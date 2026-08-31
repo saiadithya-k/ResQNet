@@ -41,25 +41,24 @@ class AIService {
     }
 
     // 2. Multilingual number word mappings
-    const numberWords = {
-      // English
-      'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
-      'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
-      // Tamil
-      'ஒன்று': 1, 'ஒரு': 1, 'இரண்டு': 2, 'இரு': 2, 'மூன்று': 3, 'நான்கு': 4, 'ஐந்து': 5,
-      'ஆறு': 6, 'ஏழு': 7, 'எட்டு': 8, 'ஒன்பது': 9, 'பத்து': 10,
-      // Hindi
-      'एक': 1, 'दो': 2, 'तीन': 3, 'चार': 4, 'पाँच': 5, 'पांच': 5,
-      'छह': 6, 'सात': 7, 'आठ': 8, 'नौ': 9, 'दस': 10,
-      // Telugu
-      'ఒకటి': 1, 'ఒక': 1, 'రెండు': 2, 'మూడు': 3, 'నాలుగు': 4, 'ఐదు': 5,
-      'ఆరు': 6, 'ఏడు': 7, 'ఎనిమిది': 8, 'తొమ్మిది': 9, 'పది': 10
-    };
+    const numberWords = [
+      // 10 down to 1 (descending priority)
+      { word: 'ten', val: 10 }, { word: 'பத்து', val: 10 }, { word: 'दस', val: 10 }, { word: 'పది', val: 10 },
+      { word: 'nine', val: 9 }, { word: 'ஒன்பது', val: 9 }, { word: 'नौ', val: 9 }, { word: 'తొమ్మిది', val: 9 },
+      { word: 'eight', val: 8 }, { word: 'எட்டு', val: 8 }, { word: 'आठ', val: 8 }, { word: 'ఎనిమిది', val: 8 },
+      { word: 'seven', val: 7 }, { word: 'ஏழு', val: 7 }, { word: 'सात', val: 7 }, { word: 'ఏడు', val: 7 },
+      { word: 'six', val: 6 }, { word: 'ஆறு', val: 6 }, { word: 'छह', val: 6 }, { word: 'ఆరు', val: 6 },
+      { word: 'five', val: 5 }, { word: 'ஐந்து', val: 5 }, { word: 'पाँच', val: 5 }, { word: 'पांच', val: 5 }, { word: 'ఐదుగురు', val: 5 }, { word: 'ఐదు', val: 5 },
+      { word: 'four', val: 4 }, { word: 'நான்கு', val: 4 }, { word: 'चार', val: 4 }, { word: 'నలుగురు', val: 4 }, { word: 'నాలుగు', val: 4 },
+      { word: 'three', val: 3 }, { word: 'மூன்று', val: 3 }, { word: 'तीन', val: 3 }, { word: 'ముగ్గురు', val: 3 }, { word: 'మూడు', val: 3 },
+      { word: 'two', val: 2 }, { word: 'இரண்டு', val: 2 }, { word: 'இரு', val: 2 }, { word: 'दो', val: 2 }, { word: 'ఇద్దరు', val: 2 }, { word: 'రెండు', val: 2 },
+      { word: 'one', val: 1 }, { word: 'ஒன்று', val: 1 }, { word: 'ஒரு', val: 1 }, { word: 'एक', val: 1 }, { word: 'ఒకటి', val: 1 }, { word: 'ఒక', val: 1 }
+    ];
 
-    for (const [word, val] of Object.entries(numberWords)) {
-      const wordRegex = new RegExp(`(?:\\b|\\s|^)${word}(?:\\s+(?:people|persons|victims|trapped|individuals|பேர்|மக்கள்|लोग|వ్యక్తులు))?(?:\\b|\\s|$)`, 'i');
+    for (const item of numberWords) {
+      const wordRegex = new RegExp(`(?:\\b|\\s|^)${item.word}(?:\\s+(?:people|persons|victims|trapped|individuals|பேர்|மக்கள்|लोग|వ్యక్తులు|మంది))?(?:\\b|\\s|$)`, 'i');
       if (wordRegex.test(lower)) {
-        return val;
+        return item.val;
       }
     }
 

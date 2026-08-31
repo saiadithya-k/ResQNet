@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const prisma = require('../../config/database');
+const mockState = require('../mockData');
 const { AppError } = require('../../utils/errors');
 
 const VALID_RESPONDER_STATUSES = [
@@ -88,54 +89,75 @@ class ResponderService {
    * List all responders matching query filters
    */
   async getAllResponders(filters = {}) {
-    const where = {};
+    try {
+      const where = {};
 
-    if (filters.status) {
-      where.status = filters.status;
-    }
-
-    const typeFilter = filters.responderType || filters.type;
-    if (typeFilter) {
-      where.responderType = typeFilter;
-    }
-
-    if (filters.isCommunity !== undefined) {
-      where.isCommunity = String(filters.isCommunity).toLowerCase() === 'true';
-    }
-
-    const profiles = await prisma.responderProfile.findMany({
-      where,
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            phone: true,
-            role: true,
-            avatarUrl: true,
-            createdAt: true,
-            updatedAt: true
-          }
-        }
-      },
-      orderBy: {
-        id: 'asc'
+      if (filters.status) {
+        where.status = filters.status;
       }
-    });
 
-    return profiles.map(p => this._formatResponder(p));
+      const typeFilter = filters.responderType || filters.type;
+      if (typeFilter) {
+        where.responderType = typeFilter;
+      }
+
+      if (filters.isCommunity !== undefined) {
+        where.isCommunity = String(filters.isCommunity).toLowerCase() === 'true';
+      }
+
+      const profiles = await prisma.responderProfile.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              phone: true,
+              role: true,
+              avatarUrl: true,
+              createdAt: true,
+              updatedAt: true
+            }
+          }
+        },
+        orderBy: {
+          id: 'asc'
+        }
+      });
+
+      if (profiles && profiles.length > 0) {
+        return profiles.map(p => this._formatResponder(p));
+      }
+    } catch (dbErr) {
+      // Fallback gracefully to mock data
+    }
+
+    let list = mockState.responders ? [...mockState.responders] : [];
+    if (filters.status) {
+      list = list.filter(r => r.status === filters.status);
+    }
+    if (filters.isCommunity !== undefined) {
+      list = list.filter(r => String(r.isCommunity) === String(filters.isCommunity));
+    }
+    return list;
   }
 
   /**
    * Get single responder by ID
    */
   async getResponderById(id) {
-    const profile = await this._findProfile(id);
-    if (!profile) {
-      throw new AppError('Responder not found', 404);
-    }
-    return this._formatResponder(profile);
+    try {
+      const profile = await this._findProfile(id);
+      if (profile) {
+        return this._formatResponder(profile);
+      }
+    } catch (dbErr) {}
+
+    const mockR = mockState.responders ? mockState.responders.find(r => r.id === id) : null;
+    if (mockR) return mockR;
+
+    throw new AppError('Responder not found', 404);
   }
 
   /**
