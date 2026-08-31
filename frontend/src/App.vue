@@ -4,11 +4,11 @@
     <AppNavbar />
 
     <div class="main-body">
-      <!-- Role-Based Navigation Sidebar -->
-      <AppSidebar />
+      <!-- Role-Based Navigation Sidebar (Internal screens only) -->
+      <AppSidebar v-if="!isPublicRoute" />
 
       <!-- Main Tactical Viewport -->
-      <main class="content-viewport">
+      <main :class="['content-viewport', { 'public-viewport': isPublicRoute }]">
         <router-view />
       </main>
     </div>
@@ -19,13 +19,19 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import AppNavbar from './components/common/AppNavbar.vue';
 import AppSidebar from './components/common/AppSidebar.vue';
 import CopilotChat from './components/ai/CopilotChat.vue';
 import { useSocketService } from './services/socketService';
 
+const route = useRoute();
 const socket = useSocketService();
+
+const isPublicRoute = computed(() => {
+  return route.path === '/' || route.path.startsWith('/login');
+});
 
 onMounted(() => {
   socket.connect();
@@ -61,5 +67,9 @@ onMounted(() => {
   min-width: 0;
   width: 100%;
   max-width: 100%;
+}
+
+.public-viewport {
+  padding: 0;
 }
 </style>

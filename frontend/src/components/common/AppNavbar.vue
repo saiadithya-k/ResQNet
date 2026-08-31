@@ -11,14 +11,16 @@
         <span class="toggle-icon">{{ uiStore.sidebarOpen ? '◀' : '☰' }}</span>
       </button>
 
-      <div class="logo-icon">
-        <span class="pulse-radar"></span>
-        🚨
-      </div>
-      <div class="brand-titles">
-        <h1 class="logo-text">ResQ<span>Net</span></h1>
-        <p class="logo-subtext">AI Emergency Intelligence System</p>
-      </div>
+      <router-link to="/" class="brand-link">
+        <div class="logo-icon">
+          <span class="pulse-radar"></span>
+          🚨
+        </div>
+        <div class="brand-titles">
+          <h1 class="logo-text">ResQ<span>Net</span></h1>
+          <p class="logo-subtext">AI Emergency Intelligence System</p>
+        </div>
+      </router-link>
     </div>
 
     <!-- Center Live System Status / Disaster Mode Banner -->
@@ -95,6 +97,14 @@ function handleLogout() {
   display: flex;
   align-items: center;
   gap: 0.875rem;
+}
+
+.brand-link {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .sidebar-slide-toggle {

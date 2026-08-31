@@ -26,9 +26,11 @@ import HospitalDashboard from '../views/hospital/HospitalDashboard.vue';
 import LoginPortal from '../views/auth/LoginPortal.vue';
 import CitizenLogin from '../views/auth/CitizenLogin.vue';
 import OperationsLogin from '../views/auth/OperationsLogin.vue';
+import LandingPage from '../views/LandingPage.vue';
 
 const routes = [
-  { path: '/', redirect: '/citizen' },
+  // Public Landing Page
+  { path: '/', name: 'LandingPage', component: LandingPage, meta: { public: true } },
 
   // Citizen Platform (Team 1)
   { path: '/citizen', name: 'CitizenDashboard', component: CitizenDashboard, meta: { requiresAuth: true } },
@@ -68,8 +70,8 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
-  if (to.path.startsWith('/login')) {
-    // Allow viewing login portal and role-specific auth pages
+  if (to.path === '/' || to.path.startsWith('/login') || to.meta.public) {
+    // Allow viewing public landing page and auth portals
     next();
   } else if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login');
