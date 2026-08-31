@@ -1,197 +1,142 @@
-# 🚨 ResQNet — AI Emergency Intelligence & Tactical Response Platform
+<div align="center">
 
-> **An AI-powered emergency coordination platform that transforms citizen distress signals into prioritized, intelligently dispatched, real-time emergency responses.**
+# 🚨 ResQNet
+### Autonomous AI Emergency Intelligence & Tactical Response Mesh
+
+[![Vue.js](https://img.shields.io/badge/Vue.js-3.5-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white)](https://vuejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-20.x-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io/)
+[![Socket.IO](https://img.shields.io/badge/Socket.IO-Real--Time-010101?style=for-the-badge&logo=socketdotio&logoColor=white)](https://socket.io/)
+[![MapLibre GL](https://img.shields.io/badge/MapLibre_GL-Vector_GIS-3969EC?style=for-the-badge&logo=maplibre&logoColor=white)](https://maplibre.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
+
+<p align="center">
+  <strong>Transforming citizen distress signals into prioritized, intelligently dispatched, life-saving responses in sub-second time.</strong>
+</p>
+
+[⚡ Explore Interactive Workflow (Public)](http://localhost:5173/workflow) • [🚀 Quick Start](#-quick-start) • [🔑 Demo Accounts](#-demo-accounts) • [📖 Deployment Guide](DEPLOYMENT.md)
+
+</div>
 
 ---
 
-## 📌 Overview
+## ⚡ 10-Stage Autonomous Emergency Lifecycle
 
-**ResQNet** is an end-to-end disaster coordination and emergency intelligence network connecting citizens in crisis, 911/112 dispatchers, tactical commanders, field paramedics, community first responders, and regional trauma hospitals in a synchronized real-time mesh.
-
-```text
-Distress Report ➔ Multilingual AI Triage ➔ 6-Factor Matching ➔ Concurrency-Locked Dispatch ➔ GIS Navigation ➔ Hospital Bed Mesh
+```
+[ 01 REPORT ] ──► [ 02 AI TRIAGE ] ──► [ 03 VERIFIED ] ──► [ 04 PRIORITY ] ──► [ 05 DISPATCH ]
+  Voice SOS/GPS     NLP & Casualties     Deduplication       Score (0-100)      6-Factor Match
+       │                                                                               │
+       ▼                                                                               ▼
+[ 10 RESOLVED ] ◄── [ 09 HOSPITAL ] ◄── [ 08 ON SCENE ] ◄── [ 07 EN ROUTE ] ◄── [ 06 ASSIGNED ]
+  SHA-256 Audit       Trauma & ICU Beds   Mutual Aid Drones    GIS Corridor       ACID Lock (AMB)
 ```
 
 ---
 
-## 🛠️ Technology Stack
+## 🌟 Core System Pillars
 
-| Layer | Technologies |
-|---|---|
-| **Frontend** | Vue 3 (Composition API), Vite, Pinia, Vue Router, Leaflet GIS |
-| **Backend** | Node.js, Express.js, Socket.IO Real-Time Engine |
-| **Database & ORM** | PostgreSQL, Prisma ORM (Serializable ACID Locks) |
-| **AI / Intelligence** | Multilingual NLP (EN, TA, HI, TE), Dynamic Priority Scoring, 6-Factor Matcher |
-| **Security & Auth** | JWT Authentication, Bcrypt Password Hashing, RBAC Middleware |
-
----
-
-## 🚀 Quick Start Guide
-
-### 1. Prerequisites
-- **Node.js** (v18+ or v20+ recommended)
-- **npm** (v9+)
-- **Docker** (for PostgreSQL) or local PostgreSQL instance on port `5432`
+| Feature | Description | Key Tech |
+|---|---|---|
+| **🎙️ Multilingual AI SOS** | Real-time speech transcription & NLP entity extraction across English, Tamil, Hindi & Telugu. | Custom NLP Engine |
+| **📍 High-Precision GIS** | Dual GPS lock & interactive vector map pinning with sub-meter reverse geocoding. | MapLibre GL, OpenFreeMap |
+| **⚡ 6-Factor Dispatch** | Matches units by skill (25%), gear (20%), distance (15%), ETA (10%), fatigue (15%) & load (15%). | Serializable ACID Locks |
+| **🏥 Regional Trauma Mesh** | Live bed telemetry pre-reserves ICU & surgical suites before ambulance arrives. | Socket.IO WebSockets |
+| **🤝 500m Community Ring** | Mobilizes CPR/First-Aid certified citizen volunteers within 500m during critical golden minutes. | Geospatial Indexing |
+| **🔒 SHA-256 Audit Vault** | Cryptographic tamper-proof ledger recording immutable chain of custody for every action. | SHA-256 Cryptography |
 
 ---
 
-### 2. Clone & Install Dependencies
+## 🚀 Quick Start
 
-Clone the repository and install dependencies for the root, backend, and frontend:
-
+### 1. Clone & Install
 ```bash
-# Clone the repository
 git clone https://github.com/saiadithya-k/ResQNet.git
 cd ResQNet
-
-# Install all dependencies (Monorepo root, backend, and frontend)
 npm run install:all
 ```
 
----
-
-### 3. Setup Database (PostgreSQL & Prisma)
-
-Start the PostgreSQL Docker container, push the schema, and seed the demo accounts:
-
+### 2. Configure Environment
 ```bash
-# Start PostgreSQL via Docker Compose
+# Backend (.env)
+cp backend/.env.example backend/.env
+
+# Frontend (.env)
+cp frontend/.env.example frontend/.env
+```
+
+### 3. Database Setup (PostgreSQL + Prisma)
+```bash
+# Start PostgreSQL container
 docker compose up -d postgres
 
-# Push Prisma schema to the database
+# Push schema & seed demo data
 npm run prisma:push
-
-# Seed demo users, responders, hospitals, and sample incidents
 npm run prisma:seed
 ```
 
----
-
-### 4. Run the Application
-
-#### Option A: Start Both Frontend & Backend Together (Recommended)
-From the project root:
-
+### 4. Launch Application
 ```bash
+# Runs backend (:5000) and frontend (:5173) concurrently
 npm run dev
 ```
 
-#### Option B: Start Separately
-
-**Terminal 1 — Backend API & Socket.IO (`http://localhost:5000`):**
-```bash
-npm --prefix backend run dev
-```
-
-**Terminal 2 — Frontend App (`http://localhost:5173`):**
-```bash
-npm --prefix frontend run dev
-```
+> [!TIP]
+> Visit **`http://localhost:5173/workflow`** to test the **Interactive 10-Stage Workflow Canvas** without needing to log in.
 
 ---
 
-## 🌐 Quick Access URLs
+## 🔑 Demo Accounts
 
-| Portal | URL | Description |
-|---|---|---|
-| **Public Landing Page** | [http://localhost:5173/](http://localhost:5173/) | Public hero portal & entry gateways |
-| **Citizen Emergency Portal** | [http://localhost:5173/login/citizen](http://localhost:5173/login/citizen) | Distress reporting, Multilingual Voice SOS & safety circle |
-| **Operations & Command Portal** | [http://localhost:5173/login/operations](http://localhost:5173/login/operations) | Tactical command, 911 dispatch, EMT units & hospital mesh |
-| **Central Auth Gateway** | [http://localhost:5173/login](http://localhost:5173/login) | Universal role-based authentication |
+> **Universal Password:** `password123`
 
----
-
-## 🔑 Seeded Demo Accounts
-
-> **Default Password for all demo accounts:** `password123`
-
-| Role | Mobile Number (Username) | Full Name | Primary Dashboard |
+| Role | Mobile / Call Sign | User Name | Dashboard Route |
 |---|---|---|---|
-| **🚨 Citizen** | `+91 9876543210` *(or `9876543210`)* | Vignesh Kumar | `/citizen` |
-| **🛡️ Admin** | `+91 9876543211` *(or `9876543211`)* | Command Chief Miller | `/admin/command` |
-| **📡 Dispatcher** | `+91 9876543212` *(or `9876543212`)* | Dispatcher John Davis | `/admin/command` |
-| **🚑 Paramedic (Responder)** | `+91 9876543213` *(or `9876543213`)* | Paramedic Sarah Connor | `/responder` |
-| **🧑‍🚒 Community Responder** | `+91 9876543214` *(or `9876543214`)* | Volunteer Alex Rivera | `/community` |
-| **🏥 Hospital Staff** | `+91 9876543215` *(or `9876543215`)* | Dr. Robert Chen (Apollo) | `/hospital` |
+| **🚨 Citizen** | `+91 9876543210` | Vignesh Kumar | `/citizen` |
+| **🛡️ Admin / Commander** | `+91 9876543211` | Chief Miller | `/admin/command` |
+| **📡 Tactical Dispatcher** | `+91 9876543212` | John Davis | `/admin/command` |
+| **🚑 Field Paramedic** | `+91 9876543213` | Sarah Connor | `/responder` |
+| **🧑‍🚒 Community Volunteer** | `+91 9876543214` | Alex Rivera | `/community` |
+| **🏥 Hospital Trauma Lead** | `+91 9876543215` | Dr. Robert Chen | `/hospital` |
 
 ---
 
-## 🌟 Key Platform Capabilities
+## 🌐 Platform Portals
 
-### 1. 🚨 Citizen Emergency Portal
-- **Multilingual Voice SOS**: Emergency transcription and entity extraction supporting English, Tamil, Hindi, and Telugu.
-- **Instant Incident Reporting**: GPS coordinate geotagging, severity classification, and trapped-victim indicators.
-- **Family Safety Circle & Survivor Check-in**: Automated status broadcast and location updates for loved ones during disasters.
-- **Public Safety Alerts**: Real-time broadcast alerts for severe weather, flooding, and regional evacuation orders.
-
-### 2. 🗺️ Tactical Command & GIS Center
-- **Interactive Leaflet GIS Command Map**: Live tracking of field units, incident heatmaps, route vectors, and hazard zones.
-- **Disaster Mode & Simulation**: Scenario stress-testing for structural collapses, earthquakes, and flood surges.
-- **Command Analytics & KPIs**: Real-time response time tracking, casualty statistics, and resource utilization rates.
-
-### 3. ⚡ Concurrency-Locked Dispatch Engine
-- **Serializable ACID Transaction**: Eliminates race conditions for simultaneous multi-dispatcher dispatches to the same unit.
-- **6-Factor Weighted Allocation**: Matches responders by skill set (25%), equipment (20%), distance (15%), ETA (10%), fatigue index (15%), and active workload (15%).
-
-### 4. 🏥 Regional Hospital Capacity Mesh
-- **Live Bed & ICU Balancing**: Real-time telemetry for general beds, ICU suites, ventilators, and surgical operating rooms.
-- **Automated Intake & Transfer Routing**: Pre-reserves trauma beds ahead of paramedic arrival and coordinates patient transfers.
-
-### 5. 🤝 Hyper-Local Community Mesh
-- **500m Proximity Matching**: Alerts CPR/First-Aid certified citizen volunteers within 500 meters during life-critical initial minutes.
-
-### 6. 🔐 Cryptographic Audit Vault
-- **SHA-256 Tamper-Proof Audit Log**: Immutable chain-of-custody recording for every status transition, dispatch order, and medical intake.
+| Portal | URL | Focus Area |
+|---|---|---|
+| **Public Landing Page** | [`/`](http://localhost:5173/) | Citizen & Operations Gateway Entry |
+| **Tactical Workflow Canvas** | [`/workflow`](http://localhost:5173/workflow) | Public 10-Stage Interactive Mesh Simulation |
+| **Citizen Emergency Hub** | [`/login/citizen`](http://localhost:5173/login/citizen) | GPS Distress, Voice SOS, Family Safety & Survivor Check-in |
+| **Operations Command Center** | [`/login/operations`](http://localhost:5173/login/operations) | Live Tactical Map, Disaster Controller & Unit Dispatch |
 
 ---
 
-## 📁 Repository Structure
+## 📁 Project Architecture
 
 ```text
 ResQNet/
-├── backend/                  # Express.js REST API & Real-Time Engine
+├── backend/                  # Node.js + Express REST & Socket.IO Real-Time Engine
 │   ├── src/
-│   │   ├── config/          # Database & Environment configuration
-│   │   ├── controllers/     # Route controllers
-│   │   ├── middleware/      # JWT Authentication & RBAC middleware
-│   │   ├── routes/          # API route definitions (30 route modules)
-│   │   ├── services/        # Business logic (AI Triage, Matching, Dispatch, GIS, Hospital)
-│   │   └── utils/           # Utility helpers & SHA-256 hashing
-│   ├── server.js            # Express & Socket.IO bootstrap
-│   └── package.json
-├── frontend/                 # Vue 3 + Vite SPA
+│   │   ├── controllers/     # Incident, Dispatcher, Hospital, AI & GIS controllers
+│   │   ├── services/        # 6-Factor Matcher, Multilingual NLP, Routing & Audit Vault
+│   │   └── middleware/      # JWT Authentication & RBAC role guards
+├── frontend/                 # Vue 3 + Vite Single Page Application
 │   ├── src/
-│   │   ├── components/      # UI components (Map, Navbar, Sidebar, Copilot)
-│   │   ├── views/           # Application views (Landing, Citizen, Command, Responder, Hospital)
-│   │   ├── stores/          # Pinia state stores (Auth, Incidents, Disasters, Map, UI)
-│   │   ├── router/          # Vue Router definitions & role navigation guards
-│   │   └── main.js          # Vue 3 entry point
-│   ├── vite.config.js       # Vite build & proxy configuration
-│   └── package.json
-├── prisma/                   # Prisma ORM Schema & Database Seed
-│   ├── schema.prisma        # PostgreSQL data models
-│   └── seed.js              # Demo accounts & seed data generator
-├── docker-compose.yml        # PostgreSQL container configuration
-├── package.json              # Monorepo root scripts
-└── README.md                 # Project documentation
+│   │   ├── views/           # Command Center, Tactical Workflow, Citizen & Hospital Dashboards
+│   │   ├── components/      # MapLibre Vector Map, Copilot Chat, Location Picker
+│   │   └── stores/          # Pinia reactive stores (Incidents, Disasters, Responders, UI)
+└── prisma/                   # PostgreSQL schema models & demo seeds
 ```
 
 ---
 
-## 📜 Available Scripts
+## 🚢 Production Deployment
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Runs both backend and frontend concurrently |
-| `npm run dev:backend` | Starts the Express server with Nodemon |
-| `npm run dev:frontend` | Starts the Vite development server |
-| `npm run install:all` | Installs root, backend, and frontend dependencies |
-| `npm run prisma:push` | Pushes the Prisma schema to the active database |
-| `npm run prisma:seed` | Seeds database with demo accounts and data |
-| `npm --prefix frontend run build` | Compiles production bundle for the frontend |
+For step-by-step production hosting on **Render** (Backend API + Database) and **Vercel** (Frontend SPA), refer to the comprehensive [**DEPLOYMENT.md**](DEPLOYMENT.md) guide.
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+<div align="center">
+  <sub>Built for Crisis Resilience • MIT Licensed • ResQNet 2026</sub>
+</div>
