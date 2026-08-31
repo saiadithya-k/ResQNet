@@ -108,7 +108,7 @@
             <div class="life-perf-track">
               <div
                 class="life-perf-fill"
-                :style="{ width: `${Math.min(100, (st.avgDurationMinutes / st.targetMinutes) * 100)}%` }"
+                :style="{ width: `${st.targetMinutes ? Math.min(100, (st.avgDurationMinutes / st.targetMinutes) * 100) : 0}%` }"
                 :class="st.avgDurationMinutes <= st.targetMinutes ? 'life-optimal' : 'life-warn'"
               ></div>
             </div>

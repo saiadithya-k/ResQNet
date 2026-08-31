@@ -186,6 +186,7 @@ function renderMarkers() {
   // 1. Incidents Markers (with Selection Synchronization)
   if (layers.value.incidents) {
     incidentStore.incidents.forEach((inc) => {
+      if (inc.latitude == null || inc.longitude == null) return;
       const isCritical = inc.severity === 'CRITICAL';
       const isSelected = incidentStore.selectedIncident?.id === inc.id;
 
@@ -225,6 +226,7 @@ function renderMarkers() {
   // 2. Responders Markers (Smooth GPS movement enabled)
   if (layers.value.responders) {
     responderStore.responders.forEach((resp) => {
+      if (resp.latitude == null || resp.longitude == null) return;
       const isAmb = resp.type === 'PARAMEDIC';
       const markerHtml = `
         <div class="custom-map-icon icon-unit ${resp.isCommunity ? 'icon-comm' : ''} ${resp.status === 'EN_ROUTE' ? 'pulse-enroute' : ''}">
@@ -258,6 +260,7 @@ function renderMarkers() {
   // 3. Hospitals Markers
   if (layers.value.hospitals) {
     hospitalStore.hospitals.forEach((hosp) => {
+      if (hosp.latitude == null || hosp.longitude == null) return;
       const markerHtml = `
         <div class="custom-map-icon icon-hospital">
           <span>🏥</span>
@@ -283,6 +286,7 @@ function renderMarkers() {
   // 4. Shelters Markers
   if (layers.value.shelters) {
     disasterStore.shelters.forEach((shelter) => {
+      if (shelter.latitude == null || shelter.longitude == null) return;
       const markerHtml = `
         <div class="custom-map-icon icon-shelter">
           <span>🏠</span>
@@ -307,6 +311,7 @@ function renderMarkers() {
   // 5. Roadblocks Markers
   if (layers.value.roadblocks) {
     disasterStore.roadBlocks.forEach((rb) => {
+      if (rb.latitude == null || rb.longitude == null) return;
       const markerHtml = `
         <div class="custom-map-icon icon-roadblock">
           <span>🚧</span>

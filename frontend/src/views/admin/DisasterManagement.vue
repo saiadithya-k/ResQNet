@@ -62,7 +62,7 @@
             <div class="progress-bar">
               <div
                 class="progress-fill"
-                :style="{ width: `${Math.round((s.currentOccupancy / s.capacity) * 100)}%` }"
+                :style="{ width: `${s.capacity ? Math.min(100, Math.round((s.currentOccupancy / s.capacity) * 100)) : 0}%` }"
               ></div>
             </div>
             <div class="shelter-badges">

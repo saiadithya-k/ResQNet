@@ -1257,7 +1257,8 @@ function focusHospitalOnMap(hosp) {
 }
 
 .incident-card-item.border-critical {
-  border-left: 3px solid #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.05);
 }
 
 .card-item-top {
