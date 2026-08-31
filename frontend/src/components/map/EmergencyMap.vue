@@ -7,7 +7,7 @@
     <div class="map-controls-panel">
       <div class="control-header">
         <span class="pulse-icon"></span>
-        <span>GIS MAP LAYERS</span>
+        <span>TACTICAL GIS LAYERS</span>
       </div>
       <div class="layer-toggles">
         <label class="toggle-item">
@@ -36,15 +36,23 @@
         </label>
         <label class="toggle-item">
           <input type="checkbox" v-model="layers.routes" @change="renderRoute" />
-          <span class="icon">⚡</span> Optimized Route
+          <span class="icon">⚡</span> Tactical Corridor
         </label>
+      </div>
+
+      <div v-if="incidentStore.selectedIncident" class="active-focus-card">
+        <div class="focus-hdr font-mono">🎯 MAP FOCUS: #{{ incidentStore.selectedIncident.id }}</div>
+        <span class="focus-title">{{ incidentStore.selectedIncident.title }}</span>
+        <button class="btn-refocus font-mono" @click="focusSelectedIncident">
+          Refocus Map
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import L from 'leaflet';
 import { useIncidentStore } from '../../stores/incidentStore';
 import { useResponderStore } from '../../stores/responderStore';
@@ -61,6 +69,9 @@ let markersLayer = null;
 let polygonsLayer = null;
 let routeLayer = null;
 
+// Track incident markers to avoid full map rebuilds on selection
+const incidentMarkersMap = new Map();
+
 const layers = ref({
   incidents: true,
   responders: true,
@@ -75,7 +86,16 @@ onMounted(() => {
   initMap();
 });
 
+onUnmounted(() => {
+  if (map) {
+    map.remove();
+    map = null;
+  }
+});
+
 function initMap() {
+  if (map) return;
+
   // Center coordinates on emergency command district
   map = L.map('tactical-leaflet-map', {
     center: [13.0827, 80.2600],
@@ -98,35 +118,54 @@ function initMap() {
   renderPolygons();
   renderMarkers();
   renderRoute();
+
+  // If an incident was already selected on mount, focus immediately
+  if (incidentStore.selectedIncident) {
+    focusSelectedIncident();
+  }
 }
 
 function renderMarkers() {
   if (!map || !markersLayer) return;
   markersLayer.clearLayers();
+  incidentMarkersMap.clear();
 
-  // 1. Incidents Markers
+  // 1. Incidents Markers (with Selection Synchronization)
   if (layers.value.incidents) {
     incidentStore.incidents.forEach((inc) => {
       const isCritical = inc.severity === 'CRITICAL';
+      const isSelected = incidentStore.selectedIncident?.id === inc.id;
+
       const markerHtml = `
-        <div class="custom-map-icon ${isCritical ? 'pulse-critical' : 'pulse-high'}">
+        <div class="custom-map-icon ${isCritical ? 'pulse-critical' : 'pulse-high'} ${isSelected ? 'marker-selected-halo' : ''}">
           <span>${inc.incidentType === 'FIRE' ? '🔥' : inc.incidentType === 'HAZMAT' ? '☣️' : '🚨'}</span>
+          ${isSelected ? '<span class="selected-pin-badge">TARGET</span>' : ''}
         </div>
       `;
-      const icon = L.divIcon({ html: markerHtml, className: 'map-div-icon', iconSize: [32, 32] });
-      const marker = L.marker([inc.latitude, inc.longitude], { icon });
+
+      const icon = L.divIcon({ html: markerHtml, className: 'map-div-icon', iconSize: [34, 34] });
+      const marker = L.marker([inc.latitude, inc.longitude], { icon, zIndexOffset: isSelected ? 1000 : 100 });
 
       marker.bindPopup(`
         <div class="map-popup-card">
-          <div class="popup-tag ${isCritical ? 'tag-crit' : 'tag-warn'}">${inc.severity} (${inc.priorityScore} Pts)</div>
+          <div class="popup-tag ${isCritical ? 'tag-crit' : 'tag-warn'}">
+            #${inc.id} · ${inc.severity} (${inc.priorityScore} PTS)
+          </div>
           <h4>${inc.title}</h4>
           <p><strong>Type:</strong> ${inc.incidentType} | <strong>Victims:</strong> ${inc.victimCount}</p>
           <p><strong>Status:</strong> ${inc.status}</p>
-          <div class="popup-action">Click incident list to dispatch</div>
+          <p class="popup-addr">📍 ${inc.address || inc.district}</p>
+          <div class="popup-action font-mono">✓ SYNCHRONIZED TO COMMAND CONSOLE</div>
         </div>
-      `);
-      marker.on('click', () => incidentStore.selectIncident(inc));
+      `, { offset: [0, -10] });
+
+      // Map -> Queue / Command Center Synchronization
+      marker.on('click', () => {
+        incidentStore.selectIncident(inc);
+      });
+
       markersLayer.addLayer(marker);
+      incidentMarkersMap.set(inc.id, marker);
     });
   }
 
@@ -140,16 +179,18 @@ function renderMarkers() {
         </div>
       `;
       const icon = L.divIcon({ html: markerHtml, className: 'map-div-icon', iconSize: [30, 30] });
-      const marker = L.marker([resp.latitude, resp.longitude], { icon });
+      const marker = L.marker([resp.latitude, resp.longitude], { icon, zIndexOffset: 200 });
 
       marker.bindPopup(`
         <div class="map-popup-card">
-          <div class="popup-tag tag-unit">${resp.badgeNumber}</div>
+          <div class="popup-tag tag-unit">${resp.badgeNumber} · ${resp.type}</div>
           <h4>${resp.name}</h4>
           <p><strong>Status:</strong> ${resp.status}</p>
           <p><strong>Fatigue:</strong> ${resp.fatigueScore}% | <strong>Duty:</strong> ${resp.dutyHours}h</p>
+          <p><strong>Assignment:</strong> ${resp.assignedIncidentId ? '#' + resp.assignedIncidentId : 'Available'}</p>
         </div>
-      `);
+      `, { offset: [0, -8] });
+
       markersLayer.addLayer(marker);
     });
   }
@@ -171,8 +212,10 @@ function renderMarkers() {
           <h4>${hosp.name}</h4>
           <p><strong>ICU Beds:</strong> ${hosp.availableIcu}/${hosp.totalIcu}</p>
           <p><strong>Trauma Beds:</strong> ${hosp.availableTrauma}/${hosp.totalTrauma}</p>
+          <p><strong>Available Total Beds:</strong> ${hosp.availableBeds}/${hosp.totalBeds}</p>
         </div>
-      `);
+      `, { offset: [0, -8] });
+
       markersLayer.addLayer(marker);
     });
   }
@@ -190,11 +233,13 @@ function renderMarkers() {
 
       marker.bindPopup(`
         <div class="map-popup-card">
-          <div class="popup-tag tag-shelter">SHELTER</div>
+          <div class="popup-tag tag-shelter">EVACUATION SHELTER</div>
           <h4>${shelter.name}</h4>
           <p><strong>Occupancy:</strong> ${shelter.currentOccupancy}/${shelter.capacity}</p>
+          <p><strong>District:</strong> ${shelter.district}</p>
         </div>
-      `);
+      `, { offset: [0, -6] });
+
       markersLayer.addLayer(marker);
     });
   }
@@ -209,7 +254,13 @@ function renderMarkers() {
       `;
       const icon = L.divIcon({ html: markerHtml, className: 'map-div-icon', iconSize: [26, 26] });
       const marker = L.marker([rb.latitude, rb.longitude], { icon });
-      marker.bindPopup(`<strong>Road Closure:</strong> ${rb.name}<br/>${rb.reason}`);
+      marker.bindPopup(`
+        <div class="map-popup-card">
+          <div class="popup-tag tag-crit">ROAD BLOCK</div>
+          <h4>${rb.name}</h4>
+          <p>${rb.reason}</p>
+        </div>
+      `, { offset: [0, -6] });
       markersLayer.addLayer(marker);
     });
   }
@@ -228,7 +279,7 @@ function renderPolygons() {
       const polygon = L.polygon(z.coordinates, {
         color: color,
         fillColor: color,
-        fillOpacity: 0.25,
+        fillOpacity: 0.22,
         weight: 2,
         dashArray: isDanger ? '6, 6' : null
       });
@@ -237,7 +288,8 @@ function renderPolygons() {
         <div class="map-popup-card">
           <div class="popup-tag" style="background: ${color}33; color: ${color};">${z.riskLevel} ZONE</div>
           <h4>${z.name}</h4>
-          <p>Hazard Type: ${z.type}</p>
+          <p><strong>Hazard:</strong> ${z.type}</p>
+          <p><strong>Est. Population:</strong> ~${z.affectedPopulation || '42,000'}</p>
         </div>
       `);
       polygonsLayer.addLayer(polygon);
@@ -255,7 +307,7 @@ function renderRoute() {
       [13.0780, 80.2650], // Ambulance A12
       [13.0795, 80.2670],
       [13.0810, 80.2695],
-      [13.0827, 80.2707]  // Harbour Collapse
+      [13.0827, 80.2707]  // Incident Target
     ];
 
     const polyline = L.polyline(routeCoords, {
@@ -265,15 +317,58 @@ function renderRoute() {
       dashArray: '8, 8'
     });
 
-    polyline.bindPopup(`<strong>⚡ Dynamic Emergency Route:</strong> 11 min ETA (Bypassed Main Flyover Closure)`);
+    polyline.bindPopup(`<strong>⚡ Tactical Corridor:</strong> 11 min ETA (Bypassed Main Flyover Closure)`);
     routeLayer.addLayer(polyline);
   }
 }
 
-watch(() => [incidentStore.incidents, responderStore.responders, disasterStore.zones], () => {
-  renderMarkers();
-  renderPolygons();
-}, { deep: true });
+// Queue -> Map Synchronization Handler
+function focusSelectedIncident() {
+  const selected = incidentStore.selectedIncident;
+  if (!map || !selected) return;
+
+  const lat = selected.latitude;
+  const lng = selected.longitude;
+
+  if (lat && lng) {
+    // Smoothly fly to tactical zoom level
+    map.flyTo([lat, lng], 15, {
+      duration: 0.8,
+      easeLinearity: 0.25
+    });
+
+    // Re-render markers to update the selection halo
+    renderMarkers();
+
+    // Open popup for the selected marker
+    const marker = incidentMarkersMap.get(selected.id);
+    if (marker) {
+      setTimeout(() => {
+        marker.openPopup();
+      }, 850);
+    }
+  }
+}
+
+// Watch for Queue Selection changes
+watch(
+  () => incidentStore.selectedIncident,
+  (newVal, oldVal) => {
+    if (newVal && newVal.id !== oldVal?.id) {
+      focusSelectedIncident();
+    }
+  }
+);
+
+// Watch for data updates
+watch(
+  () => [incidentStore.incidents, responderStore.responders, disasterStore.zones],
+  () => {
+    renderMarkers();
+    renderPolygons();
+  },
+  { deep: true }
+);
 </script>
 
 <style>
@@ -296,13 +391,13 @@ watch(() => [incidentStore.incidents, responderStore.responders, disasterStore.z
   position: absolute;
   top: 12px;
   right: 12px;
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(15, 23, 42, 0.92);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(51, 65, 85, 0.8);
   border-radius: 8px;
   padding: 0.75rem;
   z-index: 1000;
-  max-width: 200px;
+  max-width: 220px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
 }
 
@@ -329,7 +424,7 @@ watch(() => [incidentStore.incidents, responderStore.responders, disasterStore.z
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.75rem;
+  font-size: 0.725rem;
   color: #e2e8f0;
   cursor: pointer;
 }
@@ -339,6 +434,44 @@ watch(() => [incidentStore.incidents, responderStore.responders, disasterStore.z
   cursor: pointer;
 }
 
+/* Active Focus Widget */
+.active-focus-card {
+  margin-top: 0.65rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(51, 65, 85, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.focus-hdr {
+  font-size: 0.65rem;
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.focus-title {
+  font-size: 0.7rem;
+  color: #cbd5e1;
+  line-height: 1.2;
+}
+
+.btn-refocus {
+  background: rgba(37, 99, 235, 0.25);
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  color: #60a5fa;
+  font-size: 0.65rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 0.2rem;
+  text-align: center;
+}
+
+.btn-refocus:hover {
+  background: rgba(37, 99, 235, 0.4);
+}
+
 /* Custom Marker Styles */
 .map-div-icon {
   background: transparent;
@@ -346,6 +479,7 @@ watch(() => [incidentStore.incidents, responderStore.responders, disasterStore.z
 }
 
 .custom-map-icon {
+  position: relative;
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -372,6 +506,27 @@ watch(() => [incidentStore.incidents, responderStore.responders, disasterStore.z
 .pulse-high {
   border-color: #f59e0b;
   background: rgba(245, 158, 11, 0.3);
+}
+
+/* Selected Marker Tactical Halo */
+.marker-selected-halo {
+  border: 3px solid #22d3ee !important;
+  box-shadow: 0 0 16px #22d3ee, 0 0 30px rgba(34, 211, 238, 0.6) !important;
+  transform: scale(1.3);
+  z-index: 1000;
+}
+
+.selected-pin-badge {
+  position: absolute;
+  top: -14px;
+  background: #06b6d4;
+  color: #02131e;
+  font-size: 0.5rem;
+  font-weight: 800;
+  padding: 0.05rem 0.25rem;
+  border-radius: 3px;
+  font-family: monospace;
+  letter-spacing: 0.05em;
 }
 
 .icon-unit {
@@ -409,19 +564,24 @@ watch(() => [incidentStore.incidents, responderStore.responders, disasterStore.z
 }
 
 .map-popup-card h4 {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #f8fafc;
-  margin: 0.35rem 0;
+  margin: 0.3rem 0;
 }
 
 .map-popup-card p {
-  font-size: 0.75rem;
+  font-size: 0.725rem;
   color: #94a3b8;
-  margin: 0.2rem 0;
+  margin: 0.15rem 0;
+}
+
+.popup-addr {
+  font-size: 0.675rem !important;
+  color: #64748b !important;
 }
 
 .popup-tag {
-  font-size: 0.65rem;
+  font-size: 0.625rem;
   font-weight: 700;
   display: inline-block;
   padding: 0.15rem 0.4rem;
@@ -436,8 +596,9 @@ watch(() => [incidentStore.incidents, responderStore.responders, disasterStore.z
 .tag-shelter { background: rgba(168, 85, 247, 0.25); color: #d8b4fe; }
 
 .popup-action {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: #38bdf8;
-  margin-top: 0.4rem;
+  margin-top: 0.35rem;
+  font-weight: 600;
 }
 </style>

@@ -81,8 +81,22 @@ exports.updateIncidentStatus = (req, res) => {
     description: note || 'Updated from Command Center'
   });
 
+  // Dynamic Audit Log Record
+  const newAudit = {
+    id: `AUD-${Date.now().toString().slice(-4)}`,
+    user: req.user?.name || 'Command Chief',
+    action: `STATUS_CHANGED_${status}`,
+    entity: `Incident #${incident.id}`,
+    details: note || `State transitioned to ${status}`,
+    time: new Date().toLocaleTimeString().slice(0, 8)
+  };
+  mockState.auditLogs.unshift(newAudit);
+
   const io = req.app.get('io');
-  if (io) io.emit('incident:updated', incident);
+  if (io) {
+    io.emit('incident:updated', incident);
+    io.emit('audit:created', newAudit);
+  }
 
   res.json({ success: true, data: incident });
 };

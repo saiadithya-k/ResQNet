@@ -20,10 +20,21 @@ exports.dispatchResponder = (req, res) => {
     description: `Assigned to ${responder.name} (${responder.badgeNumber})`
   });
 
+  const newAudit = {
+    id: `AUD-${Date.now().toString().slice(-4)}`,
+    user: req.user?.name || 'Dispatcher Davis',
+    action: 'RESPONDER_DISPATCHED',
+    entity: `Incident #${incident.id}`,
+    details: `Dispatched ${responder.name} (${responder.badgeNumber}) - ETA 5m`,
+    time: new Date().toLocaleTimeString().slice(0, 8)
+  };
+  mockState.auditLogs.unshift(newAudit);
+
   const io = req.app.get('io');
   if (io) {
     io.emit('incident:assigned', { incident, responder });
     io.emit('responder:location_updated', responder);
+    io.emit('audit:created', newAudit);
   }
 
   res.json({
