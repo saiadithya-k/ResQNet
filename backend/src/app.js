@@ -29,21 +29,30 @@ const app = express();
 
 // Security & Parsing Middlewares
 app.use(helmet({ contentSecurityPolicy: false }));
+
+const allowedOrigins = (process.env.CLIENT_URL || '*').split(',').map(s => s.trim());
 app.use(cors({
-  origin: process.env.CLIENT_URL || '*',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
   credentials: true
 }));
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Static uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Health Check
-app.get('/health', (req, res) => {
+// Health Checks (Render / Uptime)
+app.get(['/', '/health', '/api/health'], (req, res) => {
   res.json({
     status: 'ONLINE',
-    system: 'ResQNet Emergency Platform',
+    system: 'ResQNet Emergency Intelligence Platform',
+    version: '1.0.0',
     timestamp: new Date().toISOString()
   });
 });

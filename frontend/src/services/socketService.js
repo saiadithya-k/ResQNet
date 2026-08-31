@@ -11,7 +11,9 @@ export function useSocketService() {
   function connect() {
     if (socket) return socket;
 
-    socket = io({
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || undefined;
+
+    socket = io(socketUrl, {
       autoConnect: true,
       reconnection: true
     });

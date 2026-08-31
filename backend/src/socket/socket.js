@@ -9,10 +9,18 @@ const disasterSocket = require('./disaster.socket');
 let ioInstance = null;
 
 function initSocket(httpServer) {
+  const allowedOrigins = (process.env.CLIENT_URL || '*').split(',').map(s => s.trim());
+
   const io = new Server(httpServer, {
     cors: {
-      origin: process.env.CLIENT_URL || '*',
-      methods: ['GET', 'POST', 'PATCH', 'DELETE']
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+          return callback(null, true);
+        }
+        return callback(null, true);
+      },
+      methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+      credentials: true
     }
   });
 
