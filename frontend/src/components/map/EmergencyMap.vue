@@ -114,11 +114,23 @@ const layers = ref({
   heatmap: false
 });
 
+let resizeHandler = null;
+
 onMounted(() => {
   initMap();
+  resizeHandler = () => {
+    if (map) map.invalidateSize();
+  };
+  window.addEventListener('resize', resizeHandler);
+  setTimeout(() => {
+    if (map) map.invalidateSize();
+  }, 200);
 });
 
 onUnmounted(() => {
+  if (resizeHandler) {
+    window.removeEventListener('resize', resizeHandler);
+  }
   incidentMarkersMap.clear();
   responderMarkersMap.clear();
   if (heatmapLayer && map) {

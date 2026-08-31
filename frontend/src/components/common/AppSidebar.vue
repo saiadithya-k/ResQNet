@@ -69,6 +69,7 @@
 <style scoped>
 .tactical-sidebar {
   width: 240px;
+  flex-shrink: 0;
   background: rgba(10, 15, 30, 0.85);
   backdrop-filter: blur(12px);
   border-right: 1px solid rgba(51, 65, 85, 0.6);

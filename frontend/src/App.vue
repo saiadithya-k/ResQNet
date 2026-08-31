@@ -37,7 +37,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  width: 100vw;
+  width: 100%;
+  max-width: 100%;
   overflow: hidden;
   background-color: var(--bg-primary);
 }
@@ -47,13 +48,18 @@ onMounted(() => {
   flex: 1;
   overflow: hidden;
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .content-viewport {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 1.25rem;
   position: relative;
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
 }
 </style>
