@@ -46,6 +46,7 @@ onMounted(() => {
   display: flex;
   flex: 1;
   overflow: hidden;
+  min-width: 0;
 }
 
 .content-viewport {
@@ -53,5 +54,6 @@ onMounted(() => {
   overflow-y: auto;
   padding: 1.25rem;
   position: relative;
+  min-width: 0;
 }
 </style>

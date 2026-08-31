@@ -77,12 +77,16 @@
 <script setup>
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import L from 'leaflet';
-import 'leaflet.heat';
 import api from '../../services/api';
 import { useIncidentStore } from '../../stores/incidentStore';
 import { useResponderStore } from '../../stores/responderStore';
 import { useHospitalStore } from '../../stores/hospitalStore';
 import { useDisasterStore } from '../../stores/disasterStore';
+
+if (typeof window !== 'undefined') {
+  window.L = L;
+  globalThis.L = L;
+}
 
 const incidentStore = useIncidentStore();
 const responderStore = useResponderStore();
@@ -129,6 +133,9 @@ onUnmounted(() => {
 
 function initMap() {
   if (map) return;
+
+  const mapEl = document.getElementById('tactical-leaflet-map');
+  if (!mapEl || mapEl._leaflet_id) return;
 
   // Center coordinates on emergency command district
   map = L.map('tactical-leaflet-map', {
@@ -342,7 +349,7 @@ function renderPolygons() {
   }
 }
 
-function renderHeatmap() {
+async function renderHeatmap() {
   if (!map) return;
 
   // Clean up existing heatmap layer
@@ -352,13 +359,21 @@ function renderHeatmap() {
   }
 
   if (layers.value.heatmap) {
+    if (!L.heatLayer) {
+      try {
+        await import('leaflet.heat');
+      } catch (err) {
+        console.warn('Could not load leaflet.heat', err);
+      }
+    }
+
     // Generate real heat points from active incidents
     const heatPoints = incidentStore.incidents.map((inc) => {
       const intensity = inc.severity === 'CRITICAL' ? 1.0 : inc.severity === 'HIGH' ? 0.75 : 0.5;
       return [inc.latitude, inc.longitude, intensity];
     });
 
-    if (heatPoints.length > 0) {
+    if (heatPoints.length > 0 && typeof L.heatLayer === 'function') {
       heatmapLayer = L.heatLayer(heatPoints, {
         radius: 35,
         blur: 20,

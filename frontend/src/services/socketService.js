@@ -61,6 +61,10 @@ export function useSocketService() {
     return socket;
   }
 
+  function getSocket() {
+    return socket;
+  }
+
   function on(event, handler) {
     if (!socket) connect();
     if (socket) socket.on(event, handler);
