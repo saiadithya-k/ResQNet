@@ -5,6 +5,7 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../backend/node_modules/.prisma/client"
 }
 
 enum Role {
@@ -63,8 +64,13 @@ enum ResponderStatus {
 enum ResourceStatus {
   AVAILABLE
   REQUESTED
+  OFFERED
   APPROVED
+  REJECTED
+  CANCELLED
   IN_TRANSIT
+  DELIVERED
+  RECEIVED
   DEPLOYED
   RETURNED
 }
@@ -119,6 +125,21 @@ model ResponderProfile {
   fatigueScore      Float               @default(0)
   dispatches        Dispatch[]
   fatigueRecords    FatigueRecord[]
+  certifications    Certification[]
+}
+
+model Certification {
+  id                String            @id @default(uuid())
+  responderId       String
+  responder         ResponderProfile  @relation(fields: [responderId], references: [id], onDelete: Cascade)
+  name              String
+  issuingOrg        String?
+  certificateNumber String?
+  issuedDate        DateTime?
+  expiryDate        DateTime?
+  isVerified        Boolean           @default(false)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 }
 
 model HospitalProfile {
@@ -139,8 +160,60 @@ model HospitalProfile {
   operatingRooms    Int                 @default(4)
   isAccepting       Boolean             @default(true)
   specializations   String[]            @default([])
+  specialists       HospitalSpecialist[]
+  patients          IncomingPatient[]
+  resources         Resource[]
   incomingPatients  Incident[]
-  resourceTransfers ResourceTransfer[]
+  transfersSent     ResourceTransfer[]  @relation("TransfersSent")
+  transfersReceived ResourceTransfer[]  @relation("TransfersReceived")
+  reconciliationsSent     ResourceReconciliation[] @relation("ReconciliationsSent")
+  reconciliationsReceived ResourceReconciliation[] @relation("ReconciliationsReceived")
+}
+
+model IncomingPatient {
+  id               String          @id @default(uuid())
+  hospitalId       String
+  hospital         HospitalProfile @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  incidentId       String?
+  incident         Incident?       @relation(fields: [incidentId], references: [id], onDelete: SetNull)
+  name             String?         @default("Unknown Patient")
+  age              Int?
+  gender           String?
+  triageSeverity   String          @default("MEDIUM")
+  conditionSummary String?
+  status           String          @default("EXPECTED")
+  etaMinutes       Int?
+  expectedArrival  DateTime?
+  arrivedAt        DateTime?
+  checkedInAt      DateTime?
+  admittedAt       DateTime?
+  cancelledAt      DateTime?
+  notes            String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([hospitalId])
+  @@index([status])
+  @@index([incidentId])
+}
+
+model HospitalSpecialist {
+  id           String          @id @default(uuid())
+  hospitalId   String
+  hospital     HospitalProfile @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  name         String
+  specialty    String
+  subSpecialty String?
+  status       String          @default("AVAILABLE")
+  phone        String?
+  email        String?
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([hospitalId])
+  @@index([specialty])
+  @@index([status])
 }
 
 model Incident {
@@ -181,6 +254,7 @@ model Incident {
   dispatches        Dispatch[]
   timelineEvents    IncidentEvent[]
   evidenceFiles     IncidentEvidence[]
+  patients          IncomingPatient[]
 }
 
 model IncidentEvent {
@@ -225,28 +299,85 @@ model Dispatch {
 
 model Resource {
   id            String            @id @default(uuid())
+  hospitalId    String?
+  hospital      HospitalProfile?  @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
   name          String
-  category      String            // AMBULANCE, FIRE_TRUCK, BOAT, TRAUMA_KIT, OXYGEN, GENERATOR
-  district      String
+  category      String            // AMBULANCE, FIRE_TRUCK, BOAT, TRAUMA_KIT, OXYGEN, GENERATOR, BLOOD, VENTILATOR, PPE, MEDICATION, MEDICAL_SUPPLIES
+  district      String?
   quantity      Int               @default(1)
   availableQty  Int               @default(1)
+  unit          String?           @default("units")
   status        ResourceStatus    @default(AVAILABLE)
+  isActive      Boolean           @default(true)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
   transfers     ResourceTransfer[]
+  reconciliations ResourceReconciliation[]
+
+  @@index([hospitalId])
+  @@index([category])
+  @@index([status])
 }
 
 model ResourceTransfer {
-  id            String            @id @default(uuid())
-  resourceId    String
-  resource      Resource          @relation(fields: [resourceId], references: [id])
-  fromDistrict  String
-  toDistrict    String
-  hospitalId    String?
-  hospital      HospitalProfile?  @relation(fields: [hospitalId], references: [id])
-  quantity      Int
-  status        ResourceStatus    @default(REQUESTED)
-  requestedAt   DateTime          @default(now())
-  approvedAt    DateTime?
-  returnedAt    DateTime?
+  id              String            @id @default(uuid())
+  resourceId      String
+  resource        Resource          @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  fromHospitalId  String?
+  fromHospital    HospitalProfile?  @relation("TransfersSent", fields: [fromHospitalId], references: [id], onDelete: SetNull)
+  toHospitalId    String?
+  toHospital      HospitalProfile?  @relation("TransfersReceived", fields: [toHospitalId], references: [id], onDelete: SetNull)
+  fromDistrict    String?
+  toDistrict      String?
+  quantity        Int               @default(1)
+  status          ResourceStatus    @default(REQUESTED)
+  notes           String?
+  reason          String?
+  requestedAt     DateTime          @default(now())
+  approvedAt      DateTime?
+  inTransitAt     DateTime?
+  deliveredAt     DateTime?
+  receivedAt      DateTime?
+  rejectedAt      DateTime?
+  cancelledAt     DateTime?
+  returnedAt      DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  reconciliation  ResourceReconciliation?
+
+  @@index([resourceId])
+  @@index([fromHospitalId])
+  @@index([toHospitalId])
+  @@index([status])
+}
+
+model ResourceReconciliation {
+  id                    String            @id @default(uuid())
+  transferId            String            @unique
+  transfer              ResourceTransfer  @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  resourceId            String
+  resource              Resource          @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  sourceHospitalId      String?
+  sourceHospital        HospitalProfile?  @relation("ReconciliationsSent", fields: [sourceHospitalId], references: [id], onDelete: SetNull)
+  destinationHospitalId String?
+  destinationHospital   HospitalProfile?  @relation("ReconciliationsReceived", fields: [destinationHospitalId], references: [id], onDelete: SetNull)
+  expectedQuantity      Int
+  actualQuantity        Int
+  discrepancyQuantity   Int               @default(0)
+  discrepancyType       String            @default("MATCH") // MATCH, SHORTAGE, OVERAGE
+  status                String            @default("RECONCILED") // PENDING, RECONCILED, DISCREPANCY, RESOLVED
+  resolutionReason      String?
+  resolutionNotes       String?
+  resolvedBy            String?
+  resolvedAt            DateTime?
+  reconciledAt          DateTime          @default(now())
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  @@index([transferId])
+  @@index([sourceHospitalId])
+  @@index([destinationHospitalId])
+  @@index([status])
 }
 
 model SurvivorCheckin {

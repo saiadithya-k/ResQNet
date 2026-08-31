@@ -1,11 +1,22 @@
-// In-memory / PostgreSQL Database abstraction layer
+require('dotenv').config();
+const { PrismaClient } = require('@prisma/client');
 const logger = require('../utils/logger');
 
-class DatabaseManager {
-  constructor() {
-    this.isReady = true;
-    logger.info('📦 Database Manager initialized with ResQNet Data Store');
+let prisma;
+
+if (process.env.NODE_ENV === 'production') {
+  prisma = new PrismaClient();
+} else {
+  if (!global.prisma) {
+    global.prisma = new PrismaClient({
+      log: ['error', 'warn']
+    });
   }
+  prisma = global.prisma;
 }
 
-module.exports = new DatabaseManager();
+logger.info('📦 Database connection initialized via Prisma Client');
+
+module.exports = prisma;
+module.exports.prisma = prisma;
+module.exports.default = prisma;
