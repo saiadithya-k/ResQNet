@@ -98,42 +98,106 @@ class AIService {
     };
   }
 
-  answerCopilotQuery(query, operationalState) {
+  answerCopilotQuery(query, state = {}) {
     const q = (query || '').toLowerCase();
-    
-    if (q.includes('critical') || q.includes('urgent') || q.includes('attention')) {
+    const incidents = state.incidents || [];
+    const hospitals = state.hospitals || [];
+    const shelters = state.shelters || [];
+    const responders = state.responders || [];
+
+    // Query 1: Which hospitals can accept critical patients / ICU capacity?
+    if (q.includes('hospital') || q.includes('icu') || q.includes('accept') || q.includes('trauma') || q.includes('bed')) {
+      const accepting = hospitals.filter(h => h.isAccepting && (h.availableIcu || 0) > 0);
+      const topHosp = accepting[0] || hospitals[0];
+      const details = accepting
+        .map(h => `${h.name} (${h.availableIcu}/${h.totalIcu} ICU, ${h.availableTrauma || 4} Trauma)`)
+        .join('; ');
+
       return {
-        answer: `There are currently ${operationalState.criticalCount || 2} CRITICAL incidents active. Priority #1 is the Building Collapse at Harbour Road with 8 trapped victims. Paramedic units have been dispatched.`,
-        suggestedActions: [
-          'Pre-alert Metro General ICU trauma wing',
-          'Deploy secondary heavy rescue crane unit',
-          'Issue localized evacuation alert'
-        ]
-      };
-    } else if (q.includes('hospital') || q.includes('bed') || q.includes('icu') || q.includes('trauma')) {
-      return {
-        answer: 'Metro Central Hospital has 4/10 ICU beds and 6/10 Trauma beds available (Accepting). St. Jude Hospital is nearing 85% capacity.',
-        suggestedActions: [
-          'Route next trauma patient to Metro Central General',
-          'Monitor Apollo Trauma Center bed release schedule'
-        ]
-      };
-    } else if (q.includes('shortage') || q.includes('resource') || q.includes('ambulance')) {
-      return {
-        answer: 'Resource warning: District A (Central Zone) ambulance availability is at 18%. District B has 3 surplus ambulances ready for cross-agency loan.',
-        suggestedActions: [
-          'Initiate cross-district transfer request to District B',
-          'Mobilize verified Community First Responders within 500m'
+        answer: `Currently, ${accepting.length} hospital(s) can accept critical trauma patients with open ICU beds: ${details}.`,
+        actions: [
+          {
+            type: 'VIEW_HOSPITAL',
+            label: `🏥 Focus ${topHosp?.name || 'Hospital'} on Map`,
+            payload: { id: topHosp?.id || 'HOSP-1', latitude: topHosp?.latitude, longitude: topHosp?.longitude }
+          }
         ]
       };
     }
 
+    // Query 2: Which incidents require immediate attention?
+    if (q.includes('incident') || q.includes('critical') || q.includes('immediate') || q.includes('attention') || q.includes('urgent')) {
+      const criticals = incidents.filter(i => i.severity === 'CRITICAL' || (i.priorityScore || 0) >= 85);
+      const topInc = criticals[0] || incidents[0];
+
+      return {
+        answer: `There are currently ${criticals.length} high-priority incident(s) requiring immediate command attention. Highest priority: #${topInc.id} — "${topInc.title}" at ${topInc.address} (Status: ${topInc.status}).`,
+        actions: [
+          {
+            type: 'VIEW_INCIDENT',
+            label: `🎯 Inspect Incident #${topInc.id}`,
+            payload: { id: topInc.id, latitude: topInc.latitude, longitude: topInc.longitude }
+          },
+          {
+            type: 'DISPATCH',
+            label: `⚡ Dispatch Priority Unit to #${topInc.id}`,
+            payload: { incidentId: topInc.id, responderId: 'RESP-01' }
+          }
+        ]
+      };
+    }
+
+    // Query 3: Where are we short on ambulances? / Ambulance availability
+    if (q.includes('shortage') || q.includes('short') || q.includes('ambulance') || q.includes('paramedic')) {
+      const availableAmbs = responders.filter(r => r.type === 'PARAMEDIC' && r.status === 'AVAILABLE');
+      const busyAmbs = responders.filter(r => r.type === 'PARAMEDIC' && r.status !== 'AVAILABLE');
+
+      return {
+        answer: `Ambulance Fleet Status: ${availableAmbs.length} unit(s) available in primary sector (${busyAmbs.length} currently en-route/on-scene). Central Zone fleet is operating near peak capacity.`,
+        actions: [
+          {
+            type: 'VIEW_RESPONDER',
+            label: '🚑 Inspect Ambulance A12 Telemetry',
+            payload: { id: 'RESP-01', badgeNumber: 'AMB-A12' }
+          }
+        ]
+      };
+    }
+
+    // Query 4: Which shelters are nearing capacity?
+    if (q.includes('shelter') || q.includes('capacity') || q.includes('evac') || q.includes('occupancy')) {
+      const nearCapacity = shelters.filter(s => (s.currentOccupancy / s.capacity) >= 0.75);
+      const topShelter = nearCapacity[0] || shelters[0];
+      const names = nearCapacity.map(s => `${s.name} (${Math.round((s.currentOccupancy / s.capacity) * 100)}% Full)`).join(', ');
+
+      return {
+        answer: nearCapacity.length > 0
+          ? `Shelter Alert: ${nearCapacity.length} evacuation shelter(s) are nearing or exceeding critical capacity: ${names}. Recommend routing incoming evacuees to secondary facilities.`
+          : 'All evacuation shelters are operating within standard capacity limits (<75% occupancy).',
+        actions: topShelter ? [
+          {
+            type: 'VIEW_SHELTER',
+            label: `🏠 View Shelter #${topShelter.id}`,
+            payload: { id: topShelter.id, latitude: topShelter.latitude, longitude: topShelter.longitude }
+          }
+        ] : []
+      };
+    }
+
+    // Default Operational Overview
     return {
-      answer: `Operations are currently stable. 27 total active incidents monitored across 4 districts. All response meshes are connected and tracking via GPS.`,
-      suggestedActions: [
-        'Review high-priority incidents',
-        'Check responder fatigue levels',
-        'Inspect GIS road blockages'
+      answer: `ResQNet Command Copilot active. Monitoring ${incidents.length} live incident(s), ${responders.length} tactical response unit(s), and ${hospitals.length} regional trauma centers across Sector 04.`,
+      actions: [
+        {
+          type: 'VIEW_INCIDENT',
+          label: '🚨 Inspect Priority Incident #1042',
+          payload: { id: 'INC-1042', latitude: 13.0827, longitude: 80.2707 }
+        },
+        {
+          type: 'VIEW_HOSPITAL',
+          label: '🏥 Check Trauma Hospital Status',
+          payload: { id: 'HOSP-1', latitude: 13.0750, longitude: 80.2780 }
+        }
       ]
     };
   }

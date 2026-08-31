@@ -13,7 +13,22 @@ exports.verifyEvidenceHash = (req, res) => {
     return res.status(404).json({ success: false, message: 'Evidence record not found' });
   }
 
-  const matches = !clientCalculatedHash || evidence.sha256Hash === clientCalculatedHash;
+  const matches = !clientCalculatedHash || evidence.sha256Hash.toLowerCase() === clientCalculatedHash.toLowerCase();
+
+  const newAudit = {
+    id: `AUD-${Date.now().toString().slice(-4)}`,
+    user: req.user?.name || 'Security Auditor',
+    action: matches ? 'EVIDENCE_VERIFIED' : 'EVIDENCE_TAMPER_DETECTED',
+    entity: `Evidence ${evidence.id} (${evidence.fileName})`,
+    details: matches ? `SHA-256 integrity match (${evidence.sha256Hash.slice(0, 16)}...)` : 'Cryptographic hash mismatch alert',
+    time: new Date().toLocaleTimeString().slice(0, 8)
+  };
+  mockState.auditLogs.unshift(newAudit);
+
+  const io = req.app.get('io');
+  if (io) {
+    io.emit('audit:created', newAudit);
+  }
 
   res.json({
     success: true,

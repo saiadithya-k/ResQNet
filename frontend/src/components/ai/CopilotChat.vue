@@ -12,41 +12,58 @@
       <div class="copilot-header">
         <div class="title-area">
           <span class="status-indicator"></span>
-          <h3>AI Tactical Emergency Copilot</h3>
+          <h3>AI Tactical Command Copilot</h3>
         </div>
-        <button class="close-btn" @click="isOpen = false">✕</button>
+        <button class="close-btn font-mono" @click="isOpen = false">✕</button>
       </div>
 
       <!-- Quick Operational Prompt Suggestions -->
       <div class="quick-prompts">
-        <button class="prompt-chip" @click="sendQuery('Which critical incidents need immediate attention?')">
-          🚨 Critical Incidents?
+        <button class="prompt-chip font-mono" @click="sendQuery('Which incidents require immediate attention?')">
+          🚨 Immediate Attention?
         </button>
-        <button class="prompt-chip" @click="sendQuery('Check ICU and Trauma hospital capacity')">
-          🏥 Hospital Beds?
+        <button class="prompt-chip font-mono" @click="sendQuery('Which hospitals can accept critical patients with available ICU capacity?')">
+          🏥 ICU Hospital Capacity?
         </button>
-        <button class="prompt-chip" @click="sendQuery('Detect ambulance shortages in District A')">
-          📦 Resource Shortage?
+        <button class="prompt-chip font-mono" @click="sendQuery('Where are we short on ambulances?')">
+          🚑 Ambulance Shortages?
+        </button>
+        <button class="prompt-chip font-mono" @click="sendQuery('Which shelters are nearing capacity?')">
+          🏠 Shelter Occupancy?
         </button>
       </div>
 
       <!-- Chat Stream -->
       <div class="chat-stream" ref="chatStreamRef">
         <div v-for="(msg, idx) in messages" :key="idx" :class="['chat-bubble', msg.role]">
-          <div class="sender-tag">{{ msg.role === 'user' ? 'COMMANDER' : 'AI COPILOT' }}</div>
+          <div class="sender-tag font-mono">{{ msg.role === 'user' ? 'COMMANDER' : 'AI COPILOT' }}</div>
           <div class="bubble-content">{{ msg.content }}</div>
 
-          <!-- Suggested Actionable Buttons -->
+          <!-- Explicit Interactive Action Buttons -->
           <div v-if="msg.actions && msg.actions.length > 0" class="actions-container">
-            <div class="actions-title">TACTICAL RECOMMENDATIONS:</div>
-            <div v-for="(action, aIdx) in msg.actions" :key="aIdx" class="action-item">
-              <span>⚡</span> {{ action }}
+            <div class="actions-title font-mono">TACTICAL ACTIONS (CLICK TO EXECUTE):</div>
+            <div class="action-btn-row">
+              <button
+                v-for="(action, aIdx) in msg.actions"
+                :key="aIdx"
+                class="btn-action-exec font-mono"
+                @click="executeAction(action)"
+              >
+                {{ action.label }}
+              </button>
             </div>
+          </div>
+
+          <!-- Error Retry Option -->
+          <div v-if="msg.isError" class="error-retry-box">
+            <button class="btn-retry-query font-mono" @click="retryQuery(msg.failedQuery)">
+              🔄 Retry Query
+            </button>
           </div>
         </div>
 
-        <div v-if="loading" class="chat-bubble assistant loading">
-          <div class="typing-dots"><span>.</span><span>.</span><span>.</span></div>
+        <div v-if="loading" class="chat-bubble assistant loading font-mono">
+          <span>⚡ Analyzing real-time operational grid telemetry...</span>
         </div>
       </div>
 
@@ -55,10 +72,10 @@
         <input
           type="text"
           v-model="inputQuery"
-          placeholder="Ask Copilot about incidents, resources, routes..."
-          class="copilot-input"
+          placeholder="Ask Copilot about incidents, ICU beds, ambulance shortages..."
+          class="copilot-input font-mono"
         />
-        <button type="submit" class="btn btn-primary btn-sm" :disabled="!inputQuery.trim() || loading">
+        <button type="submit" class="btn btn-primary btn-sm font-mono" :disabled="!inputQuery.trim() || loading">
           Ask
         </button>
       </form>
@@ -68,7 +85,18 @@
 
 <script setup>
 import { ref, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
 import api from '../../services/api';
+import { useIncidentStore } from '../../stores/incidentStore';
+import { useHospitalStore } from '../../stores/hospitalStore';
+import { useResponderStore } from '../../stores/responderStore';
+import { useDisasterStore } from '../../stores/disasterStore';
+
+const router = useRouter();
+const incidentStore = useIncidentStore();
+const hospitalStore = useHospitalStore();
+const responderStore = useResponderStore();
+const disasterStore = useDisasterStore();
 
 const isOpen = ref(false);
 const inputQuery = ref('');
@@ -78,8 +106,14 @@ const chatStreamRef = ref(null);
 const messages = ref([
   {
     role: 'assistant',
-    content: 'Emergency Command Copilot ready. I have real-time access to all active incidents, responder GPS locations, and hospital trauma beds.',
-    actions: []
+    content: 'ResQNet Tactical Command Copilot ready. I monitor live incident streams, ambulance fleets, hospital ICU availability, and disaster perimeters.',
+    actions: [
+      {
+        type: 'VIEW_INCIDENT',
+        label: '🚨 Inspect Priority Incident #1042',
+        payload: { id: 'INC-1042' }
+      }
+    ]
   }
 ]);
 
@@ -91,16 +125,25 @@ async function sendQuery(queryText) {
   scrollToBottom();
 
   try {
-    const res = await api.post('/ai/copilot', { query: queryText });
+    const res = await api.post('/ai/copilot', {
+      query: queryText,
+      clientContext: {
+        disasterMode: disasterStore.isDisasterMode,
+        activeIncidentId: incidentStore.selectedIncident?.id
+      }
+    });
+
     messages.value.push({
       role: 'assistant',
       content: res.data.data.answer,
-      actions: res.data.data.suggestedActions || []
+      actions: res.data.data.actions || []
     });
   } catch (err) {
     messages.value.push({
       role: 'assistant',
-      content: 'Could not connect to AI Copilot engine. Please check backend connection.',
+      content: '⚠️ Failed to connect to AI Copilot backend engine. Please check network/service availability.',
+      isError: true,
+      failedQuery: queryText,
       actions: []
     });
   } finally {
@@ -112,6 +155,36 @@ async function sendQuery(queryText) {
 function handleSend() {
   if (!inputQuery.value.trim()) return;
   sendQuery(inputQuery.value.trim());
+}
+
+function retryQuery(failedQuery) {
+  if (failedQuery) {
+    sendQuery(failedQuery);
+  }
+}
+
+function executeAction(action) {
+  if (!action) return;
+
+  if (action.type === 'VIEW_INCIDENT' && action.payload?.id) {
+    const targetInc = incidentStore.incidents.find(i => i.id === action.payload.id);
+    if (targetInc) {
+      incidentStore.selectIncident(targetInc);
+    }
+    router.push('/admin/command');
+  } else if (action.type === 'VIEW_HOSPITAL') {
+    const hosp = hospitalStore.hospitals.find(h => h.id === action.payload?.id) || action.payload;
+    hospitalStore.selectHospital(hosp);
+    router.push('/admin/command');
+  } else if (action.type === 'VIEW_RESPONDER') {
+    router.push('/admin/command');
+  } else if (action.type === 'DISPATCH') {
+    const targetInc = incidentStore.incidents.find(i => i.id === action.payload?.incidentId);
+    if (targetInc) {
+      incidentStore.selectIncident(targetInc);
+    }
+    router.push('/admin/command');
+  }
 }
 
 function scrollToBottom() {
@@ -274,13 +347,48 @@ function scrollToBottom() {
   margin-bottom: 0.25rem;
 }
 
-.action-item {
-  font-size: 0.7rem;
-  color: #e2e8f0;
+.action-btn-row {
   display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  margin-bottom: 0.2rem;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.btn-action-exec {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #6ee7b7;
+  padding: 0.35rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.675rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-action-exec:hover {
+  background: #10b981;
+  color: #022c22;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+.error-retry-box {
+  margin-top: 0.5rem;
+}
+
+.btn-retry-query {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  cursor: pointer;
+}
+
+.btn-retry-query:hover {
+  background: #ef4444;
+  color: #fff;
 }
 
 .copilot-input-form {

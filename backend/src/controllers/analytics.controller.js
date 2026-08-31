@@ -30,11 +30,28 @@ exports.getCommandStats = (req, res) => {
         { time: '10:00', avgMinutes: 7.2 }
       ],
       incidentsByType: [
-        { type: 'COLLAPSE', count: 6, color: '#ef4444' },
-        { type: 'FIRE', count: 8, color: '#f97316' },
-        { type: 'FLOOD', count: 7, color: '#06b6d4' },
-        { type: 'HAZMAT', count: 3, color: '#a855f7' },
-        { type: 'MEDICAL', count: 12, color: '#3b82f6' }
+        { type: 'COLLAPSE', count: mockState.incidents.filter(i => i.incidentType === 'COLLAPSE').length + 5, color: '#ef4444' },
+        { type: 'FIRE', count: mockState.incidents.filter(i => i.incidentType === 'FIRE').length + 7, color: '#f97316' },
+        { type: 'FLOOD', count: mockState.incidents.filter(i => i.incidentType === 'FLOOD').length + 6, color: '#06b6d4' },
+        { type: 'HAZMAT', count: mockState.incidents.filter(i => i.incidentType === 'HAZMAT').length + 3, color: '#a855f7' },
+        { type: 'MEDICAL', count: 14, color: '#3b82f6' }
+      ],
+      hourlyVolume: [
+        { hour: '06:00', total: 4, critical: 1 },
+        { hour: '07:00', total: 7, critical: 2 },
+        { hour: '08:00', total: 11, critical: 4 },
+        { hour: '09:00', total: 14, critical: 5 },
+        { hour: '10:00', total: 9, critical: 3 },
+        { hour: '11:00', total: 6, critical: 2 }
+      ],
+      lifecyclePerformance: [
+        { state: 'VERIFIED', avgDurationMinutes: 1.2, targetMinutes: 2.0, status: 'OPTIMAL' },
+        { state: 'ASSIGNED', avgDurationMinutes: 0.8, targetMinutes: 1.5, status: 'OPTIMAL' },
+        { state: 'EN_ROUTE', avgDurationMinutes: 4.8, targetMinutes: 6.0, status: 'OPTIMAL' },
+        { state: 'ON_SCENE', avgDurationMinutes: 18.5, targetMinutes: 20.0, status: 'NOMINAL' },
+        { state: 'TRANSPORTING', avgDurationMinutes: 7.2, targetMinutes: 10.0, status: 'OPTIMAL' },
+        { state: 'HOSPITAL_RECEIVED', avgDurationMinutes: 3.1, targetMinutes: 5.0, status: 'OPTIMAL' },
+        { state: 'RESOLVED', avgDurationMinutes: 35.6, targetMinutes: 45.0, status: 'OPTIMAL' }
       ]
     }
   });

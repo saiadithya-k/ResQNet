@@ -253,6 +253,10 @@ const mockState = {
       name: 'Harbour Collapse Danger Perimeter',
       type: 'COLLAPSE',
       riskLevel: 'DANGER',
+      severity: 'CRITICAL',
+      affectedPopulation: 14500,
+      active: true,
+      evacuationRoute: 'Corridor Alpha -> West Radial Arterial',
       coordinates: [
         [13.0845, 80.2685],
         [13.0845, 80.2730],
@@ -265,6 +269,10 @@ const mockState = {
       name: 'Chemical Plume Evacuation Zone',
       type: 'HAZMAT',
       riskLevel: 'EVACUATION',
+      severity: 'HIGH',
+      affectedPopulation: 32000,
+      active: true,
+      evacuationRoute: 'North Highway 4 -> St. Jude Relief Hub',
       coordinates: [
         [13.0930, 80.2480],
         [13.0930, 80.2580],
@@ -277,6 +285,10 @@ const mockState = {
       name: 'River Basin Flood Advisory Zone',
       type: 'FLOOD',
       riskLevel: 'WARNING',
+      severity: 'MODERATE',
+      affectedPopulation: 48000,
+      active: true,
+      evacuationRoute: 'South Ring Road -> Highland Stadium',
       coordinates: [
         [13.0600, 80.2300],
         [13.0600, 80.2480],
@@ -334,10 +346,16 @@ const mockState = {
       fileName: 'collapse_rubble_cam01.mp4',
       fileType: 'video/mp4',
       fileSize: '14.8 MB',
-      uploader: 'Citizen Kumar',
-      sha256Hash: '9e107d9d372bb6826bd81d3542a419d6bc405f631aec8d0e74f4b1e5a539b69d',
+      uploader: 'Field Paramedic Unit AMB-A12',
+      sampleContent: 'RESQNET_EVIDENCE_RECORD_INC_1042_RUBBLE_VIDEO_FRAME_STREAM_SEALED_2026',
+      sha256Hash: 'e6973307775f0a0d5c0776b2eb1e93ca935e408d66df21a73379cb2066d7ad99',
       status: 'VERIFIED',
-      timestamp: '2026-08-31T10:31:45Z'
+      timestamp: '2026-08-31T10:31:45Z',
+      chainOfCustody: [
+        { event: 'Field Unit Camera Stream Captured', timestamp: '2026-08-31 10:30:12 UTC', node: 'AMB-A12 DashCam' },
+        { event: 'Ingestion SHA-256 Checksum Computed', timestamp: '2026-08-31 10:31:45 UTC', node: 'ResQNet Edge Gateway' },
+        { event: 'Immutable Storage Lock Created', timestamp: '2026-08-31 10:31:48 UTC', node: 'PostgreSQL Vault Store' }
+      ]
     },
     {
       id: 'EV-1093',
@@ -345,10 +363,32 @@ const mockState = {
       fileName: 'chemical_smoke_plume.jpg',
       fileType: 'image/jpeg',
       fileSize: '3.2 MB',
-      uploader: 'Security Gate 2',
-      sha256Hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+      uploader: 'Security Gate 2 Telemetry',
+      sampleContent: 'RESQNET_EVIDENCE_RECORD_INC_1043_CHEMICAL_PLUME_IMAGE_SEALED_2026',
+      sha256Hash: '568cb3ff1b5fcebe44ff8bc85926da93c0fa0c1bf60c3b0eb6bbffb12c85e783',
       status: 'VERIFIED',
-      timestamp: '2026-08-31T10:15:20Z'
+      timestamp: '2026-08-31T10:15:20Z',
+      chainOfCustody: [
+        { event: 'Fixed Perimeter Sensor Image Captured', timestamp: '2026-08-31 10:14:50 UTC', node: 'Gate 2 IR Camera' },
+        { event: 'Ingestion SHA-256 Checksum Computed', timestamp: '2026-08-31 10:15:20 UTC', node: 'ResQNet Edge Gateway' },
+        { event: 'Immutable Storage Lock Created', timestamp: '2026-08-31 10:15:22 UTC', node: 'PostgreSQL Vault Store' }
+      ]
+    },
+    {
+      id: 'EV-1094',
+      incidentId: 'INC-1042',
+      fileName: 'structural_stress_log.json',
+      fileType: 'application/json',
+      fileSize: '420 KB',
+      uploader: 'IoT Structural Strain Sensor Hub',
+      sampleContent: 'RESQNET_EVIDENCE_RECORD_INC_1042_IOT_STRAIN_SENSOR_LOG_SEALED_2026',
+      sha256Hash: 'bdfe0c6095ecba5fa30353c7c2b4cba657dbcfc76e27944207903ee5283f3609',
+      status: 'VERIFIED',
+      timestamp: '2026-08-31T10:28:00Z',
+      chainOfCustody: [
+        { event: 'IoT Micro-Strain Sensors Logged', timestamp: '2026-08-31 10:27:50 UTC', node: 'Sensor Array #04' },
+        { event: 'Ingestion SHA-256 Checksum Computed', timestamp: '2026-08-31 10:28:00 UTC', node: 'ResQNet Edge Gateway' }
+      ]
     }
   ],
   auditLogs: [

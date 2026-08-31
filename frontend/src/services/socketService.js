@@ -61,12 +61,22 @@ export function useSocketService() {
     return socket;
   }
 
-  function getSocket() {
-    return socket;
+  function on(event, handler) {
+    if (!socket) connect();
+    if (socket) socket.on(event, handler);
+  }
+
+  function off(event, handler) {
+    if (socket) socket.off(event, handler);
   }
 
   return {
     connect,
-    getSocket
+    getSocket,
+    on,
+    off
   };
 }
+
+export const socketService = useSocketService();
+export default socketService;

@@ -1,9 +1,9 @@
 <template>
   <div class="command-dashboard">
     <!-- 1. TOP COMMAND & STATUS BAR -->
-    <header class="top-command-bar tactical-card">
+    <header class="top-command-bar tactical-card" :class="{ 'bar-disaster-active': disasterStore.isDisasterMode }">
       <div class="cmd-identity">
-        <span class="live-indicator-dot"></span>
+        <span class="live-indicator-dot" :class="{ 'dot-disaster': disasterStore.isDisasterMode }"></span>
         <div class="cmd-titles">
           <h2>RESQNET TACTICAL COMMAND CENTER</h2>
           <span class="cmd-subtitle">SECTOR 04 JOINT OPERATIONS · LIVE INCIDENT ENGINE</span>
@@ -11,16 +11,36 @@
       </div>
 
       <div class="cmd-telemetry">
+        <!-- Disaster Mode Command Control -->
+        <div class="telemetry-pill disaster-toggle-pill" :class="{ 'pill-danger': disasterStore.isDisasterMode }">
+          <span class="t-lbl">DISASTER MODE:</span>
+          <strong class="font-mono text-xs" :class="disasterStore.isDisasterMode ? 'text-red' : 'text-slate-400'">
+            {{ disasterStore.isDisasterMode ? 'ACTIVE (LEVEL 3)' : 'OFF (STANDBY)' }}
+          </strong>
+          <button
+            v-if="!disasterStore.isDisasterMode"
+            class="btn-disaster-act font-mono"
+            @click="handleToggleDisasterMode(true)"
+          >
+            ACTIVATE
+          </button>
+          <button
+            v-else
+            class="btn-disaster-deact font-mono"
+            @click="handleToggleDisasterMode(false)"
+          >
+            DEACTIVATE
+          </button>
+        </div>
+
+        <!-- Audio Mute Control -->
+        <button class="btn-mute-toggle font-mono" @click="toggleAudioMute" :title="isMuted ? 'Unmute tactical audio alert' : 'Mute tactical audio alert'">
+          {{ isMuted ? '🔇 AUDIO OFF' : '🔊 AUDIO ON' }}
+        </button>
+
         <div class="telemetry-pill">
           <span class="t-lbl">SYSTEM:</span>
           <span class="t-val text-emerald font-mono">LIVE / CONNECTED</span>
-        </div>
-
-        <div class="telemetry-pill" :class="{ 'pill-danger': disasterStore.isDisasterMode }">
-          <span class="t-lbl">DISASTER MODE:</span>
-          <span class="t-val font-mono" :class="disasterStore.isDisasterMode ? 'text-red font-bold' : 'text-emerald'">
-            {{ disasterStore.isDisasterMode ? 'ACTIVE (LEVEL 3)' : 'STANDBY' }}
-          </span>
         </div>
 
         <div class="telemetry-pill">
@@ -29,6 +49,31 @@
         </div>
       </div>
     </header>
+
+    <!-- DISASTER MODE ACTIVE OPERATIONAL SURGE BANNER -->
+    <div v-if="disasterStore.isDisasterMode" class="disaster-surge-banner font-mono">
+      <div class="surge-hdr">
+        <span class="surge-icon">🚨</span>
+        <strong>LEVEL 3 DISASTER STATE ACTIVE — METROPOLITAN JOINT SURGE PROTOCOL ENFORCED</strong>
+      </div>
+      <div class="surge-details-grid">
+        <div v-if="surgeWarnings.highHospitals.length" class="surge-warning-pill warn-hosp">
+          🏥 <strong>HOSPITAL SURGE ALERT:</strong>
+          <span v-for="h in surgeWarnings.highHospitals" :key="h.id">
+            {{ h.name }} ({{ Math.round(((h.totalBeds - h.availableBeds)/h.totalBeds)*100) }}% Beds Full)
+          </span>
+        </div>
+        <div v-if="surgeWarnings.highShelters.length" class="surge-warning-pill warn-shelter">
+          🏠 <strong>SHELTER CAPACITY ALERT:</strong>
+          <span v-for="s in surgeWarnings.highShelters" :key="s.id">
+            {{ s.name }} ({{ Math.round((s.currentOccupancy/s.capacity)*100) }}% Occupancy)
+          </span>
+        </div>
+        <div class="surge-warning-pill warn-zones">
+          ⚠️ <strong>EVACUATION PERIMETERS:</strong> Chemical Plume & Harbour Danger Sectors Cleared
+        </div>
+      </div>
+    </div>
 
     <!-- 2. DERIVED LIVE KPI STRIP -->
     <section class="kpi-strip">
@@ -150,49 +195,195 @@
             <p class="desc-text">{{ incidentStore.selectedIncident.description }}</p>
           </div>
 
-          <!-- Structured Operational Matrix -->
-          <div class="operational-matrix-box">
-            <div class="matrix-title font-mono">OPERATIONAL INTELLIGENCE MATRIX</div>
-            <div class="matrix-data-grid">
-              <div class="mat-cell">
-                <span class="mat-lbl">LOCATION / DISTRICT:</span>
-                <strong>{{ incidentStore.selectedIncident.address || incidentStore.selectedIncident.district }}</strong>
+          <!-- Complete 11-Step Architecture-Defined Incident Lifecycle State Machine -->
+          <div class="state-machine-container">
+            <div class="state-header-row">
+              <span class="font-mono text-xs text-slate-400 font-bold">INCIDENT LIFECYCLE STATE MACHINE</span>
+              <span class="font-mono text-cyan text-xs font-bold">STATE {{ currentStepIndex + 1 }}/11</span>
+            </div>
+
+            <!-- Compact Stepper Flow -->
+            <div class="lifecycle-flow-grid">
+              <div
+                v-for="(st, idx) in lifecycleStates"
+                :key="st"
+                :class="['flow-node', getStepNodeStatus(st, idx)]"
+                @click="attemptStateTransition(st)"
+                :title="`Click to transition to ${st}`"
+              >
+                <div class="node-icon-status">
+                  <span v-if="isStepPassed(st, idx)">✓</span>
+                  <span v-else-if="st === incidentStore.selectedIncident.status">●</span>
+                  <span v-else>○</span>
+                </div>
+                <span class="node-label font-mono">{{ formatStateName(st) }}</span>
               </div>
-              <div class="mat-cell">
-                <span class="mat-lbl">AFFECTED VICTIMS:</span>
-                <strong class="text-red">{{ incidentStore.selectedIncident.victimCount }} Persons ({{ incidentStore.selectedIncident.hasTrapped ? 'Trapped' : 'Unobstructed' }})</strong>
+            </div>
+
+            <!-- Next Recommended Action Button & Controls -->
+            <div class="next-action-strip">
+              <div v-if="nextActionInfo" class="next-action-box">
+                <div class="action-meta font-mono">
+                  <span>NEXT VALID TRANSITION:</span>
+                  <strong class="text-cyan">{{ nextActionInfo.next }}</strong>
+                </div>
+                <button
+                  class="btn btn-primary btn-action-flow"
+                  :disabled="isTransitioning"
+                  @click="executeNextTransition"
+                >
+                  {{ isTransitioning ? 'Updating State...' : nextActionInfo.label }}
+                </button>
               </div>
-              <div class="mat-cell">
-                <span class="mat-lbl">CURRENT STATUS:</span>
-                <strong class="text-cyan font-mono">{{ incidentStore.selectedIncident.status }}</strong>
+
+              <div v-else class="resolved-banner font-mono">
+                ✅ INCIDENT FULLY RESOLVED & CLOSED
               </div>
-              <div class="mat-cell">
-                <span class="mat-lbl">ASSIGNED UNIT:</span>
-                <strong :class="currentAssignedUnit ? 'text-emerald' : 'text-amber'">
-                  {{ currentAssignedUnit ? currentAssignedUnit.name + ' (' + currentAssignedUnit.badgeNumber + ')' : 'UNASSIGNED' }}
-                </strong>
-              </div>
-              <div class="mat-cell">
-                <span class="mat-lbl">ESTIMATED ETA:</span>
-                <strong class="text-cyan font-mono">{{ currentAssignedUnit?.etaMinutes ? currentAssignedUnit.etaMinutes + ' Minutes' : 'Calculated Upon Dispatch' }}</strong>
-              </div>
-              <div class="mat-cell">
-                <span class="mat-lbl">DESTINATION HOSPITAL:</span>
-                <strong class="text-purple">{{ targetHospitalName }}</strong>
+
+              <div v-if="transitionError" class="transition-error-alert font-mono">
+                ⚠️ {{ transitionError }}
               </div>
             </div>
           </div>
 
-          <!-- Prepared Dispatch & Lifecycle Control Structure -->
-          <div class="controls-placeholder-box">
-            <div class="controls-header font-mono">INCIDENT COMMAND ACTIONS</div>
-            <div class="action-btn-row">
-              <button class="btn btn-primary btn-sm" @click="quickAssignUnit">
-                ⚡ Allocate / Reassign Unit
+          <!-- Phase 5: Dedicated Responder Allocation & Dispatch Console -->
+          <div class="dispatch-allocation-panel">
+            <div class="dispatch-panel-header">
+              <span class="font-mono text-xs text-slate-300 font-bold">⚡ TACTICAL RESPONDER DISPATCH CONSOLE</span>
+              <span class="badge-mini font-mono text-emerald">{{ availableUnitsCount }} READY</span>
+            </div>
+
+            <!-- Current Assignment Status Banner -->
+            <div v-if="currentAssignedUnit" class="current-assigned-badge">
+              <div class="assigned-left">
+                <span class="status-dot-pulse"></span>
+                <div>
+                  <span class="font-mono text-xs text-slate-400">CURRENTLY ASSIGNED:</span>
+                  <strong class="text-emerald text-sm block font-mono">
+                    {{ currentAssignedUnit.isCommunity ? '🧑‍⚕️' : currentAssignedUnit.type === 'PARAMEDIC' ? '🚑' : '🚒' }}
+                    {{ currentAssignedUnit.badgeNumber }} · {{ currentAssignedUnit.name }}
+                  </strong>
+                </div>
+              </div>
+              <div class="assigned-right font-mono text-cyan">
+                <span>ETA: {{ currentAssignedUnit.etaMinutes || 5 }}m</span>
+              </div>
+            </div>
+
+            <!-- Available Responders Selection Cards -->
+            <div class="responder-units-list">
+              <div
+                v-for="r in sortedResponders"
+                :key="r.id"
+                :class="['responder-unit-row', {
+                  'selected-unit': selectedResponderId === r.id,
+                  'unit-busy': r.status !== 'AVAILABLE',
+                  'unit-recommended': isRecommendedUnit(r)
+                }]"
+                @click="r.status === 'AVAILABLE' ? selectedResponderId = r.id : null"
+              >
+                <div class="r-row-left">
+                  <span class="r-icon">{{ r.isCommunity ? '🧑‍⚕️' : r.type === 'PARAMEDIC' ? '🚑' : '🚒' }}</span>
+                  <div class="r-info">
+                    <div class="r-name-row">
+                      <strong class="font-mono">{{ r.badgeNumber }} · {{ r.name }}</strong>
+                      <span v-if="isRecommendedUnit(r)" class="recommended-tag font-mono">RECOMMENDED</span>
+                    </div>
+                    <span class="r-type-meta font-mono">{{ r.type }} · Fatigue {{ r.fatigueScore }}%</span>
+                  </div>
+                </div>
+
+                <div class="r-row-right">
+                  <span class="r-dist font-mono">📍 {{ calculateDistance(r) }} km</span>
+                  <span class="r-eta font-mono text-cyan">ETA {{ r.etaMinutes || calculateEta(r) }}m</span>
+                  <StatusBadge :status="r.status" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Dispatch Action Execution Button -->
+            <div class="dispatch-trigger-box">
+              <button
+                class="btn btn-primary btn-dispatch-exec"
+                :disabled="isDispatching || !canDispatchSelected"
+                @click="executeDispatch"
+              >
+                <span v-if="isDispatching">⚡ Transmitting Dispatch Order...</span>
+                <span v-else-if="currentAssignedUnit && currentAssignedUnit.id === selectedResponderId">
+                  ✓ {{ currentAssignedUnit.badgeNumber }} Already Assigned
+                </span>
+                <span v-else>
+                  ⚡ DISPATCH {{ getSelectedResponderBadge }}
+                </span>
               </button>
-              <button class="btn btn-ghost btn-sm" @click="markIncidentResolved">
-                ✓ Mark Resolved
-              </button>
+
+              <div v-if="dispatchError" class="dispatch-error-msg font-mono">
+                ⚠️ {{ dispatchError }}
+              </div>
+            </div>
+
+            <!-- Phase 6: Live GPS Responder Movement Simulator -->
+            <div class="gps-simulation-panel">
+              <div class="gps-panel-header">
+                <div class="gps-hdr-left">
+                  <span class="pulse-sim-dot" :class="{ 'sim-active': simState.status === 'RUNNING' }"></span>
+                  <span class="font-mono text-xs text-cyan font-bold">LIVE GPS TELEMETRY SIMULATOR</span>
+                </div>
+                <span class="font-mono text-xs text-slate-400">AMBULANCE A12</span>
+              </div>
+
+              <div class="gps-sim-body">
+                <div class="sim-telemetry-row">
+                  <span class="font-mono text-xs">STATUS: <strong :class="getSimStatusClass">{{ simState.status }}</strong></span>
+                  <span class="font-mono text-xs">ETA: <strong class="text-cyan">{{ simState.etaMinutes }} MIN</strong></span>
+                  <span class="font-mono text-xs">PROGRESS: <strong class="text-emerald">{{ simState.progress }}%</strong></span>
+                </div>
+
+                <!-- Simulation Progress Bar -->
+                <div class="sim-progress-track">
+                  <div class="sim-progress-fill" :style="{ width: simState.progress + '%' }"></div>
+                </div>
+
+                <!-- Interactive Simulation Controls -->
+                <div class="sim-btn-row">
+                  <button
+                    v-if="simState.status === 'IDLE'"
+                    class="btn btn-primary btn-sm flex-1"
+                    @click="startGpsSim"
+                  >
+                    🚀 START GPS SIMULATION
+                  </button>
+
+                  <button
+                    v-else-if="simState.status === 'RUNNING'"
+                    class="btn btn-ghost btn-sm flex-1 font-mono"
+                    @click="pauseGpsSim"
+                  >
+                    ⏸️ PAUSE SIMULATION
+                  </button>
+
+                  <button
+                    v-else-if="simState.status === 'PAUSED'"
+                    class="btn btn-primary btn-sm flex-1 font-mono"
+                    @click="resumeGpsSim"
+                  >
+                    ▶️ RESUME SIMULATION
+                  </button>
+
+                  <div v-else-if="simState.status === 'COMPLETED'" class="sim-completed-tag font-mono flex-1">
+                    🎯 A12 ARRIVED ON SCENE (AT TARGET)
+                  </div>
+
+                  <button
+                    v-if="simState.status !== 'IDLE'"
+                    class="btn btn-ghost btn-sm font-mono"
+                    @click="resetGpsSim"
+                    title="Reset to Base Station"
+                  >
+                    🔄 RESET
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -224,7 +415,13 @@
           :class="['ops-tab-link', { active: activeSubTab === 'hospitals' }]"
           @click="activeSubTab = 'hospitals'"
         >
-          🏥 Hospital Network Capacity ({{ hospitalStore.hospitals.length }})
+          🏥 Hospital Intel ({{ hospitalStore.hospitals.length }})
+        </button>
+        <button
+          :class="['ops-tab-link', { active: activeSubTab === 'shelters' }]"
+          @click="activeSubTab = 'shelters'"
+        >
+          🏠 Shelters Intel ({{ disasterStore.shelters.length }})
         </button>
       </div>
 
@@ -270,22 +467,84 @@
         </div>
       </div>
 
-      <!-- Tab 3: Hospital Network Capacity Summary -->
+      <!-- Tab 3: Hospital Operational Intelligence -->
       <div v-if="activeSubTab === 'hospitals'" class="ops-body-view hospitals-container">
         <div class="hospitals-summary-grid">
           <div
             v-for="h in hospitalStore.hospitals"
             :key="h.id"
-            class="hospital-summary-card"
+            :class="['hospital-summary-card', { 'card-surge-warn': ((h.totalBeds - h.availableBeds)/h.totalBeds) >= 0.8 }]"
+            @click="focusHospitalOnMap(h)"
+            title="Click to focus on tactical map"
           >
             <div class="h-card-header">
-              <strong>{{ h.name }}</strong>
-              <span class="font-mono text-cyan">Match: {{ h.matchScore }}%</span>
+              <div class="h-name-box">
+                <strong>{{ h.name }}</strong>
+                <span class="h-loc text-slate-400 text-xs">📍 {{ h.district }}</span>
+              </div>
+              <div class="h-badge-box">
+                <span v-if="((h.totalBeds - h.availableBeds)/h.totalBeds) >= 0.8" class="badge-surge-pill font-mono">
+                  ⚠️ >80% FULL
+                </span>
+                <span class="font-mono text-cyan font-bold text-xs">Match: {{ h.matchScore }}%</span>
+              </div>
             </div>
+
             <div class="h-stat-chips">
-              <span class="h-chip">Beds: <strong>{{ h.availableBeds }}/{{ h.totalBeds }}</strong></span>
-              <span class="h-chip">ICU: <strong class="text-purple">{{ h.availableIcu }}/{{ h.totalIcu }}</strong></span>
-              <span class="h-chip">Trauma: <strong class="text-red">{{ h.availableTrauma }}/{{ h.totalTrauma }}</strong></span>
+              <span class="h-chip">
+                Beds: <strong>{{ h.availableBeds }}/{{ h.totalBeds }}</strong>
+                <span class="occ-pct">({{ Math.round(((h.totalBeds - h.availableBeds)/h.totalBeds)*100) }}%)</span>
+              </span>
+              <span class="h-chip">
+                ICU: <strong class="text-purple">{{ h.availableIcu }}/{{ h.totalIcu }}</strong>
+              </span>
+              <span class="h-chip">
+                Trauma: <strong class="text-red">{{ h.availableTrauma }}/{{ h.totalTrauma }}</strong>
+              </span>
+              <span class="h-chip text-emerald">
+                {{ h.isAccepting ? '✓ ACCEPTING' : '🛑 DIVERT' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: Shelters Operational Intelligence -->
+      <div v-if="activeSubTab === 'shelters'" class="ops-body-view shelters-container">
+        <div class="shelters-summary-grid">
+          <div
+            v-for="s in disasterStore.shelters"
+            :key="s.id"
+            :class="['shelter-summary-card', { 'card-surge-warn': (s.currentOccupancy/s.capacity) >= 0.8 }]"
+          >
+            <div class="s-card-header">
+              <div>
+                <strong>#{{ s.id }} · {{ s.name }}</strong>
+                <span class="s-loc text-slate-400 text-xs block">📍 {{ s.district }}</span>
+              </div>
+              <span v-if="(s.currentOccupancy/s.capacity) >= 0.8" class="badge-surge-pill font-mono">
+                ⚠️ >80% CAPACITY
+              </span>
+            </div>
+
+            <div class="s-occupancy-bar">
+              <div class="s-bar-track">
+                <div
+                  class="s-bar-fill"
+                  :style="{ width: Math.min(100, Math.round((s.currentOccupancy/s.capacity)*100)) + '%' }"
+                  :class="(s.currentOccupancy/s.capacity) >= 0.8 ? 'fill-danger' : 'fill-emerald'"
+                ></div>
+              </div>
+              <div class="s-bar-meta font-mono text-xs">
+                <span>{{ s.currentOccupancy }} / {{ s.capacity }} Occupants</span>
+                <strong>{{ Math.round((s.currentOccupancy/s.capacity)*100) }}%</strong>
+              </div>
+            </div>
+
+            <div class="s-supplies-row font-mono text-xs">
+              <span>Food: <strong :class="s.foodSupply === 'LOW' ? 'text-red' : 'text-emerald'">{{ s.foodSupply }}</strong></span>
+              <span>Water: <strong class="text-emerald">{{ s.waterSupply }}</strong></span>
+              <span>Medical: <strong>{{ s.medicalStation ? '✓ READY' : 'NONE' }}</strong></span>
             </div>
           </div>
         </div>
@@ -300,6 +559,8 @@ import { useIncidentStore } from '../../stores/incidentStore';
 import { useResponderStore } from '../../stores/responderStore';
 import { useHospitalStore } from '../../stores/hospitalStore';
 import { useDisasterStore } from '../../stores/disasterStore';
+import { gpsSimulator } from '../../services/gpsSimulationService';
+import { audioAlert } from '../../utils/audioAlert';
 import EmergencyMap from '../../components/map/EmergencyMap.vue';
 import StatusBadge from '../../components/common/StatusBadge.vue';
 
@@ -311,12 +572,32 @@ const disasterStore = useDisasterStore();
 const searchFilter = ref('');
 const activeSubTab = ref('timeline');
 const operationalTime = ref('');
+const isMuted = ref(false);
+
+// GPS Simulation Reactive State
+const simState = ref({
+  status: 'IDLE',
+  progress: 0,
+  etaMinutes: 5,
+  index: 0
+});
 
 let clockTimer = null;
+let simUnsubscribe = null;
 
 onMounted(async () => {
   updateOperationalClock();
   clockTimer = setInterval(updateOperationalClock, 1000);
+
+  // Subscribe to Live GPS Simulation Telemetry
+  simUnsubscribe = gpsSimulator.subscribe((data) => {
+    simState.value = {
+      status: data.status,
+      progress: data.progress,
+      etaMinutes: data.etaMinutes,
+      index: data.index
+    };
+  });
 
   await Promise.all([
     incidentStore.fetchIncidents(),
@@ -328,6 +609,8 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (clockTimer) clearInterval(clockTimer);
+  if (simUnsubscribe) simUnsubscribe();
+  gpsSimulator.destroy();
 });
 
 function updateOperationalClock() {
@@ -387,24 +670,231 @@ function getAssignedResponder(inc) {
   return responder ? responder.badgeNumber : null;
 }
 
+function toggleAudioMute() {
+  isMuted.value = audioAlert.toggleMute();
+}
+
+async function handleToggleDisasterMode(activate) {
+  try {
+    await disasterStore.toggleDisasterMode(activate, {
+      disasterType: 'MULTI_SECTOR_CRITICAL_SURGE',
+      district: 'Sector 4 Joint Metropolitan Area',
+      severity: 'CRITICAL'
+    });
+  } catch (err) {
+    alert('Failed to toggle Disaster Mode');
+  }
+}
+
+// Surge Capacity Alerts (Hospitals & Shelters > 80% full)
+const surgeWarnings = computed(() => {
+  const highHospitals = hospitalStore.hospitals.filter(h => {
+    const occRatio = (h.totalBeds - h.availableBeds) / h.totalBeds;
+    return occRatio >= 0.75;
+  });
+
+  const highShelters = disasterStore.shelters.filter(s => {
+    return (s.currentOccupancy / s.capacity) >= 0.80;
+  });
+
+  return { highHospitals, highShelters };
+});
+
 function getPriorityClass(score) {
   if (score >= 90) return 'score-critical';
   if (score >= 75) return 'score-high';
   return 'score-medium';
 }
 
-async function quickAssignUnit() {
-  if (!incidentStore.selectedIncident) return;
-  const availableUnit = responderStore.responders.find(r => r.status === 'AVAILABLE') || responderStore.responders[0];
-  if (availableUnit) {
-    await responderStore.dispatch(incidentStore.selectedIncident.id, availableUnit.id);
-    await incidentStore.fetchIncidents();
+const isTransitioning = ref(false);
+const transitionError = ref(null);
+
+const lifecycleStates = [
+  'REPORTED',
+  'AI_ANALYZING',
+  'VERIFIED',
+  'PRIORITIZED',
+  'DISPATCHING',
+  'ASSIGNED',
+  'EN_ROUTE',
+  'ON_SCENE',
+  'TRANSPORTING',
+  'HOSPITAL_RECEIVED',
+  'RESOLVED'
+];
+
+const nextActionTransitions = {
+  'REPORTED': { next: 'VERIFIED', label: '✓ VERIFY INCIDENT', note: 'Incident verified by Command Chief' },
+  'AI_ANALYZING': { next: 'VERIFIED', label: '✓ VERIFY INCIDENT', note: 'AI Analysis complete and verified' },
+  'VERIFIED': { next: 'PRIORITIZED', label: '⚡ COMPUTE PRIORITY', note: 'Dynamic priority score locked' },
+  'PRIORITIZED': { next: 'DISPATCHING', label: '🚨 INITIATE DISPATCH', note: 'Auto-dispatch algorithm triggered' },
+  'DISPATCHING': { next: 'ASSIGNED', label: '🚑 ASSIGN RESPONDER', note: 'Unit assigned and locked' },
+  'ASSIGNED': { next: 'EN_ROUTE', label: '🚀 START EN ROUTE', note: 'Unit departing station en route' },
+  'EN_ROUTE': { next: 'ON_SCENE', label: '📍 MARK ON SCENE', note: 'Unit arrived at emergency site' },
+  'ON_SCENE': { next: 'TRANSPORTING', label: '🏥 START TRANSPORT', note: 'Victims loaded, moving to hospital' },
+  'TRANSPORTING': { next: 'HOSPITAL_RECEIVED', label: '🏨 HOSPITAL RECEIVED', note: 'Trauma team received patients' },
+  'HOSPITAL_RECEIVED': { next: 'RESOLVED', label: '✅ RESOLVE INCIDENT', note: 'Emergency operations completed' },
+  'RESOLVED': null
+};
+
+const currentStepIndex = computed(() => {
+  const current = incidentStore.selectedIncident?.status;
+  if (!current) return 0;
+  const idx = lifecycleStates.indexOf(current);
+  return idx !== -1 ? idx : 0;
+});
+
+const nextActionInfo = computed(() => {
+  const current = incidentStore.selectedIncident?.status;
+  if (!current) return null;
+  return nextActionTransitions[current] || null;
+});
+
+function formatStateName(st) {
+  return st.replace('_', ' ');
+}
+
+function isStepPassed(st, idx) {
+  return currentStepIndex.value > idx;
+}
+
+function getStepNodeStatus(st, idx) {
+  if (currentStepIndex.value > idx) return 'node-passed';
+  if (st === incidentStore.selectedIncident?.status) return 'node-current';
+  if (nextActionInfo.value && nextActionInfo.value.next === st) return 'node-next-valid';
+  return 'node-future';
+}
+
+async function attemptStateTransition(targetState) {
+  if (!incidentStore.selectedIncident || isTransitioning.value) return;
+  transitionError.value = null;
+
+  // Allow next valid transition or backward inspection
+  const targetIndex = lifecycleStates.indexOf(targetState);
+  if (targetIndex === -1) return;
+
+  try {
+    isTransitioning.value = true;
+    await incidentStore.updateStatus(
+      incidentStore.selectedIncident.id,
+      targetState,
+      `Operational status transitioned to ${targetState} via State Machine Console`
+    );
+  } catch (err) {
+    transitionError.value = 'Failed to transition state: ' + (err.response?.data?.message || err.message);
+  } finally {
+    isTransitioning.value = false;
   }
 }
 
-async function markIncidentResolved() {
-  if (!incidentStore.selectedIncident) return;
-  await incidentStore.updateStatus(incidentStore.selectedIncident.id, 'RESOLVED', 'Incident resolved by Command Officer');
+async function executeNextTransition() {
+  if (!nextActionInfo.value || !incidentStore.selectedIncident) return;
+  const { next, note } = nextActionInfo.value;
+  try {
+    isTransitioning.value = true;
+    transitionError.value = null;
+    await incidentStore.updateStatus(incidentStore.selectedIncident.id, next, note);
+  } catch (err) {
+    transitionError.value = 'Failed to advance lifecycle: ' + (err.response?.data?.message || err.message);
+  } finally {
+    isTransitioning.value = false;
+  }
+}
+
+const selectedResponderId = ref('RESP-01');
+const isDispatching = ref(false);
+const dispatchError = ref(null);
+
+const availableUnitsCount = computed(() =>
+  responderStore.responders.filter(r => r.status === 'AVAILABLE').length
+);
+
+const sortedResponders = computed(() => {
+  return [...responderStore.responders].sort((a, b) => {
+    // Sort available first
+    if (a.status === 'AVAILABLE' && b.status !== 'AVAILABLE') return -1;
+    if (a.status !== 'AVAILABLE' && b.status === 'AVAILABLE') return 1;
+    return a.fatigueScore - b.fatigueScore;
+  });
+});
+
+const getSelectedResponderBadge = computed(() => {
+  const r = responderStore.responders.find(u => u.id === selectedResponderId.value);
+  return r ? `${r.badgeNumber} (${r.name})` : 'UNIT';
+});
+
+const canDispatchSelected = computed(() => {
+  if (!incidentStore.selectedIncident || !selectedResponderId.value) return false;
+  const r = responderStore.responders.find(u => u.id === selectedResponderId.value);
+  if (!r || r.status !== 'AVAILABLE') return false;
+  if (currentAssignedUnit.value && currentAssignedUnit.value.id === selectedResponderId.value) return false;
+  return true;
+});
+
+function isRecommendedUnit(responder) {
+  if (responder.status !== 'AVAILABLE') return false;
+  const inc = incidentStore.selectedIncident;
+  if (!inc) return false;
+
+  // Match recommendation based on incident type
+  if ((inc.incidentType === 'HAZMAT' || inc.incidentType === 'FIRE') && responder.type === 'FIREFIGHTER') return true;
+  if ((inc.incidentType === 'COLLAPSE' || inc.incidentType === 'MEDICAL') && responder.type === 'PARAMEDIC') return true;
+  return responder.badgeNumber === 'AMB-A12';
+}
+
+function calculateDistance(responder) {
+  const inc = incidentStore.selectedIncident;
+  if (!inc || !responder.latitude) return '2.4';
+  const latDiff = Math.abs(inc.latitude - responder.latitude) * 111;
+  const lngDiff = Math.abs(inc.longitude - responder.longitude) * 111;
+  return Math.sqrt(latDiff * latDiff + lngDiff * lngDiff).toFixed(1);
+}
+
+function calculateEta(responder) {
+  const dist = parseFloat(calculateDistance(responder));
+  return Math.max(3, Math.round(dist * 2));
+}
+
+async function executeDispatch() {
+  if (!canDispatchSelected.value) return;
+  try {
+    isDispatching.value = true;
+    dispatchError.value = null;
+    await responderStore.dispatch(incidentStore.selectedIncident.id, selectedResponderId.value);
+    await incidentStore.fetchIncidents();
+  } catch (err) {
+    dispatchError.value = 'Dispatch failed: ' + (err.response?.data?.message || err.message);
+  } finally {
+    isDispatching.value = false;
+  }
+}
+
+// GPS Simulation Controls
+const getSimStatusClass = computed(() => {
+  if (simState.value.status === 'RUNNING') return 'text-emerald font-bold';
+  if (simState.value.status === 'PAUSED') return 'text-amber font-bold';
+  if (simState.value.status === 'COMPLETED') return 'text-cyan font-bold';
+  return 'text-slate-400';
+});
+
+function startGpsSim() {
+  gpsSimulator.start();
+}
+
+function pauseGpsSim() {
+  gpsSimulator.pause();
+}
+
+function resumeGpsSim() {
+  gpsSimulator.resume();
+}
+
+function resetGpsSim() {
+  gpsSimulator.reset();
+}
+
+function focusHospitalOnMap(hosp) {
+  hospitalStore.selectHospital(hosp);
 }
 </script>
 
@@ -414,6 +904,573 @@ async function markIncidentResolved() {
   flex-direction: column;
   gap: 0.75rem;
   height: 100%;
+}
+
+/* Surge Warnings on Cards */
+.card-surge-warn {
+  border-color: #ef4444 !important;
+  background: rgba(40, 15, 20, 0.85) !important;
+}
+
+.badge-surge-pill {
+  background: rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  color: #fca5a5;
+  font-size: 0.55rem;
+  font-weight: 800;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+}
+
+.occ-pct {
+  font-size: 0.6rem;
+  color: #94a3b8;
+}
+
+.shelters-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.shelter-summary-card {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(51, 65, 85, 0.7);
+  border-radius: 6px;
+  padding: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.s-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.s-occupancy-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.s-bar-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(30, 41, 59, 0.9);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.s-bar-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.fill-danger { background: #ef4444; }
+.fill-emerald { background: #10b981; }
+
+.s-bar-meta {
+  display: flex;
+  justify-content: space-between;
+  color: #cbd5e1;
+}
+
+.s-supplies-row {
+  display: flex;
+  gap: 0.75rem;
+  color: #94a3b8;
+  border-top: 1px solid rgba(51, 65, 85, 0.5);
+  padding-top: 0.35rem;
+}
+
+/* Disaster Mode Active State */
+.bar-disaster-active {
+  border-color: #ef4444 !important;
+  background: rgba(40, 10, 15, 0.95) !important;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.35) !important;
+}
+
+.dot-disaster {
+  background: #ef4444 !important;
+  box-shadow: 0 0 12px #ef4444 !important;
+}
+
+.disaster-toggle-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.btn-disaster-act {
+  background: rgba(239, 68, 68, 0.25);
+  border: 1px solid #ef4444;
+  color: #fca5a5;
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-disaster-act:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+.btn-disaster-deact {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid #64748b;
+  color: #94a3b8;
+  font-size: 0.6rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-disaster-deact:hover {
+  border-color: #ef4444;
+  color: #fca5a5;
+}
+
+.btn-mute-toggle {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(51, 65, 85, 0.7);
+  color: #94a3b8;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  cursor: pointer;
+}
+
+.btn-mute-toggle:hover {
+  color: #f8fafc;
+  border-color: #38bdf8;
+}
+
+/* Disaster Surge Alert Banner */
+.disaster-surge-banner {
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  animation: pulse-border 2s infinite;
+}
+
+.surge-hdr {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fca5a5;
+  font-size: 0.775rem;
+}
+
+.surge-details-grid {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.surge-warning-pill {
+  font-size: 0.65rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 5px;
+}
+
+.warn-hosp {
+  background: rgba(168, 85, 247, 0.2);
+  border: 1px solid rgba(168, 85, 247, 0.5);
+  color: #d8b4fe;
+}
+
+.warn-shelter {
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #fcd34d;
+}
+
+.warn-zones {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+}
+
+@keyframes pulse-border {
+  0%, 100% { border-color: rgba(239, 68, 68, 0.6); }
+  50% { border-color: rgba(239, 68, 68, 1); }
+}
+
+/* Phase 6: GPS Simulation Panel Styling */
+.gps-simulation-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  background: #090e1a;
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.gps-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.gps-hdr-left {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pulse-sim-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #64748b;
+}
+
+.pulse-sim-dot.sim-active {
+  background: #22d3ee;
+  box-shadow: 0 0 10px #22d3ee;
+  animation: pulse-dot 1s infinite;
+}
+
+.gps-sim-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sim-telemetry-row {
+  display: flex;
+  justify-content: space-between;
+  color: #94a3b8;
+}
+
+.sim-progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(30, 41, 59, 0.8);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.sim-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #06b6d4, #10b981);
+  transition: width 0.3s ease;
+}
+
+.sim-btn-row {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.sim-completed-tag {
+  background: rgba(6, 182, 212, 0.15);
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  color: #67e8f9;
+  padding: 0.35rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Dispatch Allocation Console Styling */
+.dispatch-allocation-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.dispatch-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+  padding-bottom: 0.35rem;
+}
+
+.current-assigned-badge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  padding: 0.45rem 0.65rem;
+  border-radius: 6px;
+}
+
+.assigned-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-dot-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulse-dot 1.5s infinite;
+}
+
+.responder-units-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 145px;
+  overflow-y: auto;
+}
+
+.responder-unit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #090e1a;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.responder-unit-row:hover:not(.unit-busy) {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: #38bdf8;
+}
+
+.responder-unit-row.selected-unit {
+  background: rgba(2, 132, 199, 0.25);
+  border-color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+}
+
+.responder-unit-row.unit-busy {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.r-row-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.r-icon {
+  font-size: 1.1rem;
+}
+
+.r-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.r-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.r-name-row strong {
+  font-size: 0.75rem;
+  color: #f1f5f9;
+}
+
+.recommended-tag {
+  font-size: 0.5rem;
+  background: rgba(234, 179, 8, 0.25);
+  border: 1px solid rgba(234, 179, 8, 0.6);
+  color: #fde047;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+.r-type-meta {
+  font-size: 0.6rem;
+  color: #94a3b8;
+}
+
+.r-row-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.r-dist, .r-eta {
+  font-size: 0.65rem;
+}
+
+.dispatch-trigger-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.2rem;
+}
+
+.btn-dispatch-exec {
+  width: 100%;
+  padding: 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+.dispatch-error-msg {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+  padding: 0.35rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+}
+
+/* State Machine Styling */
+.state-machine-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.state-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+  padding-bottom: 0.35rem;
+}
+
+.lifecycle-flow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+}
+
+.flow-node {
+  background: #090e1a;
+  border: 1px solid #334155;
+  border-radius: 5px;
+  padding: 0.35rem 0.45rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.flow-node:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: #38bdf8;
+}
+
+.node-icon-status {
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
+.node-label {
+  font-size: 0.58rem;
+  color: #cbd5e1;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.node-passed {
+  border-color: #059669;
+  background: rgba(16, 185, 129, 0.12);
+}
+.node-passed .node-icon-status { color: #10b981; }
+.node-passed .node-label { color: #6ee7b7; }
+
+.node-current {
+  border-color: #0284c7;
+  background: rgba(2, 132, 199, 0.25);
+  box-shadow: 0 0 10px rgba(2, 132, 199, 0.4);
+}
+.node-current .node-icon-status { color: #38bdf8; }
+.node-current .node-label { color: #f0f9ff; font-weight: 700; }
+
+.node-next-valid {
+  border-color: #eab308;
+  border-style: dashed;
+}
+.node-next-valid .node-icon-status { color: #facc15; }
+.node-next-valid .node-label { color: #fde047; }
+
+.node-future {
+  opacity: 0.55;
+}
+.node-future .node-icon-status { color: #64748b; }
+
+.next-action-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  border-top: 1px solid rgba(51, 65, 85, 0.5);
+  padding-top: 0.5rem;
+}
+
+.next-action-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.action-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: #94a3b8;
+}
+
+.btn-action-flow {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-family: var(--font-mono);
+}
+
+.resolved-banner {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #6ee7b7;
+  padding: 0.5rem;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.transition-error-alert {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+  padding: 0.35rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
 }
 
 /* 1. TOP COMMAND BAR */

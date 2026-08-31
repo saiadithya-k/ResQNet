@@ -9,9 +9,16 @@ exports.dispatchResponder = (req, res) => {
     return res.status(404).json({ success: false, message: 'Incident or responder not found' });
   }
 
+  if (responder.status === 'DISPATCHED' && responder.assignedIncidentId && responder.assignedIncidentId !== incident.id) {
+    return res.status(400).json({
+      success: false,
+      message: `Unit ${responder.name} (${responder.badgeNumber}) is currently assigned to Incident #${responder.assignedIncidentId}`
+    });
+  }
+
   responder.status = 'DISPATCHED';
   responder.assignedIncidentId = incident.id;
-  responder.etaMinutes = 5;
+  responder.etaMinutes = responder.etaMinutes || 5;
 
   incident.status = 'ASSIGNED';
   incident.timeline.push({

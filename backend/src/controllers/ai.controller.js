@@ -13,8 +13,21 @@ exports.checkDuplicates = (req, res) => {
 };
 
 exports.copilotQuery = (req, res) => {
-  const { query } = req.body;
+  const { query, clientContext } = req.body;
+  if (!query || typeof query !== 'string') {
+    return res.status(400).json({ success: false, message: 'Query string is required' });
+  }
+
   const criticalCount = mockState.incidents.filter(i => i.severity === 'CRITICAL').length;
-  const result = aiService.answerCopilotQuery(query, { criticalCount, incidents: mockState.incidents });
+  const result = aiService.answerCopilotQuery(query, {
+    criticalCount,
+    incidents: mockState.incidents,
+    responders: mockState.responders,
+    hospitals: mockState.hospitals,
+    shelters: mockState.shelters,
+    disasterMode: mockState.disasterMode,
+    ...clientContext
+  });
+
   res.json({ success: true, data: result });
 };

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import api from '../services/api';
+import { audioAlert } from '../utils/audioAlert';
 
 export const useDisasterStore = defineStore('disaster', {
   state: () => ({
@@ -11,6 +12,11 @@ export const useDisasterStore = defineStore('disaster', {
     simulationResults: null,
     loading: false
   }),
+  getters: {
+    criticalShelters: (state) => {
+      return state.shelters.filter(s => (s.currentOccupancy / s.capacity) >= 0.80);
+    }
+  },
   actions: {
     async fetchStatus() {
       try {
@@ -31,8 +37,14 @@ export const useDisasterStore = defineStore('disaster', {
         const res = await api.post('/disasters/toggle', { activate, ...params });
         this.isDisasterMode = res.data.data.disasterMode;
         this.activeDisaster = res.data.data.activeDisaster;
+
+        if (this.isDisasterMode) {
+          audioAlert.playTacticalAlert();
+        }
+        return res.data;
       } catch (err) {
         console.error('Failed to toggle disaster mode', err);
+        throw err;
       }
     },
     async runSimulation(payload) {

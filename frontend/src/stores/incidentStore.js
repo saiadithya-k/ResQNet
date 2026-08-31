@@ -34,15 +34,18 @@ export const useIncidentStore = defineStore('incidents', {
     async updateStatus(id, status, note) {
       try {
         const res = await api.patch(`/incidents/${id}/status`, { status, note });
+        const updated = res.data.data;
         const idx = this.incidents.findIndex(i => i.id === id);
         if (idx !== -1) {
-          this.incidents[idx] = res.data.data;
+          this.incidents[idx] = updated;
           if (this.selectedIncident?.id === id) {
-            this.selectedIncident = res.data.data;
+            this.selectedIncident = updated;
           }
         }
+        return updated;
       } catch (err) {
         console.error('Failed to update incident status', err);
+        throw err;
       }
     },
     addOrUpdateIncident(incident) {
