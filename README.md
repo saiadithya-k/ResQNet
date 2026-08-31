@@ -520,29 +520,6 @@ ResQNet/
 
 ---
 
-## RESQNET CAPABILITY MATRIX
-
-| System Capability | Implementation Status | Technical Subsystem |
-|---|---|---|
-| **Citizen Emergency Reporting** | `IMPLEMENTED` | Form & location submission with media upload |
-| **Multilingual AI Entity Extraction** | `IMPLEMENTED` | Cross-lingual parser (English, Tamil, Hindi, Telugu) |
-| **Dynamic Priority Scoring (1–100)** | `IMPLEMENTED` | Deterministic multi-factor scoring algorithm |
-| **Spatial Deduplication & Clustering** | `IMPLEMENTED` | Spatial-temporal radius similarity matcher |
-| **Tactical MapLibre Vector GIS** | `IMPLEMENTED` | WebGL vector map with OpenFreeMap tiles |
-| **GPS Hardware Location Acquisition** | `IMPLEMENTED` | Browser Geolocation API coordinate resolver |
-| **Landmark & Place Name Search** | `IMPLEMENTED` | Nominatim search with local landmark cache |
-| **Interactive Map Pinning** | `IMPLEMENTED` | Draggable vector anchor with reverse geocoding |
-| **6-Factor Responder Matching** | `IMPLEMENTED` | Weighted multi-factor recommendation engine |
-| **ACID Concurrency-Locked Dispatch** | `IMPLEMENTED` | PostgreSQL transaction isolation (`prisma.$transaction`) |
-| **Hospital Bed & ICU Telemetry** | `IMPLEMENTED` | Real-time capacity tracker & incoming patient logger |
-| **500m Community Responder Mesh** | `IMPLEMENTED` | Hyper-local CPR/AED volunteer mobilization |
-| **Multi-Hazard Disaster Simulator** | `IMPLEMENTED` | Impact projection engine & Disaster Mode toggle |
-| **Resource Coordination & Reconciliation**| `IMPLEMENTED` | Inter-agency request, approval & manifest reconciliation |
-| **Tamper-Evident SHA-256 Vault** | `IMPLEMENTED` | Cryptographic binary media hashing & validation |
-| **Tactical Workflow Canvas** | `IMPLEMENTED` | Public interactive 10-stage architecture visualization |
-| **Operational AI Copilot Interface** | `IMPLEMENTED` | Context-aware telemetry diagnostics console |
-
----
 
 <div align="center">
   <sub>ResQNet — Engineered for Crisis Resilience • Open-Source MIT License</sub>
