@@ -18,29 +18,33 @@ exports.checkDuplicates = (req, res) => {
   res.json({ success: true, data: result });
 };
 
-exports.copilotQuery = (req, res) => {
-  const { query, clientContext } = req.body || {};
-  if (!query || typeof query !== 'string') {
-    return res.status(400).json({ success: false, message: 'Query string is required' });
+exports.copilotQuery = async (req, res, next) => {
+  try {
+    const { query, clientContext } = req.body || {};
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ success: false, message: 'Query string is required' });
+    }
+
+    // Derive role securely from authenticated user or request
+    const userRole = req.user?.role || req.body?.userRole || (clientContext?.isAdmin ? 'ADMIN' : 'CITIZEN');
+    const criticalCount = mockState.incidents ? mockState.incidents.filter(i => i.severity === 'CRITICAL').length : 0;
+    
+    const result = await aiService.answerCopilotQuery(
+      query,
+      {
+        criticalCount,
+        incidents: mockState.incidents || [],
+        responders: mockState.responders || [],
+        hospitals: mockState.hospitals || [],
+        shelters: mockState.shelters || [],
+        disasterMode: mockState.disasterMode || false,
+        ...(clientContext || {})
+      },
+      userRole
+    );
+
+    res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
   }
-
-  // Derive role securely from authenticated user or request
-  const userRole = req.user?.role || req.body?.userRole || (clientContext?.isAdmin ? 'ADMIN' : 'CITIZEN');
-  const criticalCount = mockState.incidents ? mockState.incidents.filter(i => i.severity === 'CRITICAL').length : 0;
-  
-  const result = aiService.answerCopilotQuery(
-    query,
-    {
-      criticalCount,
-      incidents: mockState.incidents || [],
-      responders: mockState.responders || [],
-      hospitals: mockState.hospitals || [],
-      shelters: mockState.shelters || [],
-      disasterMode: mockState.disasterMode || false,
-      ...(clientContext || {})
-    },
-    userRole
-  );
-
-  res.json({ success: true, data: result });
 };

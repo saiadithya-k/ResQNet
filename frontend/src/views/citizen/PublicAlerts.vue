@@ -306,7 +306,7 @@ function initModalMap(alert) {
 
   modalMap = new maplibregl.Map({
     container: 'alert-leaflet-map',
-    style: 'https://tiles.openfreemap.org/styles/liberty',
+    style: 'https://tiles.openfreemap.org/styles/positron',
     center: [lng, lat],
     zoom: 13,
     attributionControl: true

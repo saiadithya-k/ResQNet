@@ -6,8 +6,28 @@
     <!-- Floating Map Control Toolbar -->
     <div class="map-controls-panel">
       <div class="control-header">
-        <span class="pulse-icon"></span>
-        <span>TACTICAL GIS LAYERS</span>
+        <div class="header-left">
+          <span class="pulse-icon"></span>
+          <span>TACTICAL GIS LAYERS</span>
+        </div>
+        <div class="theme-switcher font-mono">
+          <button
+            type="button"
+            :class="['theme-pill', { active: currentTheme === 'light' }]"
+            @click="switchTheme('light')"
+            title="White / Positron Theme"
+          >
+            ☀️ White
+          </button>
+          <button
+            type="button"
+            :class="['theme-pill', { active: currentTheme === 'dark' }]"
+            @click="switchTheme('dark')"
+            title="Dark Tactical Theme"
+          >
+            🌙 Dark
+          </button>
+        </div>
       </div>
       <div class="layer-toggles">
         <label class="toggle-item">
@@ -120,6 +140,13 @@ const routeMetrics = ref({
   emergencyDist: 2.8
 });
 
+const currentTheme = ref('light');
+const themeStyles = {
+  light: 'https://tiles.openfreemap.org/styles/positron',
+  dark: 'https://tiles.openfreemap.org/styles/dark',
+  bright: 'https://tiles.openfreemap.org/styles/bright'
+};
+
 let resizeObserver = null;
 
 onMounted(async () => {
@@ -163,12 +190,25 @@ function clearAllMarkers() {
   roadblockMarkers.clear();
 }
 
+function switchTheme(newTheme) {
+  currentTheme.value = newTheme;
+  if (!map) return;
+
+  const targetStyle = themeStyles[newTheme] || themeStyles.light;
+  map.setStyle(targetStyle);
+
+  map.once('style.load', () => {
+    setupSourcesAndLayers();
+    renderAll();
+  });
+}
+
 function initMap() {
   if (map || !mapContainer.value) return;
 
   map = new maplibregl.Map({
     container: mapContainer.value,
-    style: 'https://tiles.openfreemap.org/styles/liberty',
+    style: themeStyles[currentTheme.value] || themeStyles.light,
     center: [80.2600, 13.0827], // [lng, lat]
     zoom: 13,
     attributionControl: true
@@ -844,7 +884,8 @@ function focusSelectedIncident() {
     center: [selected.longitude, selected.latitude],
     zoom: 15,
     essential: true,
-    speed: 1.2
+    speed: 2.4,
+    curve: 1.1
   });
 
   renderIncidents();
@@ -853,7 +894,7 @@ function focusSelectedIncident() {
   if (marker) {
     setTimeout(() => {
       marker.togglePopup();
-    }, 600);
+    }, 120);
   }
 }
 
@@ -869,14 +910,39 @@ watch(
 );
 
 watch(
+  () => responderStore.selectedResponder,
+  (newResp) => {
+    if (newResp && map && newResp.latitude && newResp.longitude) {
+      map.flyTo({
+        center: [newResp.longitude, newResp.latitude],
+        zoom: 15,
+        essential: true,
+        speed: 2.4,
+        curve: 1.1
+      });
+      const marker = responderMarkers.get(newResp.id);
+      if (marker) {
+        setTimeout(() => marker.togglePopup(), 120);
+      }
+    }
+  }
+);
+
+watch(
   () => hospitalStore.selectedHospital,
   (newHosp) => {
     if (newHosp && map && newHosp.latitude && newHosp.longitude) {
       map.flyTo({
         center: [newHosp.longitude, newHosp.latitude],
         zoom: 15,
-        essential: true
+        essential: true,
+        speed: 2.4,
+        curve: 1.1
       });
+      const marker = hospitalMarkers.get(newHosp.id);
+      if (marker) {
+        setTimeout(() => marker.togglePopup(), 120);
+      }
     }
   }
 );
@@ -936,15 +1002,58 @@ watch(
 
 .control-header {
   display: flex;
-  align-items: center;
-  gap: 0.375rem;
+  flex-direction: column;
+  gap: 0.35rem;
   font-size: 0.7rem;
   font-weight: 700;
   color: #94a3b8;
   font-family: var(--font-mono, monospace);
   margin-bottom: 0.5rem;
   border-bottom: 1px solid rgba(51, 65, 85, 0.6);
-  padding-bottom: 0.35rem;
+  padding-bottom: 0.45rem;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.theme-switcher {
+  display: flex;
+  gap: 0.25rem;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.theme-pill {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.625rem;
+  padding: 0.2rem 0.35rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.theme-pill.active {
+  background: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+.theme-pill:hover:not(.active) {
+  color: #f1f5f9;
+  background: rgba(51, 65, 85, 0.5);
 }
 
 .pulse-icon {

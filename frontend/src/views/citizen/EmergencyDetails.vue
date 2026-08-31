@@ -337,7 +337,7 @@ function initMap() {
 
   map = new maplibregl.Map({
     container: 'citizen-incident-map',
-    style: 'https://tiles.openfreemap.org/styles/liberty',
+    style: 'https://tiles.openfreemap.org/styles/positron',
     center: [lng, lat],
     zoom: 14,
     attributionControl: true

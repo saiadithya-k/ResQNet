@@ -4,6 +4,7 @@ import api from '../services/api';
 export const useResponderStore = defineStore('responders', {
   state: () => ({
     responders: [],
+    selectedResponder: null,
     loading: false
   }),
   getters: {
@@ -11,6 +12,9 @@ export const useResponderStore = defineStore('responders', {
     communityResponders: (state) => state.responders.filter(r => r.isCommunity)
   },
   actions: {
+    selectResponder(responder) {
+      this.selectedResponder = responder;
+    },
     async fetchResponders() {
       try {
         const res = await api.get('/responders');

@@ -247,7 +247,7 @@ function initMap() {
 
   mapInstance = new maplibregl.Map({
     container: 'risk-impact-map',
-    style: 'https://tiles.openfreemap.org/styles/liberty',
+    style: 'https://tiles.openfreemap.org/styles/positron',
     center: [lng, lat],
     zoom: 13,
     attributionControl: true

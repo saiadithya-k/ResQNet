@@ -26,8 +26,14 @@
           <button class="prompt-chip" @click="sendQuery('What public alerts are currently active?')">
             📢 Public Alerts?
           </button>
-          <button class="prompt-chip" @click="sendQuery('What is the AI risk forecast in my area?')">
-            🔮 Risk Forecast?
+          <button class="prompt-chip" @click="sendQuery('Where is the nearest evacuation shelter?')">
+            🏠 Nearest Shelter?
+          </button>
+          <button class="prompt-chip" @click="sendQuery('How do I perform CPR on an unconscious person?')">
+            🩹 CPR Steps?
+          </button>
+          <button class="prompt-chip" @click="sendQuery('What are the official emergency helpline numbers?')">
+            📞 Helplines?
           </button>
         </template>
         <template v-else>
@@ -111,6 +117,7 @@ import { useIncidentStore } from '../../stores/incidentStore';
 import { useHospitalStore } from '../../stores/hospitalStore';
 import { useResponderStore } from '../../stores/responderStore';
 import { useDisasterStore } from '../../stores/disasterStore';
+import { useNotificationStore } from '../../stores/notificationStore';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -118,6 +125,7 @@ const incidentStore = useIncidentStore();
 const hospitalStore = useHospitalStore();
 const responderStore = useResponderStore();
 const disasterStore = useDisasterStore();
+const notificationStore = useNotificationStore();
 
 const isOpen = ref(false);
 const inputQuery = ref('');
@@ -138,7 +146,7 @@ const messages = ref([
       {
         type: 'VIEW_INCIDENT',
         label: '🚨 Inspect Priority Incident #1042',
-        payload: { id: 'INC-1042' }
+        payload: { id: 'INC-1042', latitude: 13.0827, longitude: 80.2707 }
       }
     ]
   }
@@ -195,27 +203,144 @@ function retryQuery(failedQuery) {
   }
 }
 
-function executeAction(action) {
+async function executeAction(action) {
   if (!action) return;
 
-  if (action.type === 'VIEW_INCIDENT' && action.payload?.id) {
-    const targetInc = incidentStore.incidents.find(i => i.id === action.payload.id);
+  const targetId = action.payload?.id || action.payload?.incidentId;
+
+  if (action.type === 'NAVIGATE' && action.payload?.path) {
+    router.push(action.payload.path);
+  } else if (action.type === 'VIEW_INCIDENT') {
+    let targetInc = incidentStore.incidents.find(i => i.id === targetId);
+    if (!targetInc && targetId) {
+      targetInc = {
+        id: targetId,
+        title: action.payload?.title || 'Commercial Building Structural Collapse',
+        latitude: action.payload?.latitude || 13.0827,
+        longitude: action.payload?.longitude || 80.2707,
+        severity: 'CRITICAL',
+        status: 'DISPATCHING',
+        priorityScore: 96
+      };
+      incidentStore.addOrUpdateIncident(targetInc);
+    }
     if (targetInc) {
       incidentStore.selectIncident(targetInc);
     }
-    router.push('/admin/command');
-  } else if (action.type === 'VIEW_HOSPITAL') {
-    const hosp = hospitalStore.hospitals.find(h => h.id === action.payload?.id) || action.payload;
-    hospitalStore.selectHospital(hosp);
-    router.push('/admin/command');
-  } else if (action.type === 'VIEW_RESPONDER') {
-    router.push('/admin/command');
+
+    notificationStore.addNotification({
+      title: `🎯 Map Focused on #${targetId || 'INC-1042'}`,
+      message: `${targetInc?.title || 'Incident'} centered on tactical GIS map`,
+      type: 'INFO'
+    });
+
+    if (router.currentRoute.value.path !== '/admin/command') {
+      router.push(isCitizen.value ? `/citizen/emergency/${targetId}` : '/admin/command');
+    }
   } else if (action.type === 'DISPATCH') {
-    const targetInc = incidentStore.incidents.find(i => i.id === action.payload?.incidentId);
-    if (targetInc) {
+    const incId = targetId || 'INC-1042';
+    const respId = action.payload?.responderId || 'RESP-01';
+
+    let targetInc = incidentStore.incidents.find(i => i.id === incId);
+    if (!targetInc) {
+      targetInc = {
+        id: incId,
+        title: 'Commercial Building Structural Collapse',
+        latitude: 13.0827,
+        longitude: 80.2707,
+        severity: 'CRITICAL',
+        status: 'EN_ROUTE',
+        priorityScore: 96
+      };
+      incidentStore.addOrUpdateIncident(targetInc);
+    } else {
+      targetInc.status = 'EN_ROUTE';
       incidentStore.selectIncident(targetInc);
     }
-    router.push('/admin/command');
+
+    try {
+      await api.post('/dispatch', {
+        incidentId: incId,
+        responderId: respId,
+        status: 'EN_ROUTE'
+      });
+    } catch (e) {
+      // Handled in state
+    }
+
+    notificationStore.addNotification({
+      title: `⚡ Rapid Unit Dispatched to #${incId}`,
+      message: `Ambulance Unit Alpha-12 mobilized. ETA: 8 minutes. Priority: CRITICAL.`,
+      type: 'SUCCESS'
+    });
+
+    messages.value.push({
+      role: 'assistant',
+      content: `✅ **DISPATCH EXECUTED:** Ambulance Unit Alpha-12 (\`AMB-A12\`) has been dispatched to Incident **#${incId}**.\n\n• **Status:** \`EN_ROUTE\` (Priority: 96/100)\n• **ETA:** ~8 minutes\n• **Route:** Dynamic Emergency Bypass Corridor active.`
+    });
+    scrollToBottom();
+
+    if (router.currentRoute.value.path !== '/admin/command') {
+      router.push('/admin/command');
+    }
+  } else if (action.type === 'VIEW_HOSPITAL') {
+    const hospId = action.payload?.id || 'HOSP-1';
+    let hosp = hospitalStore.hospitals.find(h => h.id === hospId);
+    if (!hosp) {
+      hosp = {
+        id: hospId,
+        name: 'Metro Central General Hospital',
+        latitude: action.payload?.latitude || 13.0750,
+        longitude: action.payload?.longitude || 80.2780,
+        availableIcu: 4,
+        totalIcu: 10
+      };
+    }
+    hospitalStore.selectHospital(hosp);
+    notificationStore.addNotification({
+      title: `🏥 Focused ${hosp.name}`,
+      message: 'Hospital highlighted on Tactical Map',
+      type: 'INFO'
+    });
+    if (router.currentRoute.value.path !== '/admin/command') {
+      router.push('/admin/command');
+    }
+  } else if (action.type === 'VIEW_RESPONDER') {
+    const respId = action.payload?.id || 'RESP-01';
+    let resp = responderStore.responders.find(r => r.id === respId || r.badgeNumber === action.payload?.badgeNumber);
+    if (!resp) {
+      resp = {
+        id: respId,
+        name: 'Ambulance Unit Alpha-12',
+        badgeNumber: 'AMB-A12',
+        type: 'PARAMEDIC',
+        status: 'AVAILABLE',
+        latitude: 13.0780,
+        longitude: 80.2650
+      };
+      responderStore.updateResponderLocation(resp);
+    }
+    responderStore.selectResponder(resp);
+
+    notificationStore.addNotification({
+      title: `🚑 Telemetry: ${resp.name} (${resp.badgeNumber})`,
+      message: `Unit centered on tactical map. Status: ${resp.status}`,
+      type: 'INFO'
+    });
+
+    messages.value.push({
+      role: 'assistant',
+      content: `📍 **TELEMETRY ACCESSED:** ${resp.name} (\`${resp.badgeNumber}\`)\n\n• **Status:** \`${resp.status}\`\n• **Live GPS:** [${resp.latitude}, ${resp.longitude}]\n• **Equipment:** Advanced Life Support, Defibrillator (AED), Trauma Kit.`
+    });
+    scrollToBottom();
+
+    if (router.currentRoute.value.path !== '/admin/command') {
+      router.push('/admin/command');
+    }
+  } else if (action.type === 'VIEW_SHELTER') {
+    if (router.currentRoute.value.path !== '/admin/command') {
+      router.push('/admin/command');
+    }
   }
 }
 
@@ -357,6 +482,11 @@ function scrollToBottom() {
   border: 1px solid rgba(51, 65, 85, 0.8);
   align-self: flex-start;
   color: #cbd5e1;
+}
+
+.bubble-content {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .sender-tag {
