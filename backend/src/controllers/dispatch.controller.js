@@ -1,34 +1,85 @@
-const mockState = require('../services/mockData');
+const dispatchService = require('../services/dispatch/dispatch.service');
+const { AppError } = require('../utils/errors');
 
-exports.dispatchResponder = (req, res) => {
-  const { incidentId, responderId } = req.body;
-  const incident = mockState.incidents.find(i => i.id === incidentId);
-  const responder = mockState.responders.find(r => r.id === responderId);
+/**
+ * Dispatch a responder to an incident
+ * POST /api/dispatch
+ */
+exports.dispatchResponder = async (req, res, next) => {
+  try {
+    const { incidentId, responderId, notes } = req.body;
 
-  if (!incident || !responder) {
-    return res.status(404).json({ success: false, message: 'Incident or responder not found' });
+    if (!incidentId || typeof incidentId !== 'string' || incidentId.trim() === '') {
+      return next(new AppError('incidentId is required and must be a valid string', 400));
+    }
+
+    if (!responderId || typeof responderId !== 'string' || responderId.trim() === '') {
+      return next(new AppError('responderId is required and must be a valid string', 400));
+    }
+
+    const result = await dispatchService.assignResponder(incidentId.trim(), responderId.trim(), notes);
+
+    // Emit real-time status and dispatch events via Socket.IO
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('responder:status_changed', {
+        responderId: result.responder.id,
+        userId: result.responder.userId,
+        status: 'DISPATCHED',
+        previousStatus: result.previousStatus,
+        timestamp: new Date().toISOString(),
+        responder: result.responder
+      });
+      io.emit('incident:assigned', {
+        incident: result.incident,
+        responder: result.responder,
+        dispatch: result.dispatch
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Responder successfully dispatched',
+      data: result
+    });
+  } catch (error) {
+    next(error);
   }
+};
 
-  responder.status = 'DISPATCHED';
-  responder.assignedIncidentId = incident.id;
-  responder.etaMinutes = 5;
+/**
+ * Get ranked responder matches for an incident
+ * GET /api/dispatch/:incidentId/matches or POST /api/dispatch/:incidentId/matches
+ */
+exports.getMatches = async (req, res, next) => {
+  try {
+    const { incidentId } = req.params;
+    const options = req.method === 'POST' ? req.body : req.query;
+    const matchesResult = await dispatchService.getMatches(incidentId, options);
 
-  incident.status = 'ASSIGNED';
-  incident.timeline.push({
-    time: new Date().toLocaleTimeString().slice(0, 5),
-    title: 'Dispatched',
-    description: `Assigned to ${responder.name} (${responder.badgeNumber})`
-  });
-
-  const io = req.app.get('io');
-  if (io) {
-    io.emit('incident:assigned', { incident, responder });
-    io.emit('responder:location_updated', responder);
+    res.json({
+      success: true,
+      data: matchesResult
+    });
+  } catch (error) {
+    next(error);
   }
+};
 
-  res.json({
-    success: true,
-    message: 'Responder successfully dispatched',
-    data: { incident, responder }
-  });
+/**
+ * Get single dispatch by ID
+ * GET /api/dispatch/:id
+ */
+exports.getDispatchById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const dispatch = await dispatchService.getDispatchById(id);
+
+    res.json({
+      success: true,
+      data: dispatch
+    });
+  } catch (error) {
+    next(error);
+  }
 };

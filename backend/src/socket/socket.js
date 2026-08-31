@@ -1,5 +1,10 @@
 const { Server } = require('socket.io');
 const logger = require('../utils/logger');
+const responderSocket = require('./responder.socket');
+const incidentSocket = require('./incident.socket');
+const hospitalSocket = require('./hospital.socket');
+const resourceSocket = require('./resource.socket');
+const disasterSocket = require('./disaster.socket');
 
 let ioInstance = null;
 
@@ -7,7 +12,7 @@ function initSocket(httpServer) {
   const io = new Server(httpServer, {
     cors: {
       origin: process.env.CLIENT_URL || '*',
-      methods: ['GET', 'POST']
+      methods: ['GET', 'POST', 'PATCH', 'DELETE']
     }
   });
 
@@ -15,6 +20,13 @@ function initSocket(httpServer) {
 
   io.on('connection', (socket) => {
     logger.info(`🔌 Socket client connected: ${socket.id}`);
+
+    // Register domain socket listeners
+    responderSocket(io, socket);
+    incidentSocket(io, socket);
+    hospitalSocket(io, socket);
+    resourceSocket(io, socket);
+    disasterSocket(io, socket);
 
     // Join room based on user role or district
     socket.on('join:room', (roomName) => {
