@@ -24,6 +24,32 @@ Report → Verify → Prioritize → Dispatch → Coordinate → Treat → Resol
 
 ---
 
+## 🌐 Quick Access URLs & Demo Accounts
+
+### 🔗 Application Gateways
+
+| Portal | URL | Description |
+|---|---|---|
+| **Public Landing Page** | [http://localhost:5173/](http://localhost:5173/) | Hero page, live status & entry gateways |
+| **Citizen Emergency Portal** | [http://localhost:5173/login/citizen](http://localhost:5173/login/citizen) | Citizen registration, Voice SOS & distress reporting |
+| **Operations & Command Portal** | [http://localhost:5173/login/operations](http://localhost:5173/login/operations) | Tactical operations, dispatch, hospital & field units |
+| **Central Authentication Gateway** | [http://localhost:5173/login](http://localhost:5173/login) | Direct universal role-routing portal |
+
+### 🔑 Demo Accounts (Mobile Number + Password)
+
+> **Default Password for all accounts:** `password123`
+
+| Role | Mobile Number (Username) | Name | Target Dashboard |
+|---|---|---|---|
+| **🚨 Citizen** | `+91 9876543210` *(or `9876543210`)* | Vignesh Kumar | `/citizen` |
+| **🛡️ Admin** | `+91 9876543211` *(or `9876543211`)* | Command Chief Miller | `/admin/command` |
+| **📡 Dispatcher** | `+91 9876543212` *(or `9876543212`)* | Dispatcher John Davis | `/admin/command` |
+| **🚑 Paramedic (Responder)** | `+91 9876543213` *(or `9876543213`)* | Paramedic Sarah Connor | `/responder` |
+| **🧑‍🚒 Community Responder** | `+91 9876543214` *(or `9876543214`)* | Volunteer Alex Rivera | `/community` |
+| **🏥 Hospital Staff** | `+91 9876543215` *(or `9876543215`)* | Dr. Robert Chen (Apollo) | `/hospital` |
+
+---
+
 # 🎯 Core Technology Stack
 
 | Layer | Technology |
