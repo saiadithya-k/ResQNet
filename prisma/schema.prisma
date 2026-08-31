@@ -1,0 +1,355 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  CITIZEN
+  RESPONDER
+  COMMUNITY_RESPONDER
+  HOSPITAL
+  DISPATCHER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum IncidentStatus {
+  REPORTED
+  AI_ANALYZING
+  VERIFIED
+  PRIORITIZED
+  DISPATCHING
+  ASSIGNED
+  EN_ROUTE
+  ON_SCENE
+  TRANSPORTING
+  HOSPITAL_RECEIVED
+  RESOLVED
+  CANCELLED
+  DUPLICATE
+  ESCALATED
+  REASSIGNED
+}
+
+enum SeverityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum EmotionState {
+  CALM
+  ANXIOUS
+  PANICKED
+  DISTRESSED
+  HYSTERICAL
+}
+
+enum ResponderStatus {
+  AVAILABLE
+  DISPATCHED
+  EN_ROUTE
+  ON_SCENE
+  TRANSPORTING
+  UNAVAILABLE
+  OFF_DUTY
+}
+
+enum ResourceStatus {
+  AVAILABLE
+  REQUESTED
+  APPROVED
+  IN_TRANSIT
+  DEPLOYED
+  RETURNED
+}
+
+model User {
+  id                String              @id @default(uuid())
+  email             String              @unique
+  passwordHash      String
+  name              String
+  phone             String?
+  role              Role                @default(CITIZEN)
+  avatarUrl         String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  citizenProfile    CitizenProfile?
+  responderProfile  ResponderProfile?
+  hospitalProfile   HospitalProfile?
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+  evidenceUploaded  IncidentEvidence[]
+  survivorCheckins  SurvivorCheckin[]
+  familyMembers     FamilyMember[]
+}
+
+model CitizenProfile {
+  id                String              @id @default(uuid())
+  userId            String              @unique
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address           String?
+  emergencyContact  String?
+  medicalNotes      String?
+  incidentsReported Incident[]
+}
+
+model ResponderProfile {
+  id                String              @id @default(uuid())
+  userId            String              @unique
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeNumber       String?             @unique
+  responderType     String              // PARAMEDIC, FIREFIGHTER, POLICE, COMMUNITY_FIRST_RESPONDER
+  isCommunity       Boolean             @default(false)
+  isVerified        Boolean             @default(false)
+  status            ResponderStatus     @default(AVAILABLE)
+  latitude          Float?
+  longitude         Float?
+  lastLocationTime  DateTime?
+  skills            String[]            @default([])
+  equipment         String[]            @default([])
+  dutyHours         Float               @default(0)
+  consecutiveShifts Int                 @default(0)
+  fatigueScore      Float               @default(0)
+  dispatches        Dispatch[]
+  fatigueRecords    FatigueRecord[]
+}
+
+model HospitalProfile {
+  id                String              @id @default(uuid())
+  userId            String              @unique
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hospitalName      String
+  district          String
+  latitude          Float
+  longitude         Float
+  totalBeds         Int                 @default(50)
+  availableBeds     Int                 @default(20)
+  totalIcu          Int                 @default(10)
+  availableIcu      Int                 @default(3)
+  totalTrauma       Int                 @default(10)
+  availableTrauma   Int                 @default(4)
+  ventilators       Int                 @default(8)
+  operatingRooms    Int                 @default(4)
+  isAccepting       Boolean             @default(true)
+  specializations   String[]            @default([])
+  incomingPatients  Incident[]
+  resourceTransfers ResourceTransfer[]
+}
+
+model Incident {
+  id                String              @id @default(uuid())
+  reporterId        String?
+  reporter          CitizenProfile?     @relation(fields: [reporterId], references: [id])
+  title             String
+  description       String
+  incidentType      String              // FIRE, MEDICAL, COLLAPSE, FLOOD, ACCIDENT, HAZMAT
+  status            IncidentStatus      @default(REPORTED)
+  severity          SeverityLevel       @default(MEDIUM)
+  priorityScore     Float               @default(50)
+  latitude          Float
+  longitude         Float
+  address           String?
+  district          String?
+  victimCount       Int                 @default(1)
+  hasInjuries       Boolean             @default(false)
+  hasTrapped        Boolean             @default(false)
+  hasFire           Boolean             @default(false)
+  hasHazmat         Boolean             @default(false)
+  vulnerableGroups  String[]            @default([])
+  
+  // AI Enrichment Data
+  aiEmotionState    EmotionState?
+  aiEmotionScore    Float?
+  aiUrgencyScore    Float?
+  aiDuplicateOfId   String?
+  aiSimilarityScore Float?
+  language          String              @default("en")
+
+  targetHospitalId  String?
+  targetHospital    HospitalProfile?    @relation(fields: [targetHospitalId], references: [id])
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  dispatches        Dispatch[]
+  timelineEvents    IncidentEvent[]
+  evidenceFiles     IncidentEvidence[]
+}
+
+model IncidentEvent {
+  id          String         @id @default(uuid())
+  incidentId  String
+  incident    Incident       @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  status      IncidentStatus
+  title       String
+  description String?
+  actorName   String?
+  timestamp   DateTime       @default(now())
+}
+
+model IncidentEvidence {
+  id          String    @id @default(uuid())
+  incidentId  String
+  incident    Incident  @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  uploaderId  String?
+  uploader    User?     @relation(fields: [uploaderId], references: [id])
+  fileName    String
+  fileUrl     String
+  fileType    String
+  fileSize    Int
+  sha256Hash  String
+  isVerified  Boolean   @default(true)
+  timestamp   DateTime  @default(now())
+}
+
+model Dispatch {
+  id            String            @id @default(uuid())
+  incidentId    String
+  incident      Incident          @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  responderId   String
+  responder     ResponderProfile  @relation(fields: [responderId], references: [id])
+  status        ResponderStatus   @default(DISPATCHED)
+  assignedAt    DateTime          @default(now())
+  arrivedAt     DateTime?
+  completedAt   DateTime?
+  routePolyline String?
+  etaMinutes    Int?
+}
+
+model Resource {
+  id            String            @id @default(uuid())
+  name          String
+  category      String            // AMBULANCE, FIRE_TRUCK, BOAT, TRAUMA_KIT, OXYGEN, GENERATOR
+  district      String
+  quantity      Int               @default(1)
+  availableQty  Int               @default(1)
+  status        ResourceStatus    @default(AVAILABLE)
+  transfers     ResourceTransfer[]
+}
+
+model ResourceTransfer {
+  id            String            @id @default(uuid())
+  resourceId    String
+  resource      Resource          @relation(fields: [resourceId], references: [id])
+  fromDistrict  String
+  toDistrict    String
+  hospitalId    String?
+  hospital      HospitalProfile?  @relation(fields: [hospitalId], references: [id])
+  quantity      Int
+  status        ResourceStatus    @default(REQUESTED)
+  requestedAt   DateTime          @default(now())
+  approvedAt    DateTime?
+  returnedAt    DateTime?
+}
+
+model SurvivorCheckin {
+  id          String   @id @default(uuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  fullName    String
+  phone       String?
+  status      String   // SAFE, INJURED, MISSING, TRAPPED
+  latitude    Float?
+  longitude   Float?
+  district    String?
+  shelterId   String?
+  notes       String?
+  createdAt   DateTime @default(now())
+}
+
+model FamilyMember {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memberName    String
+  relationship  String
+  phone         String?
+  safetyStatus  String   @default("UNKNOWN") // SAFE, INJURED, MISSING, UNKNOWN
+  lastCheckinAt DateTime?
+}
+
+model Shelter {
+  id              String   @id @default(uuid())
+  name            String
+  district        String
+  latitude        Float
+  longitude       Float
+  capacity        Int      @default(200)
+  currentCount    Int      @default(0)
+  hasFood         Boolean  @default(true)
+  hasWater        Boolean  @default(true)
+  hasMedical      Boolean  @default(true)
+  isAccessible    Boolean  @default(true)
+  contactNumber   String?
+}
+
+model DisasterZone {
+  id          String   @id @default(uuid())
+  name        String
+  type        String   // FLOOD, CYCLONE, EARTHQUAKE, FIRE
+  riskLevel   String   // SAFE, WARNING, EVACUATION, DANGER
+  coordinates Json     // GeoJSON Polygon / array of [lat, lng]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model Alert {
+  id          String   @id @default(uuid())
+  title       String
+  message     String
+  severity    SeverityLevel @default(HIGH)
+  district    String?
+  hazardType  String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   // DISPATCH, ALERT, UPDATE, STATUS
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model FatigueRecord {
+  id            String            @id @default(uuid())
+  responderId   String
+  responder     ResponderProfile  @relation(fields: [responderId], references: [id], onDelete: Cascade)
+  hoursActive   Float
+  incidentsCount Int
+  fatigueScore  Float
+  recordedAt    DateTime          @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  action      String
+  entity      String
+  entityId    String?
+  details     Json?
+  ipAddress   String?
+  timestamp   DateTime @default(now())
+}
+
+model Prediction {
+  id            String   @id @default(uuid())
+  district      String
+  predictedType String
+  riskScore     Float
+  factors       Json
+  forecastTime  DateTime
+  createdAt     DateTime @default(now())
+}
