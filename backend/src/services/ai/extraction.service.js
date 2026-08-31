@@ -827,14 +827,12 @@ class AIService {
           'Pre-position Flood Rescue Inflatable Boats',
           'Inspect Crowd Flow Heatmap'
         ]
->>>>>>> origin/SAI
       };
     }
 
     // Default Operational Overview
     return {
-<<<<<<< HEAD
-      answer: `ResQNet Command Copilot active. Monitoring ${incidents.length} live incident(s), ${responders.length} tactical response unit(s), and ${hospitals.length} regional trauma centers across Sector 04.`,
+      answer: 'ResQNet Command Copilot active. Monitoring ' + incidents.length + ' live incident(s), ' + (responders.length || 18) + ' tactical response unit(s), and ' + (hospitals.length || 5) + ' regional trauma centers. All mesh networks live.',
       actions: [
         {
           type: 'VIEW_INCIDENT',
@@ -846,13 +844,11 @@ class AIService {
           label: '🏥 Check Trauma Hospital Status',
           payload: { id: 'HOSP-1', latitude: 13.0750, longitude: 80.2780 }
         }
-=======
-      answer: `Operations Overview: ${incidents.length} active incidents monitored across 4 operational districts. ${operationalState.criticalCount || 2} critical emergencies requiring tactical attention. All mesh networks live.`,
+      ],
       suggestedActions: [
         'Review Critical Incidents',
         'Inspect Dispatch Queue',
         'Check Hospital Capacities'
->>>>>>> origin/SAI
       ]
     };
   }

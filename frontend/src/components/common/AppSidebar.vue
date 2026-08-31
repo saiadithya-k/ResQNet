@@ -63,11 +63,27 @@
         </router-link>
         <router-link to="/citizen/voice" class="nav-item" @click="uiStore.closeSidebarOnMobile">
           <span class="icon">🎙️</span>
-          <span class="label">Multilingual Voice</span>
+          <span class="label">Multilingual Voice SOS</span>
+        </router-link>
+        <router-link to="/citizen/alerts" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+          <span class="icon">📢</span>
+          <span class="label">Public Safety Alerts</span>
         </router-link>
         <router-link to="/citizen/family" class="nav-item" @click="uiStore.closeSidebarOnMobile">
           <span class="icon">👨‍👩‍👧</span>
-          <span class="label">Family Safety</span>
+          <span class="label">Family Safety Circle</span>
+        </router-link>
+        <router-link to="/citizen/survivor" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+          <span class="icon">🟢</span>
+          <span class="label">Survivor Check-In</span>
+        </router-link>
+        <router-link to="/citizen/risk" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+          <span class="icon">🔮</span>
+          <span class="label">Risk & Hazard Models</span>
+        </router-link>
+        <router-link to="/citizen/emergencies" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+          <span class="icon">📋</span>
+          <span class="label">My Emergencies</span>
         </router-link>
       </div>
 
