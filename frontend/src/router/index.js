@@ -23,7 +23,9 @@ import CitizenRiskAwareness from '../views/citizen/CitizenRiskAwareness.vue';
 import ResponderDashboard from '../views/responder/ResponderDashboard.vue';
 import CommunityDashboard from '../views/community/CommunityDashboard.vue';
 import HospitalDashboard from '../views/hospital/HospitalDashboard.vue';
-import Login from '../views/auth/Login.vue';
+import LoginPortal from '../views/auth/LoginPortal.vue';
+import CitizenLogin from '../views/auth/CitizenLogin.vue';
+import OperationsLogin from '../views/auth/OperationsLogin.vue';
 
 const routes = [
   { path: '/', redirect: '/citizen' },
@@ -53,8 +55,10 @@ const routes = [
   { path: '/community', name: 'CommunityDashboard', component: CommunityDashboard, meta: { requiresAuth: true } },
   { path: '/hospital', name: 'HospitalDashboard', component: HospitalDashboard, meta: { requiresAuth: true } },
 
-  // Auth
-  { path: '/login', name: 'Login', component: Login, meta: { public: true } }
+  // Auth Gateways (Separate Citizen & Operations)
+  { path: '/login', name: 'LoginPortal', component: LoginPortal, meta: { public: true } },
+  { path: '/login/citizen', name: 'CitizenLogin', component: CitizenLogin, meta: { public: true } },
+  { path: '/login/operations', name: 'OperationsLogin', component: OperationsLogin, meta: { public: true } }
 ];
 
 const router = createRouter({
@@ -64,8 +68,8 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
-  if (to.path === '/login') {
-    // Allow viewing the login page directly
+  if (to.path.startsWith('/login')) {
+    // Allow viewing login portal and role-specific auth pages
     next();
   } else if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login');

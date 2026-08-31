@@ -45,10 +45,10 @@
       </div>
 
       <div class="user-pill">
-        <div class="avatar">{{ authStore.user?.name?.charAt(0) || 'A' }}</div>
+        <div class="avatar">{{ authStore.user?.name?.charAt(0) || authStore.user?.role?.charAt(0) || '👤' }}</div>
         <div class="user-meta">
-          <span class="user-name">{{ authStore.user?.name || 'Chief Miller' }}</span>
-          <span class="user-role badge-role">{{ authStore.user?.role || 'ADMIN' }}</span>
+          <span class="user-name">{{ authStore.user?.name || authStore.user?.mobileNumber || 'Guest User' }}</span>
+          <span class="user-role badge-role">{{ authStore.user?.role || 'GUEST' }}</span>
         </div>
         <button class="logout-btn" @click="handleLogout" title="Switch Account / Sign In">
           🚪
