@@ -29,10 +29,26 @@ exports.dispatchResponder = async (req, res, next) => {
     try {
       result = await dispatchService.assignResponder(trimmedIncidentId, trimmedResponderId, notes);
     } catch (dbErr) {
-      // If DB fails but mock exists, fall back gracefully to mock state
+      // If error is an explicit application/domain rejection (400, 404, 409), return it directly
+      if (dbErr instanceof AppError || dbErr.statusCode) {
+        return res.status(dbErr.statusCode).json({
+          success: false,
+          message: dbErr.message
+        });
+      }
+
+      // Handle Prisma write conflict / transaction serialization failure (P2034) or unique constraint (P2002) as 409 Conflict
+      if (dbErr.code === 'P2034' || dbErr.code === 'P2002') {
+        return res.status(409).json({
+          success: false,
+          message: 'Concurrent dispatch conflict: this unit or incident was just assigned by another operator.'
+        });
+      }
+
+      // If DB fails due to connection/offline error but mock exists, fall back gracefully to mock state
       if (mockIncident && mockResponder) {
-        if (mockResponder.status === 'DISPATCHED' && mockResponder.assignedIncidentId && mockResponder.assignedIncidentId !== mockIncident.id) {
-          return res.status(400).json({
+        if (mockResponder.status === 'DISPATCHED' && mockResponder.assignedIncidentId) {
+          return res.status(409).json({
             success: false,
             message: `Unit ${mockResponder.name} (${mockResponder.badgeNumber}) is currently assigned to Incident #${mockResponder.assignedIncidentId}`
           });
