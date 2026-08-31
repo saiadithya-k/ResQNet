@@ -7,11 +7,11 @@
       @click="uiStore.closeSidebarOnMobile"
     ></div>
 
-    <!-- Sliding Tactical Sidebar -->
-    <aside :class="['tactical-sidebar', { 'sidebar-collapsed': !uiStore.sidebarOpen }]">
+    <!-- Sliding Role-Specific Sidebar -->
+    <aside :class="['tactical-sidebar', { 'sidebar-collapsed': !uiStore.sidebarOpen }, isCitizen ? 'citizen-sidebar-theme' : 'ops-sidebar-theme']">
       <!-- Sidebar Header / Slide Collapse Control -->
       <div class="sidebar-header">
-        <span class="header-label">TACTICAL CONSOLE</span>
+        <span class="header-label">{{ sidebarTitle }}</span>
         <button
           class="slide-btn"
           @click="uiStore.toggleSidebar"
@@ -21,96 +21,230 @@
         </button>
       </div>
 
-      <!-- Command & GIS (Team 3) -->
-      <div class="nav-group">
-        <div class="group-title">COMMAND & GIS (TEAM 3)</div>
-        <router-link to="/admin/command" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-          <span class="icon">🚨</span>
-          <span class="label">Command Center</span>
-        </router-link>
-        <router-link to="/admin/disaster" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-          <span class="icon">🌪️</span>
-          <span class="label">Disaster Mode</span>
-        </router-link>
-        <router-link to="/admin/simulation" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-          <span class="icon">🧪</span>
-          <span class="label">Disaster Simulator</span>
-        </router-link>
-        <router-link to="/admin/analytics" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-          <span class="icon">📊</span>
-          <span class="label">Command Analytics</span>
-        </router-link>
-        <router-link to="/admin/evidence" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-          <span class="icon">🔐</span>
-          <span class="label">Evidence Vault (SHA)</span>
-        </router-link>
-        <router-link to="/admin/audit" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-          <span class="icon">🧾</span>
-          <span class="label">Audit Logs</span>
-        </router-link>
-      </div>
+      <!-- ================= 1. CITIZEN EXCLUSIVE NAVIGATION ================= -->
+      <template v-if="isCitizen">
+        <!-- Emergency & Safety -->
+        <div class="nav-group">
+          <div class="group-title">EMERGENCY & SAFETY</div>
+          <router-link to="/citizen" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">🏠</span>
+            <span class="label">Citizen Dashboard</span>
+          </router-link>
+          <router-link to="/citizen/report" class="nav-item emergency-highlight" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">🚨</span>
+            <span class="label">Report Incident</span>
+          </router-link>
+          <router-link to="/citizen/voice" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">🎙️</span>
+            <span class="label">Multilingual Voice SOS</span>
+          </router-link>
+          <router-link to="/citizen/alerts" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">📢</span>
+            <span class="label">Public Safety Alerts</span>
+          </router-link>
+        </div>
 
-      <!-- Citizen & AI (Team 1) -->
-      <div class="nav-group">
-        <div class="group-title">CITIZEN & AI (TEAM 1)</div>
-        <router-link to="/citizen" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-          <span class="icon">👤</span>
-          <span class="label">Citizen Portal</span>
-        </router-link>
-        <router-link to="/citizen/report" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-          <span class="icon">📝</span>
-          <span class="label">Report Incident</span>
-        </router-link>
-        <router-link to="/citizen/voice" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-          <span class="icon">🎙️</span>
-          <span class="label">Multilingual Voice SOS</span>
-        </router-link>
-        <router-link to="/citizen/alerts" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-          <span class="icon">📢</span>
-          <span class="label">Public Safety Alerts</span>
-        </router-link>
-        <router-link to="/citizen/family" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-          <span class="icon">👨‍👩‍👧</span>
-          <span class="label">Family Safety Circle</span>
-        </router-link>
-        <router-link to="/citizen/survivor" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-          <span class="icon">🟢</span>
-          <span class="label">Survivor Check-In</span>
-        </router-link>
-        <router-link to="/citizen/risk" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-          <span class="icon">🔮</span>
-          <span class="label">Risk & Hazard Models</span>
-        </router-link>
-        <router-link to="/citizen/emergencies" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-          <span class="icon">📋</span>
-          <span class="label">My Emergencies</span>
-        </router-link>
-      </div>
+        <!-- My Safety Circle -->
+        <div class="nav-group">
+          <div class="group-title">MY SAFETY & TRACKING</div>
+          <router-link to="/citizen/emergencies" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">📋</span>
+            <span class="label">My Emergencies</span>
+          </router-link>
+          <router-link to="/citizen/family" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">👨‍👩‍👧</span>
+            <span class="label">Family Safety Circle</span>
+          </router-link>
+          <router-link to="/citizen/survivor" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">🟢</span>
+            <span class="label">Survivor Check-In</span>
+          </router-link>
+          <router-link to="/citizen/risk" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">🔮</span>
+            <span class="label">Risk & Hazard Models</span>
+          </router-link>
+        </div>
 
-      <!-- Response & Hospital (Team 2) -->
-      <div class="nav-group">
-        <div class="group-title">RESPONSE & HOSPITAL (TEAM 2)</div>
-        <router-link to="/responder" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-          <span class="icon">🚑</span>
-          <span class="label">Responder Units</span>
-        </router-link>
-        <router-link to="/community" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-          <span class="icon">🧑‍🚒</span>
-          <span class="label">Community Mesh</span>
-        </router-link>
-        <router-link to="/hospital" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-          <span class="icon">🏥</span>
-          <span class="label">Hospital Capacity</span>
-        </router-link>
-      </div>
+        <!-- Account -->
+        <div class="nav-group">
+          <div class="group-title">ACCOUNT</div>
+          <router-link to="/citizen/profile" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">👤</span>
+            <span class="label">Citizen Profile</span>
+          </router-link>
+          <button class="nav-item logout-nav-btn" @click="handleLogout">
+            <span class="icon">🚪</span>
+            <span class="label">Logout</span>
+          </button>
+        </div>
+      </template>
+
+      <!-- ================= 2. ADMIN / DISPATCHER NAVIGATION ================= -->
+      <template v-else-if="isAdminOrDispatcher">
+        <!-- Command & Operations -->
+        <div class="nav-group">
+          <div class="group-title">COMMAND & OPERATIONS</div>
+          <router-link to="/admin/command" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">🚨</span>
+            <span class="label">Command Center</span>
+          </router-link>
+          <router-link to="/admin/disaster" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">🌪️</span>
+            <span class="label">Disaster Mode</span>
+          </router-link>
+          <router-link to="/admin/simulation" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">🧪</span>
+            <span class="label">Disaster Simulator</span>
+          </router-link>
+          <router-link to="/admin/analytics" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">📊</span>
+            <span class="label">Command Analytics</span>
+          </router-link>
+          <router-link to="/admin/evidence" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">🔐</span>
+            <span class="label">Evidence Vault (SHA)</span>
+          </router-link>
+          <router-link to="/admin/audit" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">🧾</span>
+            <span class="label">Audit Logs</span>
+          </router-link>
+        </div>
+
+        <!-- Tactical Resource Mesh -->
+        <div class="nav-group">
+          <div class="group-title">RESOURCE & RESPONSE MESH</div>
+          <router-link to="/responder" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">🚑</span>
+            <span class="label">Responder Units</span>
+          </router-link>
+          <router-link to="/community" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">🧑‍🚒</span>
+            <span class="label">Community Mesh</span>
+          </router-link>
+          <router-link to="/hospital" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">🏥</span>
+            <span class="label">Hospital Capacity</span>
+          </router-link>
+        </div>
+
+        <!-- Account -->
+        <div class="nav-group">
+          <div class="group-title">ACCOUNT</div>
+          <button class="nav-item logout-nav-btn" @click="handleLogout">
+            <span class="icon">🚪</span>
+            <span class="label">Logout</span>
+          </button>
+        </div>
+      </template>
+
+      <!-- ================= 3. RESPONDER NAVIGATION ================= -->
+      <template v-else-if="isResponder">
+        <div class="nav-group">
+          <div class="group-title">FIELD RESPONSE CONSOLE</div>
+          <router-link to="/responder" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">🚑</span>
+            <span class="label">Responder Dashboard</span>
+          </router-link>
+          <router-link to="/hospital" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">🏥</span>
+            <span class="label">Hospital Intake Mesh</span>
+          </router-link>
+          <router-link to="/citizen/alerts" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">📢</span>
+            <span class="label">Public Safety Alerts</span>
+          </router-link>
+        </div>
+
+        <div class="nav-group">
+          <div class="group-title">ACCOUNT</div>
+          <button class="nav-item logout-nav-btn" @click="handleLogout">
+            <span class="icon">🚪</span>
+            <span class="label">Logout</span>
+          </button>
+        </div>
+      </template>
+
+      <!-- ================= 4. COMMUNITY RESPONDER NAVIGATION ================= -->
+      <template v-else-if="isCommunity">
+        <div class="nav-group">
+          <div class="group-title">COMMUNITY MESH CONSOLE</div>
+          <router-link to="/community" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">🧑‍🚒</span>
+            <span class="label">Community Dashboard</span>
+          </router-link>
+          <router-link to="/citizen/alerts" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">📢</span>
+            <span class="label">Public Safety Alerts</span>
+          </router-link>
+        </div>
+
+        <div class="nav-group">
+          <div class="group-title">ACCOUNT</div>
+          <button class="nav-item logout-nav-btn" @click="handleLogout">
+            <span class="icon">🚪</span>
+            <span class="label">Logout</span>
+          </button>
+        </div>
+      </template>
+
+      <!-- ================= 5. HOSPITAL NAVIGATION ================= -->
+      <template v-else-if="isHospital">
+        <div class="nav-group">
+          <div class="group-title">HOSPITAL NETWORK</div>
+          <router-link to="/hospital" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">🏥</span>
+            <span class="label">Hospital Capacity & Intake</span>
+          </router-link>
+          <router-link to="/citizen/alerts" class="nav-item" @click="uiStore.closeSidebarOnMobile">
+            <span class="icon">📢</span>
+            <span class="label">Public Safety Alerts</span>
+          </router-link>
+        </div>
+
+        <div class="nav-group">
+          <div class="group-title">ACCOUNT</div>
+          <button class="nav-item logout-nav-btn" @click="handleLogout">
+            <span class="icon">🚪</span>
+            <span class="label">Logout</span>
+          </button>
+        </div>
+      </template>
     </aside>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useUiStore } from '../../stores/uiStore';
+import { useAuthStore } from '../../stores/authStore';
 
+const router = useRouter();
 const uiStore = useUiStore();
+const authStore = useAuthStore();
+
+const userRole = computed(() => (authStore.user?.role || 'CITIZEN').toUpperCase());
+
+const isCitizen = computed(() => userRole.value === 'CITIZEN');
+const isAdminOrDispatcher = computed(() => ['ADMIN', 'DISPATCHER'].includes(userRole.value));
+const isResponder = computed(() => userRole.value === 'RESPONDER');
+const isCommunity = computed(() => userRole.value === 'COMMUNITY_RESPONDER');
+const isHospital = computed(() => userRole.value === 'HOSPITAL');
+
+const sidebarTitle = computed(() => {
+  if (isCitizen.value) return 'CITIZEN PORTAL';
+  if (isAdminOrDispatcher.value) return 'TACTICAL CONSOLE';
+  if (isResponder.value) return 'FIELD EMT CONSOLE';
+  if (isCommunity.value) return 'COMMUNITY CONSOLE';
+  if (isHospital.value) return 'HOSPITAL MESH';
+  return 'RESQNET PORTAL';
+});
+
+function handleLogout() {
+  authStore.logout();
+  uiStore.closeSidebarOnMobile();
+  router.push('/');
+}
 </script>
 
 <style scoped>
@@ -240,5 +374,42 @@ const uiStore = useUiStore();
 
 .nav-item .icon {
   font-size: 1rem;
+}
+
+.citizen-sidebar-theme {
+  border-right-color: rgba(16, 185, 129, 0.3);
+}
+
+.citizen-sidebar-theme .nav-item.router-link-active {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.emergency-highlight {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  color: #fca5a5 !important;
+}
+
+.emergency-highlight:hover {
+  background: rgba(239, 68, 68, 0.25) !important;
+  border-color: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+.logout-nav-btn {
+  background: transparent;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  color: #f87171;
+}
+
+.logout-nav-btn:hover {
+  background: rgba(239, 68, 68, 0.15) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  color: #fca5a5 !important;
 }
 </style>

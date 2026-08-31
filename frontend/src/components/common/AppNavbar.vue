@@ -46,21 +46,63 @@
         <span class="val text-red">{{ incidentStore.criticalIncidents.length }}</span>
       </div>
 
-      <div class="user-pill">
-        <div class="avatar">{{ authStore.user?.name?.charAt(0) || authStore.user?.role?.charAt(0) || '👤' }}</div>
-        <div class="user-meta">
-          <span class="user-name">{{ authStore.user?.name || authStore.user?.mobileNumber || 'Guest User' }}</span>
-          <span class="user-role badge-role">{{ authStore.user?.role || 'GUEST' }}</span>
+      <!-- Interactive User Account Menu -->
+      <div class="user-menu-wrapper">
+        <div class="user-pill" @click="toggleUserMenu" title="Account Menu">
+          <div class="avatar">{{ authStore.user?.name?.charAt(0) || authStore.user?.role?.charAt(0) || '👤' }}</div>
+          <div class="user-meta">
+            <span class="user-name">{{ authStore.user?.name || authStore.user?.mobileNumber || 'Guest User' }}</span>
+            <span class="user-role badge-role">{{ authStore.user?.role || 'CITIZEN' }}</span>
+          </div>
+          <span class="dropdown-caret">{{ userMenuOpen ? '▲' : '▼' }}</span>
         </div>
-        <button class="logout-btn" @click="handleLogout" title="Switch Account / Sign In">
-          🚪
-        </button>
+
+        <!-- Dropdown Menu -->
+        <div v-if="userMenuOpen" class="user-dropdown-menu">
+          <div class="dropdown-header">
+            <div class="dh-name">{{ authStore.user?.name || 'Verified User' }}</div>
+            <div class="dh-mobile" v-if="authStore.user?.mobileNumber">📱 {{ authStore.user.mobileNumber }}</div>
+            <span class="dh-badge">{{ authStore.user?.role || 'CITIZEN' }}</span>
+          </div>
+
+          <div class="dropdown-actions">
+            <router-link
+              v-if="authStore.user?.role === 'CITIZEN'"
+              to="/citizen/profile"
+              class="dropdown-item"
+              @click="userMenuOpen = false"
+            >
+              <span class="di-icon">👤</span> My Citizen Profile
+            </router-link>
+            <router-link
+              v-if="authStore.user?.role === 'CITIZEN'"
+              to="/citizen/emergencies"
+              class="dropdown-item"
+              @click="userMenuOpen = false"
+            >
+              <span class="di-icon">📋</span> My Emergencies
+            </router-link>
+            <router-link
+              v-if="['ADMIN', 'DISPATCHER'].includes(authStore.user?.role)"
+              to="/admin/command"
+              class="dropdown-item"
+              @click="userMenuOpen = false"
+            >
+              <span class="di-icon">🚨</span> Tactical Command
+            </router-link>
+
+            <button class="dropdown-item logout-item" @click="handleLogout">
+              <span class="di-icon">🚪</span> Logout
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </header>
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../stores/authStore';
 import { useIncidentStore } from '../../stores/incidentStore';
@@ -73,10 +115,31 @@ const incidentStore = useIncidentStore();
 const disasterStore = useDisasterStore();
 const uiStore = useUiStore();
 
-function handleLogout() {
-  authStore.logout();
-  router.push('/login');
+const userMenuOpen = ref(false);
+
+function toggleUserMenu() {
+  userMenuOpen.value = !userMenuOpen.value;
 }
+
+function handleLogout() {
+  userMenuOpen.value = false;
+  authStore.logout();
+  router.push('/');
+}
+
+function handleDocumentClick(e) {
+  if (!e.target.closest('.user-menu-wrapper')) {
+    userMenuOpen.value = false;
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleDocumentClick);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleDocumentClick);
+});
 </script>
 
 <style scoped>
@@ -250,6 +313,10 @@ function handleLogout() {
   color: #94a3b8;
 }
 
+.user-menu-wrapper {
+  position: relative;
+}
+
 .user-pill {
   display: flex;
   align-items: center;
@@ -258,56 +325,119 @@ function handleLogout() {
   padding: 0.25rem 0.75rem 0.25rem 0.25rem;
   border-radius: 9999px;
   border: 1px solid rgba(51, 65, 85, 0.6);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
 }
 
-.avatar {
-  width: 32px;
-  height: 32px;
-  background: #3b82f6;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.875rem;
+.user-pill:hover {
+  background: rgba(51, 65, 85, 0.8);
+  border-color: rgba(59, 130, 246, 0.5);
 }
 
-.user-meta {
+.dropdown-caret {
+  font-size: 0.55rem;
+  color: #94a3b8;
+  margin-left: 0.15rem;
+}
+
+.user-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 230px;
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  backdrop-filter: blur(20px);
+  border-radius: 12px;
+  padding: 0.75rem;
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
+  box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.7), 0 0 15px rgba(59, 130, 246, 0.15);
+  z-index: 1100;
+  animation: dropdown-fade 0.15s ease-out;
 }
 
-.user-name {
-  font-size: 0.75rem;
-  font-weight: 600;
+@keyframes dropdown-fade {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-header {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.dh-name {
+  font-size: 0.85rem;
+  font-weight: 700;
   color: #f8fafc;
-  line-height: 1.2;
 }
 
-.badge-role {
-  font-size: 0.6rem;
+.dh-mobile {
+  font-size: 0.7rem;
+  color: #94a3b8;
   font-family: var(--font-mono);
-  color: #60a5fa;
 }
 
-.logout-btn {
+.dh-badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  width: fit-content;
+  margin-top: 0.2rem;
+  font-family: var(--font-mono);
+}
+
+.dropdown-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.775rem;
+  color: #cbd5e1;
+  text-decoration: none;
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 0.95rem;
-  padding: 0.2rem 0.4rem;
-  border-radius: 6px;
-  opacity: 0.75;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100%;
+  text-align: left;
+  transition: all 0.15s ease;
 }
 
-.logout-btn:hover {
-  opacity: 1;
-  background: rgba(239, 68, 68, 0.25);
-  transform: scale(1.1);
+.dropdown-item:hover {
+  background: rgba(30, 41, 59, 0.8);
+  color: #38bdf8;
+}
+
+.logout-item {
+  color: #f87171;
+  border-top: 1px solid rgba(51, 65, 85, 0.5);
+  margin-top: 0.25rem;
+  padding-top: 0.6rem;
+}
+
+.logout-item:hover {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #fca5a5 !important;
+}
+
+.di-icon {
+  font-size: 0.95rem;
 }
 </style>
