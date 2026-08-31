@@ -10,8 +10,8 @@ module.exports = (req, res, next) => {
     }
 
     if (!token) {
-      // Default to guest/demo user in dev mode if not provided, for easy testing
-      req.user = { id: 'demo-admin-id', email: 'admin@resqnet.org', role: 'ADMIN', name: 'Command Chief' };
+      // Default to guest/citizen user in dev mode if not provided, for least-privilege security
+      req.user = { id: 'demo-citizen-id', email: 'citizen@resqnet.org', role: 'CITIZEN', name: 'Verified Citizen' };
       return next();
     }
 

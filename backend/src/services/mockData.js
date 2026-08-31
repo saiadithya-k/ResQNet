@@ -339,6 +339,11 @@ const mockState = {
     { id: 'SURV-03', fullName: 'Kavitha Nathan', phone: '+91 94440 98765', status: 'INJURED', district: 'Central Zone', shelterName: 'Metro Central Triage', time: '10:39' },
     { id: 'SURV-04', fullName: 'Sanjay Nathan', phone: '+91 94440 98766', status: 'MISSING', district: 'Central Zone', shelterName: 'Unknown', time: '10:41' }
   ],
+  familyMembers: [
+    { id: 'FAM-01', name: 'Father (Ramesh Sundaram)', relationship: 'Father', status: 'SAFE', location: 'City Memorial Stadium Shelter', time: '10:34' },
+    { id: 'FAM-02', name: 'Mother (Kavitha Sundaram)', relationship: 'Mother', status: 'INJURED', location: 'Metro General Hospital Triage', time: '10:39' },
+    { id: 'FAM-03', name: 'Brother (Sanjay Sundaram)', relationship: 'Brother', status: 'MISSING', location: 'Near Harbour Road Sector 4', time: '10:41' }
+  ],
   evidenceRecords: [
     {
       id: 'EV-1092',
@@ -393,9 +398,51 @@ const mockState = {
   ],
   auditLogs: [
     { id: 'AUD-01', user: 'Admin Miller', action: 'DISPATCH_APPROVED', entity: 'Incident INC-1042', details: 'Assigned Ambulance A12 and CFR-892', time: '10:32:15' },
-    { id: 'AUD-02', user: 'AI Engine', action: 'PRIORITY_COMPUTED', entity: 'Incident INC-1042', details: 'Score set to 96 (CRITICAL, 8 trapped)', time: '10:31:50' },
-    { id: 'AUD-03', user: 'Dispatcher Davis', action: 'RESOURCE_TRANSFER_REQUESTED', entity: '3 Ambulances from District B', details: 'Approved inter-district emergency mutual aid', time: '10:30:10' },
-    { id: 'AUD-04', user: 'Admin Miller', action: 'DISASTER_ZONE_DECLARED', entity: 'Zone Harbour Collapse', details: 'Danger perimeter established with road blocks', time: '10:25:00' }
+    { id: 'AUD-02', user: 'Admin Miller', action: 'INCIDENT_ESCALATED', entity: 'Incident INC-1042', details: 'Dynamic Priority raised to 96 (Collapse severity CRITICAL)', time: '10:32:00' },
+    { id: 'AUD-03', user: 'System (AI)', action: 'TRIAGE_COMPLETED', entity: 'Incident INC-1043', details: 'Extracted: HAZMAT, 2 victims, Distressed', time: '10:15:30' }
+  ],
+  citizenProfile: {
+    id: 'CIT-9802',
+    name: 'Vignesh Kumar',
+    email: 'vignesh.kumar@resqnet.org',
+    phone: '+91 98401 55678',
+    bloodGroup: 'O+',
+    address: 'Flat 4B, Emerald Towers, 42 Harbour Road, Central Zone',
+    language: 'Tamil & English',
+    medicalNotes: 'No known drug allergies. Asthmatic (inhaler carried).',
+    emergencyContacts: [
+      { id: 'EC-01', name: 'Ramesh Sundaram', relationship: 'Father', phone: '+91 98401 23456', isPrimary: true },
+      { id: 'EC-02', name: 'Dr. S. Radhakrishnan', relationship: 'Family Physician', phone: '+91 94440 11223', isPrimary: false }
+    ]
+  },
+  citizenNotifications: [
+    {
+      id: 'NOTIF-01',
+      title: 'RESPONDER UNIT EN ROUTE',
+      message: 'Ambulance Unit Alpha-12 has been dispatched to INC-1042.',
+      category: 'RESPONDER',
+      time: '10:33 AM',
+      read: false,
+      incidentId: 'INC-1042'
+    },
+    {
+      id: 'NOTIF-02',
+      title: 'SURVIVOR STATUS SYNCHRONIZED',
+      message: 'Father (Ramesh Sundaram) checked in as SAFE at City Memorial Stadium.',
+      category: 'FAMILY_SAFETY',
+      time: '10:34 AM',
+      read: false,
+      incidentId: null
+    },
+    {
+      id: 'NOTIF-03',
+      title: 'FLASH FLOOD ADVISORY ISSUED',
+      message: 'Civil Defense has issued a CRITICAL Flood Warning for Riverbank South.',
+      category: 'PUBLIC_ALERT',
+      time: '10:10 AM',
+      read: true,
+      incidentId: null
+    }
   ]
 };
 

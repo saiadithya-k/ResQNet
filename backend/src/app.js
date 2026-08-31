@@ -65,6 +65,7 @@ app.use('/api/routes', routeRoutes);
 app.use('/api/survivors', survivorRoutes);
 app.use('/api/disasters', disasterRoutes);
 app.use('/api/predictions', predictionRoutes);
+app.use('/api/prediction', predictionRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/evidence', evidenceRoutes);

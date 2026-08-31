@@ -49,7 +49,8 @@ exports.createIncident = (req, res) => {
     aiEmotionState: aiEnrichment.emotion.state,
     aiEmotionScore: aiEnrichment.emotion.score,
     aiUrgencyScore: aiEnrichment.emotion.score,
-    mediaUrl: mediaUrl || null,
+    mediaUrl: mediaUrl || (req.body.evidenceFiles && req.body.evidenceFiles[0]?.url) || null,
+    evidenceFiles: [],
     createdAt: new Date().toISOString(),
     timeline: [
       { time: new Date().toLocaleTimeString().slice(0, 5), title: 'Reported', description: 'Submitted by citizen' },
@@ -57,14 +58,83 @@ exports.createIncident = (req, res) => {
     ]
   };
 
+  // Associate attached evidence files
+  if (req.body.evidenceFiles && Array.isArray(req.body.evidenceFiles)) {
+    newIncident.evidenceFiles = req.body.evidenceFiles.map(ev => {
+      const match = mockState.evidenceRecords.find(e => e.id === ev.id || e.fileName === ev.fileName);
+      if (match) {
+        match.incidentId = newIncident.id;
+        return match;
+      }
+      return { ...ev, incidentId: newIncident.id };
+    });
+
+    if (newIncident.evidenceFiles.length > 0) {
+      newIncident.timeline.push({
+        time: new Date().toLocaleTimeString().slice(0, 5),
+        title: 'Evidence Attached',
+        description: `${newIncident.evidenceFiles.length} media file(s) sealed with SHA-256 chain of custody`
+      });
+    }
+  }
+
+  // Duplicate Analysis & Spatial-Temporal Clustering
+  const dupCheck = aiService.detectDuplicates(newIncident, mockState.incidents);
+  if (dupCheck.isDuplicate && dupCheck.primaryIncidentId) {
+    const primary = mockState.incidents.find(i => i.id === dupCheck.primaryIncidentId);
+    if (primary) {
+      newIncident.status = 'DUPLICATE';
+      newIncident.duplicateOf = primary.id;
+      newIncident.similarityScore = dupCheck.similarityScore;
+      newIncident.similarityFactors = dupCheck.factors;
+
+      newIncident.timeline.push({
+        time: new Date().toLocaleTimeString().slice(0, 5),
+        title: 'Duplicate Linked',
+        description: `Linked to primary emergency ${primary.id} (Similarity: ${Math.round(dupCheck.similarityScore * 100)}%)`
+      });
+
+      // Attach as supporting report to primary incident without deleting original report
+      if (!primary.supportingReports) primary.supportingReports = [];
+      primary.supportingReports.push({
+        id: newIncident.id,
+        reportedAt: newIncident.createdAt,
+        title: newIncident.title,
+        description: newIncident.description,
+        evidenceFiles: newIncident.evidenceFiles || [],
+        similarityScore: dupCheck.similarityScore,
+        factors: dupCheck.factors
+      });
+
+      // Merge evidence files into primary incident's evidence collection
+      if (newIncident.evidenceFiles && newIncident.evidenceFiles.length > 0) {
+        if (!primary.evidenceFiles) primary.evidenceFiles = [];
+        primary.evidenceFiles.push(...newIncident.evidenceFiles);
+      }
+
+      primary.timeline.push({
+        time: new Date().toLocaleTimeString().slice(0, 5),
+        title: 'Supporting Report Linked',
+        description: `Citizen report ${newIncident.id} linked (${dupCheck.factors.slice(0, 2).join(', ')})`
+      });
+    }
+  }
+
   mockState.incidents.unshift(newIncident);
 
   // Emit real-time event
   const io = req.app.get('io');
-  if (io) io.emit('incident:created', newIncident);
+  if (io) {
+    io.emit('incident:created', newIncident);
+    if (newIncident.duplicateOf) {
+      const primary = mockState.incidents.find(i => i.id === newIncident.duplicateOf);
+      if (primary) io.emit('incident:updated', primary);
+    }
+  }
 
   res.status(201).json({ success: true, data: newIncident });
 };
+
 
 exports.updateIncidentStatus = (req, res) => {
   const incident = mockState.incidents.find(i => i.id === req.params.id);

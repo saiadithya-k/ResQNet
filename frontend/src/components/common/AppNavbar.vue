@@ -1,7 +1,16 @@
 <template>
   <header class="tactical-navbar">
-    <!-- Brand Logo & Live Radar Indicator -->
+    <!-- Brand Logo & Live Radar Indicator + Slide Toggle -->
     <div class="brand-section">
+      <!-- Sidebar Slide Toggle Button -->
+      <button
+        class="sidebar-slide-toggle"
+        @click="uiStore.toggleSidebar"
+        :title="uiStore.sidebarOpen ? 'Slide Close Sidebar' : 'Slide Open Sidebar'"
+      >
+        <span class="toggle-icon">{{ uiStore.sidebarOpen ? '◀' : '☰' }}</span>
+      </button>
+
       <div class="logo-icon">
         <span class="pulse-radar"></span>
         🚨
@@ -50,10 +59,12 @@
 import { useAuthStore } from '../../stores/authStore';
 import { useIncidentStore } from '../../stores/incidentStore';
 import { useDisasterStore } from '../../stores/disasterStore';
+import { useUiStore } from '../../stores/uiStore';
 
 const authStore = useAuthStore();
 const incidentStore = useIncidentStore();
 const disasterStore = useDisasterStore();
+const uiStore = useUiStore();
 </script>
 
 <style scoped>
@@ -65,8 +76,9 @@ const disasterStore = useDisasterStore();
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.5rem;
+  padding: 0 1.25rem;
   z-index: 1000;
+  position: relative;
 }
 
 .brand-section {
@@ -75,14 +87,36 @@ const disasterStore = useDisasterStore();
   gap: 0.875rem;
 }
 
-.logo-icon {
-  position: relative;
-  font-size: 1.6rem;
+.sidebar-slide-toggle {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #94a3b8;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1.1rem;
+}
+
+.sidebar-slide-toggle:hover {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border-color: #3b82f6;
+  transform: scale(1.05);
+}
+
+.logo-icon {
+  position: relative;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
   background: rgba(30, 41, 59, 0.8);
   border: 1px solid rgba(59, 130, 246, 0.4);
   border-radius: 10px;
@@ -118,7 +152,6 @@ const disasterStore = useDisasterStore();
   color: #94a3b8;
   font-family: var(--font-mono);
   letter-spacing: 0.05em;
-  text-transform: uppercase;
 }
 
 .center-banner {
@@ -130,39 +163,24 @@ const disasterStore = useDisasterStore();
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(15, 23, 42, 0.8);
-  padding: 0.35rem 0.85rem;
+  padding: 0.35rem 0.875rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
   border-radius: 9999px;
-  border: 1px solid rgba(16, 185, 129, 0.4);
   font-size: 0.75rem;
-  font-family: var(--font-mono);
   font-weight: 600;
-  color: #6ee7b7;
+  color: #34d399;
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
 }
 
 .status-dot {
   width: 8px;
   height: 8px;
+  background: #10b981;
   border-radius: 50%;
-  background-color: #10b981;
   box-shadow: 0 0 8px #10b981;
-  animation: blink 1.5s infinite;
-}
-
-.disaster-active-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: rgba(220, 38, 38, 0.25);
-  border: 1px solid #ef4444;
-  padding: 0.35rem 1rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-family: var(--font-mono);
-  font-weight: 700;
-  color: #fca5a5;
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
-  animation: pulse-border 1.5s infinite;
+  animation: blink 1.5s ease-in-out infinite;
 }
 
 @keyframes blink {
@@ -170,10 +188,30 @@ const disasterStore = useDisasterStore();
   50% { opacity: 0.4; }
 }
 
+.disaster-active-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid #ef4444;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #f87171;
+  font-family: var(--font-mono);
+  animation: pulse-danger 1.5s infinite;
+}
+
+@keyframes pulse-danger {
+  0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); }
+}
+
 .right-section {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .quick-kpi {
@@ -182,41 +220,37 @@ const disasterStore = useDisasterStore();
   gap: 0.375rem;
   font-size: 0.75rem;
   font-family: var(--font-mono);
+  background: rgba(30, 41, 59, 0.5);
+  padding: 0.35rem 0.625rem;
+  border-radius: 6px;
+  border: 1px solid rgba(51, 65, 85, 0.5);
 }
 
 .quick-kpi .label {
-  color: #64748b;
+  color: #94a3b8;
 }
-
-.quick-kpi .val {
-  font-weight: 700;
-  font-size: 0.9rem;
-}
-
-.text-amber { color: #f59e0b; }
-.text-red { color: #ef4444; }
 
 .user-pill {
   display: flex;
   align-items: center;
   gap: 0.625rem;
-  background: rgba(30, 41, 59, 0.6);
-  padding: 0.25rem 0.75rem 0.25rem 0.35rem;
+  background: rgba(30, 41, 59, 0.7);
+  padding: 0.25rem 0.75rem 0.25rem 0.25rem;
   border-radius: 9999px;
-  border: 1px solid #334155;
+  border: 1px solid rgba(51, 65, 85, 0.6);
 }
 
 .avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+  width: 32px;
+  height: 32px;
   background: #3b82f6;
+  color: white;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.8rem;
-  color: white;
+  font-size: 0.875rem;
 }
 
 .user-meta {
@@ -227,12 +261,13 @@ const disasterStore = useDisasterStore();
 .user-name {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #e2e8f0;
+  color: #f8fafc;
+  line-height: 1.2;
 }
 
 .badge-role {
-  font-size: 0.625rem;
-  color: #38bdf8;
+  font-size: 0.6rem;
   font-family: var(--font-mono);
+  color: #60a5fa;
 }
 </style>

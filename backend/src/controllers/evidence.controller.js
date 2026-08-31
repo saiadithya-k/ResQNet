@@ -1,8 +1,49 @@
 const crypto = require('crypto');
+const fs = require('fs');
 const mockState = require('../services/mockData');
 
 exports.getEvidenceList = (req, res) => {
   res.json({ success: true, count: mockState.evidenceRecords.length, data: mockState.evidenceRecords });
+};
+
+exports.uploadEvidence = (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No media file received' });
+  }
+
+  let hash = '';
+  try {
+    const fileBuffer = fs.readFileSync(req.file.path);
+    hash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+  } catch (e) {
+    hash = crypto.createHash('sha256').update(req.file.originalname + Date.now()).digest('hex');
+  }
+
+  const sizeFormatted = req.file.size > 1024 * 1024
+    ? `${(req.file.size / (1024 * 1024)).toFixed(1)} MB`
+    : `${Math.round(req.file.size / 1024)} KB`;
+
+  const record = {
+    id: `EV-${1100 + mockState.evidenceRecords.length}`,
+    incidentId: req.body.incidentId || null,
+    fileName: req.file.originalname,
+    storedFileName: req.file.filename,
+    fileType: req.file.mimetype,
+    fileSize: sizeFormatted,
+    rawBytes: req.file.size,
+    url: `/uploads/${req.file.filename}`,
+    sha256Hash: hash,
+    status: 'VERIFIED',
+    uploader: req.body.uploader || 'Citizen Reporter',
+    timestamp: new Date().toISOString()
+  };
+
+  mockState.evidenceRecords.unshift(record);
+
+  res.status(201).json({
+    success: true,
+    data: record
+  });
 };
 
 exports.verifyEvidenceHash = (req, res) => {
@@ -47,3 +88,4 @@ exports.verifyEvidenceHash = (req, res) => {
     }
   });
 };
+
