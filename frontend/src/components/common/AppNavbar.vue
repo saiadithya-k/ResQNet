@@ -2,8 +2,9 @@
   <header class="tactical-navbar">
     <!-- Brand Logo & Live Radar Indicator + Slide Toggle -->
     <div class="brand-section">
-      <!-- Sidebar Slide Toggle Button -->
+      <!-- Sidebar Slide Toggle Button (Internal Screens Only) -->
       <button
+        v-if="!isPublicRoute"
         class="sidebar-slide-toggle"
         @click="uiStore.toggleSidebar"
         :title="uiStore.sidebarOpen ? 'Slide Close Sidebar' : 'Slide Open Sidebar'"
@@ -35,7 +36,7 @@
       </div>
     </div>
 
-    <!-- Quick Stats & User Profile -->
+    <!-- Quick Stats & User Profile / Sign In -->
     <div class="right-section">
       <div class="quick-kpi">
         <span class="label">ACTIVE:</span>
@@ -46,12 +47,12 @@
         <span class="val text-red">{{ incidentStore.criticalIncidents.length }}</span>
       </div>
 
-      <!-- Interactive User Account Menu -->
-      <div class="user-menu-wrapper">
+      <!-- Interactive User Account Menu (When Authenticated) -->
+      <div v-if="authStore.isAuthenticated && authStore.user" class="user-menu-wrapper">
         <div class="user-pill" @click="toggleUserMenu" title="Account Menu">
           <div class="avatar">{{ authStore.user?.name?.charAt(0) || authStore.user?.role?.charAt(0) || '👤' }}</div>
           <div class="user-meta">
-            <span class="user-name">{{ authStore.user?.name || authStore.user?.mobileNumber || 'Guest User' }}</span>
+            <span class="user-name">{{ authStore.user?.name || authStore.user?.mobileNumber || 'User' }}</span>
             <span class="user-role badge-role">{{ authStore.user?.role || 'CITIZEN' }}</span>
           </div>
           <span class="dropdown-caret">{{ userMenuOpen ? '▲' : '▼' }}</span>
@@ -97,23 +98,36 @@
           </div>
         </div>
       </div>
+
+      <!-- Sign In Button (When Unauthenticated) -->
+      <div v-else class="auth-actions">
+        <router-link to="/login" class="nav-signin-btn">
+          <span class="di-icon">🔐</span>
+          <span>Sign In</span>
+        </router-link>
+      </div>
     </div>
   </header>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/authStore';
 import { useIncidentStore } from '../../stores/incidentStore';
 import { useDisasterStore } from '../../stores/disasterStore';
 import { useUiStore } from '../../stores/uiStore';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const incidentStore = useIncidentStore();
 const disasterStore = useDisasterStore();
 const uiStore = useUiStore();
+
+const isPublicRoute = computed(() => {
+  return route.path === '/' || route.path.startsWith('/login');
+});
 
 const userMenuOpen = ref(false);
 
@@ -439,5 +453,34 @@ onUnmounted(() => {
 
 .di-icon {
   font-size: 0.95rem;
+}
+
+.auth-actions {
+  display: flex;
+  align-items: center;
+}
+
+.nav-signin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(30, 58, 138, 0.3));
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  color: #93c5fd;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.15);
+}
+
+.nav-signin-btn:hover {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.4), rgba(29, 78, 216, 0.5));
+  border-color: #3b82f6;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
 }
 </style>
