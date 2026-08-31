@@ -143,7 +143,7 @@
         <div class="feature-card">
           <div class="feature-icon">🗺️</div>
           <h3>Tactical GIS Command Center</h3>
-          <p>Interactive Leaflet GIS map with simulated GPS interpolation, hazard zone polygons, route vectors, and heatmaps.</p>
+          <p>Interactive MapLibre & OpenFreeMap Tactical GIS map with simulated GPS interpolation, hazard zone polygons, route vectors, and heatmaps.</p>
         </div>
 
         <div class="feature-card">

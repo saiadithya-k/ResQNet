@@ -190,7 +190,25 @@ h1, h2, h3, h4, h5, h6 {
   border-color: #64748b;
 }
 
-/* Leaflet dark theme fix */
+/* MapLibre GL & Tactical Map dark theme */
+.maplibregl-map {
+  background: #090e1a !important;
+  font-family: inherit;
+}
+
+.maplibregl-popup-content {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7);
+}
+
+.maplibregl-popup-tip {
+  border-top-color: #0f172a !important;
+}
+
+/* Leaflet compatibility fallback */
 .leaflet-container {
   background: #090e1a !important;
   font-family: inherit;

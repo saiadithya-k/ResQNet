@@ -267,10 +267,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import * as maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { useIncidentStore } from '../../stores/incidentStore';
 import { useSocketService } from '../../services/socketService';
 import api from '../../services/api';
@@ -299,8 +299,6 @@ async function loadIncident() {
     if (res.data?.data) {
       incident.value = res.data.data;
       lastSyncTime.value = new Date().toLocaleTimeString();
-      await nextTick();
-      initMap();
     } else {
       fetchError.value = 'Incident not found.';
     }
@@ -309,6 +307,10 @@ async function loadIncident() {
     fetchError.value = err.response?.data?.message || 'Unable to access incident records.';
   } finally {
     loading.value = false;
+    if (incident.value) {
+      await nextTick();
+      initMap();
+    }
   }
 }
 
@@ -317,6 +319,14 @@ function initMap() {
   const container = document.getElementById('citizen-incident-map');
   if (!container) return;
 
+  if (incidentMarker) {
+    incidentMarker.remove();
+    incidentMarker = null;
+  }
+  if (responderMarker) {
+    responderMarker.remove();
+    responderMarker = null;
+  }
   if (map) {
     map.remove();
     map = null;
@@ -325,43 +335,80 @@ function initMap() {
   const lat = incident.value.latitude || 13.0827;
   const lng = incident.value.longitude || 80.2707;
 
-  map = L.map('citizen-incident-map', {
-    center: [lat, lng],
+  map = new maplibregl.Map({
+    container: 'citizen-incident-map',
+    style: 'https://tiles.openfreemap.org/styles/liberty',
+    center: [lng, lat],
     zoom: 14,
-    zoomControl: false
+    attributionControl: true
   });
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19,
-    attribution: '© CartoDB'
-  }).addTo(map);
+  map.on('load', () => {
+    // Incident Marker
+    const incEl = document.createElement('div');
+    incEl.className = 'custom-incident-pin';
+    incEl.style.background = '#ef4444';
+    incEl.style.width = '16px';
+    incEl.style.height = '16px';
+    incEl.style.borderRadius = '50%';
+    incEl.style.border = '2px solid white';
+    incEl.style.boxShadow = '0 0 10px #ef4444';
 
-  // Incident Marker
-  const incidentIcon = L.divIcon({
-    className: 'custom-incident-pin',
-    html: `<div style="background:#ef4444; width:16px; height:16px; border-radius:50%; border:2px solid white; box-shadow:0 0 10px #ef4444;"></div>`,
-    iconSize: [16, 16],
-    iconAnchor: [8, 8]
+    const incPopup = new maplibregl.Popup({ offset: [0, -10] }).setHTML(
+      `<strong>Incident: ${incident.value.title}</strong><br>${incident.value.address}`
+    );
+
+    incidentMarker = new maplibregl.Marker({ element: incEl })
+      .setLngLat([lng, lat])
+      .setPopup(incPopup)
+      .addTo(map);
+
+    incidentMarker.togglePopup();
+
+    // If responder lat/lng exists
+    if (incident.value.responderLat && incident.value.responderLng) {
+      const rLat = incident.value.responderLat;
+      const rLng = incident.value.responderLng;
+
+      const respEl = document.createElement('div');
+      respEl.className = 'custom-resp-pin';
+      respEl.style.background = '#3b82f6';
+      respEl.style.width = '20px';
+      respEl.style.height = '20px';
+      respEl.style.borderRadius = '50%';
+      respEl.style.border = '2px solid white';
+      respEl.style.boxShadow = '0 0 10px #3b82f6';
+      respEl.style.display = 'flex';
+      respEl.style.alignItems = 'center';
+      respEl.style.justifyContent = 'center';
+      respEl.style.fontSize = '11px';
+      respEl.innerHTML = '🚑';
+
+      const respPopup = new maplibregl.Popup({ offset: [0, -10] }).setHTML(
+        '<strong>Assigned First Responder Unit</strong>'
+      );
+
+      responderMarker = new maplibregl.Marker({ element: respEl })
+        .setLngLat([rLng, rLat])
+        .setPopup(respPopup)
+        .addTo(map);
+
+      // Fit bounds
+      const minLng = Math.min(lng, rLng);
+      const maxLng = Math.max(lng, rLng);
+      const minLat = Math.min(lat, rLat);
+      const maxLat = Math.max(lat, rLat);
+
+      map.fitBounds([[minLng, minLat], [maxLng, maxLat]], {
+        padding: 40,
+        maxZoom: 15
+      });
+    }
+
+    setTimeout(() => {
+      if (map) map.resize();
+    }, 100);
   });
-
-  incidentMarker = L.marker([lat, lng], { icon: incidentIcon }).addTo(map);
-  incidentMarker.bindPopup(`<strong>Incident: ${incident.value.title}</strong><br>${incident.value.address}`).openPopup();
-
-  // If responder lat/lng exists
-  if (incident.value.responderLat && incident.value.responderLng) {
-    const respIcon = L.divIcon({
-      className: 'custom-resp-pin',
-      html: `<div style="background:#3b82f6; width:18px; height:18px; border-radius:50%; border:2px solid white; box-shadow:0 0 10px #3b82f6; display:flex; align-items:center; justify-content:center; font-size:10px;">🚑</div>`,
-      iconSize: [18, 18],
-      iconAnchor: [9, 9]
-    });
-    responderMarker = L.marker([incident.value.responderLat, incident.value.responderLng], { icon: respIcon }).addTo(map);
-    responderMarker.bindPopup('<strong>Assigned First Responder Unit</strong>');
-
-    // Fit bounds to show both
-    const bounds = L.latLngBounds([[lat, lng], [incident.value.responderLat, incident.value.responderLng]]);
-    map.fitBounds(bounds, { padding: [30, 30] });
-  }
 }
 
 function computeLifecycleSteps(inc) {
@@ -458,7 +505,15 @@ onMounted(() => {
   }
 });
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
+  if (incidentMarker) {
+    incidentMarker.remove();
+    incidentMarker = null;
+  }
+  if (responderMarker) {
+    responderMarker.remove();
+    responderMarker = null;
+  }
   if (map) {
     map.remove();
     map = null;

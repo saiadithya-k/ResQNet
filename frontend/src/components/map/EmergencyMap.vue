@@ -1,7 +1,7 @@
 <template>
   <div class="map-container">
     <!-- Map Canvas Element -->
-    <div id="tactical-leaflet-map" class="map-view"></div>
+    <div ref="mapContainer" class="map-view"></div>
 
     <!-- Floating Map Control Toolbar -->
     <div class="map-controls-panel">
@@ -11,35 +11,35 @@
       </div>
       <div class="layer-toggles">
         <label class="toggle-item">
-          <input type="checkbox" v-model="layers.incidents" @change="renderMarkers" />
+          <input type="checkbox" v-model="layers.incidents" @change="updateLayersVisibility" />
           <span class="icon">🔴</span> Incidents ({{ incidentStore.incidents.length }})
         </label>
         <label class="toggle-item">
-          <input type="checkbox" v-model="layers.responders" @change="renderMarkers" />
+          <input type="checkbox" v-model="layers.responders" @change="updateLayersVisibility" />
           <span class="icon">🚑</span> Units ({{ responderStore.responders.length }})
         </label>
         <label class="toggle-item">
-          <input type="checkbox" v-model="layers.hospitals" @change="renderMarkers" />
+          <input type="checkbox" v-model="layers.hospitals" @change="updateLayersVisibility" />
           <span class="icon">🏥</span> Hospitals ({{ hospitalStore.hospitals.length }})
         </label>
         <label class="toggle-item">
-          <input type="checkbox" v-model="layers.shelters" @change="renderMarkers" />
+          <input type="checkbox" v-model="layers.shelters" @change="updateLayersVisibility" />
           <span class="icon">🏠</span> Shelters ({{ disasterStore.shelters.length }})
         </label>
         <label class="toggle-item">
-          <input type="checkbox" v-model="layers.zones" @change="renderPolygons" />
+          <input type="checkbox" v-model="layers.zones" @change="updateLayersVisibility" />
           <span class="icon">⚠️</span> Disaster Zones
         </label>
         <label class="toggle-item">
-          <input type="checkbox" v-model="layers.roadblocks" @change="renderMarkers" />
+          <input type="checkbox" v-model="layers.roadblocks" @change="updateLayersVisibility" />
           <span class="icon">🚧</span> Roadblocks
         </label>
         <label class="toggle-item">
-          <input type="checkbox" v-model="layers.routes" @change="renderRoute" />
+          <input type="checkbox" v-model="layers.routes" @change="updateLayersVisibility" />
           <span class="icon">⚡</span> Route Optimization
         </label>
         <label class="toggle-item">
-          <input type="checkbox" v-model="layers.heatmap" @change="renderHeatmap" />
+          <input type="checkbox" v-model="layers.heatmap" @change="updateLayersVisibility" />
           <span class="icon">🔥</span> Incident Heatmap
         </label>
       </div>
@@ -63,6 +63,7 @@
         </div>
       </div>
 
+      <!-- Active Focus Card -->
       <div v-if="incidentStore.selectedIncident" class="active-focus-card">
         <div class="focus-hdr font-mono">🎯 MAP FOCUS: #{{ incidentStore.selectedIncident.id }}</div>
         <span class="focus-title">{{ incidentStore.selectedIncident.title }}</span>
@@ -75,33 +76,30 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref, watch } from 'vue';
-import L from 'leaflet';
+import { onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue';
+import * as maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+
 import api from '../../services/api';
 import { useIncidentStore } from '../../stores/incidentStore';
 import { useResponderStore } from '../../stores/responderStore';
 import { useHospitalStore } from '../../stores/hospitalStore';
 import { useDisasterStore } from '../../stores/disasterStore';
 
-if (typeof window !== 'undefined') {
-  window.L = L;
-  globalThis.L = L;
-}
-
 const incidentStore = useIncidentStore();
 const responderStore = useResponderStore();
 const hospitalStore = useHospitalStore();
 const disasterStore = useDisasterStore();
 
+const mapContainer = ref(null);
 let map = null;
-let markersLayer = null;
-let polygonsLayer = null;
-let routeLayer = null;
-let heatmapLayer = null;
 
-// Track incident markers to avoid full map rebuilds on selection
-const incidentMarkersMap = new Map();
-const responderMarkersMap = new Map();
+// Marker tracking maps for dynamic updates
+const incidentMarkers = new Map();
+const responderMarkers = new Map();
+const hospitalMarkers = new Map();
+const shelterMarkers = new Map();
+const roadblockMarkers = new Map();
 
 const layers = ref({
   incidents: true,
@@ -114,93 +112,367 @@ const layers = ref({
   heatmap: false
 });
 
-let resizeHandler = null;
-
-onMounted(() => {
-  initMap();
-  resizeHandler = () => {
-    if (map) map.invalidateSize();
-  };
-  window.addEventListener('resize', resizeHandler);
-  setTimeout(() => {
-    if (map) map.invalidateSize();
-  }, 200);
+const activeRouteType = ref('EMERGENCY'); // EMERGENCY | STANDARD | BOTH
+const routeMetrics = ref({
+  standardEta: 22,
+  standardDist: 3.4,
+  emergencyEta: 11,
+  emergencyDist: 2.8
 });
 
-onUnmounted(() => {
-  if (resizeHandler) {
-    window.removeEventListener('resize', resizeHandler);
+let resizeObserver = null;
+
+onMounted(async () => {
+  await nextTick();
+  initMap();
+
+  if (mapContainer.value) {
+    resizeObserver = new ResizeObserver(() => {
+      if (map) map.resize();
+    });
+    resizeObserver.observe(mapContainer.value);
   }
-  incidentMarkersMap.clear();
-  responderMarkersMap.clear();
-  if (heatmapLayer && map) {
-    map.removeLayer(heatmapLayer);
-    heatmapLayer = null;
+});
+
+onBeforeUnmount(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+    resizeObserver = null;
   }
+  clearAllMarkers();
   if (map) {
     map.remove();
     map = null;
   }
 });
 
+function clearAllMarkers() {
+  incidentMarkers.forEach(m => m.remove());
+  incidentMarkers.clear();
+
+  responderMarkers.forEach(m => m.remove());
+  responderMarkers.clear();
+
+  hospitalMarkers.forEach(m => m.remove());
+  hospitalMarkers.clear();
+
+  shelterMarkers.forEach(m => m.remove());
+  shelterMarkers.clear();
+
+  roadblockMarkers.forEach(m => m.remove());
+  roadblockMarkers.clear();
+}
+
 function initMap() {
-  if (map) return;
+  if (map || !mapContainer.value) return;
 
-  const mapEl = document.getElementById('tactical-leaflet-map');
-  if (!mapEl || mapEl._leaflet_id) return;
-
-  // Center coordinates on emergency command district
-  map = L.map('tactical-leaflet-map', {
-    center: [13.0827, 80.2600],
+  map = new maplibregl.Map({
+    container: mapContainer.value,
+    style: 'https://tiles.openfreemap.org/styles/liberty',
+    center: [80.2600, 13.0827], // [lng, lat]
     zoom: 13,
-    zoomControl: false
+    attributionControl: true
   });
 
-  L.control.zoom({ position: 'bottomright' }).addTo(map);
+  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
 
-  // High-tech dark CartoDB tiles
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; CartoDB &copy; ResQNet Tactical GIS',
-    maxZoom: 19
-  }).addTo(map);
+  map.on('load', () => {
+    setupSourcesAndLayers();
+    renderAll();
 
-  markersLayer = L.layerGroup().addTo(map);
-  polygonsLayer = L.layerGroup().addTo(map);
-  routeLayer = L.layerGroup().addTo(map);
+    if (incidentStore.selectedIncident) {
+      focusSelectedIncident();
+    }
+  });
 
-  renderPolygons();
-  renderMarkers();
-  renderRoute();
+  map.on('error', (e) => {
+    console.warn('MapLibre tactical map event:', e.error?.message || e);
+  });
+}
 
-  // If an incident was already selected on mount, focus immediately
-  if (incidentStore.selectedIncident) {
-    focusSelectedIncident();
+function setupSourcesAndLayers() {
+  if (!map) return;
+
+  // 1. Disaster Zones GeoJSON source & layers
+  if (!map.getSource('disaster-zones-source')) {
+    map.addSource('disaster-zones-source', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] }
+    });
+
+    map.addLayer({
+      id: 'disaster-zones-fill',
+      type: 'fill',
+      source: 'disaster-zones-source',
+      paint: {
+        'fill-color': ['get', 'color'],
+        'fill-opacity': ['get', 'opacity']
+      }
+    });
+
+    map.addLayer({
+      id: 'disaster-zones-outline',
+      type: 'line',
+      source: 'disaster-zones-source',
+      paint: {
+        'line-color': ['get', 'color'],
+        'line-width': 2.5,
+        'line-dasharray': [3, 2]
+      }
+    });
+
+    map.on('click', 'disaster-zones-fill', (e) => {
+      if (e.features && e.features[0]) {
+        const p = e.features[0].properties;
+        new maplibregl.Popup({ offset: [0, -5] })
+          .setLngLat(e.lngLat)
+          .setHTML(`
+            <div class="map-popup-card">
+              <div class="popup-tag" style="background: ${p.color}33; color: ${p.color};">
+                #${p.id} · ${p.riskLevel} ZONE (${p.severity || 'HIGH'})
+              </div>
+              <h4>${p.name}</h4>
+              <p><strong>Hazard Type:</strong> ${p.type}</p>
+              <p><strong>Status:</strong> <span class="text-emerald">ACTIVE SECTOR PERIMETER</span></p>
+              <p><strong>Est. Population:</strong> ~${Number(p.affectedPopulation || 15000).toLocaleString()} Persons</p>
+              <p class="text-cyan"><strong>Evac Corridor:</strong> ${p.evacuationRoute || 'Designated Radial Arterials'}</p>
+            </div>
+          `)
+          .addTo(map);
+      }
+    });
+  }
+
+  // 2. Incident Heatmap Source & Layer
+  if (!map.getSource('incident-heatmap-source')) {
+    map.addSource('incident-heatmap-source', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] }
+    });
+
+    map.addLayer({
+      id: 'incident-heatmap-layer',
+      type: 'heatmap',
+      source: 'incident-heatmap-source',
+      layout: {
+        visibility: layers.value.heatmap ? 'visible' : 'none'
+      },
+      paint: {
+        'heatmap-weight': ['get', 'weight'],
+        'heatmap-intensity': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          0, 1,
+          15, 3
+        ],
+        'heatmap-color': [
+          'interpolate',
+          ['linear'],
+          ['heatmap-density'],
+          0, 'rgba(6, 182, 212, 0)',
+          0.2, '#06b6d4',
+          0.4, '#10b981',
+          0.7, '#f59e0b',
+          1.0, '#ef4444'
+        ],
+        'heatmap-radius': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          0, 15,
+          15, 35
+        ],
+        'heatmap-opacity': 0.8
+      }
+    });
+  }
+
+  // 3. Routes GeoJSON Source & Layers
+  if (!map.getSource('routes-source')) {
+    map.addSource('routes-source', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] }
+    });
+
+    map.addLayer({
+      id: 'routes-standard-layer',
+      type: 'line',
+      source: 'routes-source',
+      filter: ['==', ['get', 'routeType'], 'STANDARD'],
+      paint: {
+        'line-color': '#f59e0b',
+        'line-width': 4,
+        'line-opacity': 0.85,
+        'line-dasharray': [2, 2]
+      }
+    });
+
+    map.addLayer({
+      id: 'routes-emergency-layer',
+      type: 'line',
+      source: 'routes-source',
+      filter: ['==', ['get', 'routeType'], 'EMERGENCY'],
+      paint: {
+        'line-color': '#10b981',
+        'line-width': 6,
+        'line-opacity': 0.95
+      }
+    });
+
+    map.on('click', 'routes-emergency-layer', (e) => {
+      new maplibregl.Popup({ offset: [0, -5] })
+        .setLngLat(e.lngLat)
+        .setHTML(`
+          <div class="map-popup-card">
+            <div class="popup-tag tag-unit">EMERGENCY CORRIDOR (${routeMetrics.value.emergencyEta} MIN)</div>
+            <h4>Dynamic Hazard Bypass Route</h4>
+            <p>Distance: ${routeMetrics.value.emergencyDist} km (50% Faster)</p>
+            <p class="text-emerald">✓ Bypasses Harbour Roadblock & Flood Zone</p>
+          </div>
+        `)
+        .addTo(map);
+    });
+
+    map.on('click', 'routes-standard-layer', (e) => {
+      new maplibregl.Popup({ offset: [0, -5] })
+        .setLngLat(e.lngLat)
+        .setHTML(`
+          <div class="map-popup-card">
+            <div class="popup-tag tag-warn">STANDARD ROUTE (${routeMetrics.value.standardEta} MIN)</div>
+            <h4>Congested Traffic Path</h4>
+            <p>Distance: ${routeMetrics.value.standardDist} km</p>
+            <p class="text-red">⚠️ Passes through active roadblock</p>
+          </div>
+        `)
+        .addTo(map);
+    });
   }
 }
 
-function renderMarkers() {
-  if (!map || !markersLayer) return;
-  markersLayer.clearLayers();
-  incidentMarkersMap.clear();
+function renderAll() {
+  renderDisasterZones();
+  renderIncidents();
+  renderResponders();
+  renderHospitals();
+  renderShelters();
+  renderRoadblocks();
+  renderHeatmap();
+  fetchAndRenderRoutes();
+  updateLayersVisibility();
+}
 
-  // 1. Incidents Markers (with Selection Synchronization)
-  if (layers.value.incidents) {
-    incidentStore.incidents.forEach((inc) => {
-      if (inc.latitude == null || inc.longitude == null) return;
-      const isCritical = inc.severity === 'CRITICAL';
-      const isSelected = incidentStore.selectedIncident?.id === inc.id;
+function updateLayersVisibility() {
+  if (!map || !map.isStyleLoaded()) return;
 
-      const markerHtml = `
-        <div class="custom-map-icon ${isCritical ? 'pulse-critical' : 'pulse-high'} ${isSelected ? 'marker-selected-halo' : ''}">
-          <span>${inc.incidentType === 'FIRE' ? '🔥' : inc.incidentType === 'HAZMAT' ? '☣️' : '🚨'}</span>
-          ${isSelected ? '<span class="selected-pin-badge">TARGET</span>' : ''}
-        </div>
-      `;
+  // Toggle MapLibre GeoJSON layers
+  if (map.getLayer('disaster-zones-fill')) {
+    map.setLayoutProperty('disaster-zones-fill', 'visibility', layers.value.zones ? 'visible' : 'none');
+    map.setLayoutProperty('disaster-zones-outline', 'visibility', layers.value.zones ? 'visible' : 'none');
+  }
 
-      const icon = L.divIcon({ html: markerHtml, className: 'map-div-icon', iconSize: [34, 34] });
-      const marker = L.marker([inc.latitude, inc.longitude], { icon, zIndexOffset: isSelected ? 1000 : 100 });
+  if (map.getLayer('incident-heatmap-layer')) {
+    map.setLayoutProperty('incident-heatmap-layer', 'visibility', layers.value.heatmap ? 'visible' : 'none');
+  }
 
-      marker.bindPopup(`
+  if (map.getLayer('routes-emergency-layer')) {
+    const isEmerg = layers.value.routes && (activeRouteType.value === 'EMERGENCY' || activeRouteType.value === 'BOTH');
+    map.setLayoutProperty('routes-emergency-layer', 'visibility', isEmerg ? 'visible' : 'none');
+  }
+
+  if (map.getLayer('routes-standard-layer')) {
+    const isStd = layers.value.routes && (activeRouteType.value === 'STANDARD' || activeRouteType.value === 'BOTH');
+    map.setLayoutProperty('routes-standard-layer', 'visibility', isStd ? 'visible' : 'none');
+  }
+
+  // Toggle Marker visibility
+  incidentMarkers.forEach(m => {
+    const el = m.getElement();
+    if (el) el.style.display = layers.value.incidents ? 'block' : 'none';
+  });
+
+  responderMarkers.forEach(m => {
+    const el = m.getElement();
+    if (el) el.style.display = layers.value.responders ? 'block' : 'none';
+  });
+
+  hospitalMarkers.forEach(m => {
+    const el = m.getElement();
+    if (el) el.style.display = layers.value.hospitals ? 'block' : 'none';
+  });
+
+  shelterMarkers.forEach(m => {
+    const el = m.getElement();
+    if (el) el.style.display = layers.value.shelters ? 'block' : 'none';
+  });
+
+  roadblockMarkers.forEach(m => {
+    const el = m.getElement();
+    if (el) el.style.display = layers.value.roadblocks ? 'block' : 'none';
+  });
+}
+
+function renderDisasterZones() {
+  if (!map || !map.getSource('disaster-zones-source')) return;
+
+  const features = disasterStore.zones.map(z => {
+    const isDanger = z.riskLevel === 'DANGER';
+    const isEvac = z.riskLevel === 'EVACUATION';
+    const color = isDanger ? '#ef4444' : isEvac ? '#f97316' : '#eab308';
+    const opacity = isDanger ? 0.28 : isEvac ? 0.22 : 0.16;
+
+    // Convert [lat, lng] -> [lng, lat] and close ring
+    const ring = (z.coordinates || []).map(pt => [pt[1], pt[0]]);
+    if (ring.length > 0 && (ring[0][0] !== ring[ring.length - 1][0] || ring[0][1] !== ring[ring.length - 1][1])) {
+      ring.push([...ring[0]]);
+    }
+
+    return {
+      type: 'Feature',
+      properties: {
+        id: z.id,
+        name: z.name,
+        type: z.type,
+        riskLevel: z.riskLevel,
+        severity: z.severity,
+        affectedPopulation: z.affectedPopulation,
+        evacuationRoute: z.evacuationRoute,
+        color,
+        opacity
+      },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [ring]
+      }
+    };
+  });
+
+  map.getSource('disaster-zones-source').setData({
+    type: 'FeatureCollection',
+    features
+  });
+}
+
+function renderIncidents() {
+  if (!map) return;
+
+  // Track active ids to remove pruned markers
+  const activeIds = new Set();
+
+  incidentStore.incidents.forEach(inc => {
+    if (inc.latitude == null || inc.longitude == null) return;
+    activeIds.add(inc.id);
+
+    const isCritical = inc.severity === 'CRITICAL';
+    const isSelected = incidentStore.selectedIncident?.id === inc.id;
+
+    let markerObj = incidentMarkers.get(inc.id);
+
+    if (!markerObj) {
+      const el = document.createElement('div');
+      el.className = 'maplibre-marker-wrapper';
+
+      const popup = new maplibregl.Popup({ offset: [0, -14] }).setHTML(`
         <div class="map-popup-card">
           <div class="popup-tag ${isCritical ? 'tag-crit' : 'tag-warn'}">
             #${inc.id} · ${inc.severity} (${inc.priorityScore} PTS)
@@ -211,215 +483,285 @@ function renderMarkers() {
           <p class="popup-addr">📍 ${inc.address || inc.district}</p>
           <div class="popup-action font-mono">✓ SYNCHRONIZED TO COMMAND CONSOLE</div>
         </div>
-      `, { offset: [0, -10] });
+      `);
 
-      // Map -> Queue / Command Center Synchronization
-      marker.on('click', () => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
         incidentStore.selectIncident(inc);
       });
 
-      markersLayer.addLayer(marker);
-      incidentMarkersMap.set(inc.id, marker);
-    });
-  }
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat([inc.longitude, inc.latitude])
+        .setPopup(popup)
+        .addTo(map);
 
-  // 2. Responders Markers (Smooth GPS movement enabled)
-  if (layers.value.responders) {
-    responderStore.responders.forEach((resp) => {
-      if (resp.latitude == null || resp.longitude == null) return;
-      const isAmb = resp.type === 'PARAMEDIC';
-      const markerHtml = `
-        <div class="custom-map-icon icon-unit ${resp.isCommunity ? 'icon-comm' : ''} ${resp.status === 'EN_ROUTE' ? 'pulse-enroute' : ''}">
-          <span>${resp.isCommunity ? '🧑‍⚕️' : isAmb ? '🚑' : '🚒'}</span>
-        </div>
-      `;
-      const icon = L.divIcon({ html: markerHtml, className: 'map-div-icon', iconSize: [32, 32] });
+      incidentMarkers.set(inc.id, marker);
+      markerObj = marker;
+    } else {
+      markerObj.setLngLat([inc.longitude, inc.latitude]);
+    }
 
-      let marker = responderMarkersMap.get(resp.id);
-      if (!marker) {
-        marker = L.marker([resp.latitude, resp.longitude], { icon, zIndexOffset: 200 });
-        marker.bindPopup(`
-          <div class="map-popup-card">
-            <div class="popup-tag tag-unit">${resp.badgeNumber} · ${resp.type}</div>
-            <h4>${resp.name}</h4>
-            <p><strong>Status:</strong> ${resp.status}</p>
-            <p><strong>Speed:</strong> ${resp.status === 'EN_ROUTE' ? '54 km/h' : '0 km/h'} | <strong>ETA:</strong> ${resp.etaMinutes || 5}m</p>
-            <p><strong>Fatigue:</strong> ${resp.fatigueScore}% | <strong>Duty:</strong> ${resp.dutyHours}h</p>
-            <p><strong>Assignment:</strong> ${resp.assignedIncidentId ? '#' + resp.assignedIncidentId : 'Available'}</p>
-          </div>
-        `, { offset: [0, -8] });
-        markersLayer.addLayer(marker);
-        responderMarkersMap.set(resp.id, marker);
-      } else {
-        marker.setLatLng([resp.latitude, resp.longitude]);
-        marker.setIcon(icon);
-      }
-    });
-  }
+    // Update inner HTML of element
+    const el = markerObj.getElement();
+    el.innerHTML = `
+      <div class="custom-map-icon ${isCritical ? 'pulse-critical' : 'pulse-high'} ${isSelected ? 'marker-selected-halo' : ''}">
+        <span>${inc.incidentType === 'FIRE' ? '🔥' : inc.incidentType === 'HAZMAT' ? '☣️' : '🚨'}</span>
+        ${isSelected ? '<span class="selected-pin-badge">TARGET</span>' : ''}
+      </div>
+    `;
+    el.style.display = layers.value.incidents ? 'block' : 'none';
+  });
 
-  // 3. Hospitals Markers
-  if (layers.value.hospitals) {
-    hospitalStore.hospitals.forEach((hosp) => {
-      if (hosp.latitude == null || hosp.longitude == null) return;
-      const markerHtml = `
-        <div class="custom-map-icon icon-hospital">
-          <span>🏥</span>
-        </div>
-      `;
-      const icon = L.divIcon({ html: markerHtml, className: 'map-div-icon', iconSize: [28, 28] });
-      const marker = L.marker([hosp.latitude, hosp.longitude], { icon });
+  // Remove markers no longer in state
+  incidentMarkers.forEach((marker, id) => {
+    if (!activeIds.has(id)) {
+      marker.remove();
+      incidentMarkers.delete(id);
+    }
+  });
+}
 
-      marker.bindPopup(`
+function renderResponders() {
+  if (!map) return;
+
+  const activeIds = new Set();
+
+  responderStore.responders.forEach(resp => {
+    if (resp.latitude == null || resp.longitude == null) return;
+    activeIds.add(resp.id);
+
+    const isAmb = resp.type === 'PARAMEDIC';
+    let markerObj = responderMarkers.get(resp.id);
+
+    if (!markerObj) {
+      const el = document.createElement('div');
+      el.className = 'maplibre-marker-wrapper';
+
+      const popup = new maplibregl.Popup({ offset: [0, -12] }).setHTML(`
         <div class="map-popup-card">
-          <div class="popup-tag tag-hosp">HOSPITAL MATCH: ${hosp.matchScore}%</div>
+          <div class="popup-tag tag-unit">${resp.badgeNumber || resp.id} · ${resp.type}</div>
+          <h4>${resp.name}</h4>
+          <p><strong>Status:</strong> ${resp.status}</p>
+          <p><strong>Speed:</strong> ${resp.status === 'EN_ROUTE' ? '54 km/h' : '0 km/h'} | <strong>ETA:</strong> ${resp.etaMinutes || 5}m</p>
+          <p><strong>Fatigue:</strong> ${resp.fatigueScore || 20}% | <strong>Duty:</strong> ${resp.dutyHours || 4}h</p>
+          <p><strong>Assignment:</strong> ${resp.assignedIncidentId ? '#' + resp.assignedIncidentId : 'Available'}</p>
+        </div>
+      `);
+
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat([resp.longitude, resp.latitude])
+        .setPopup(popup)
+        .addTo(map);
+
+      responderMarkers.set(resp.id, marker);
+      markerObj = marker;
+    } else {
+      // Smooth GPS update
+      markerObj.setLngLat([resp.longitude, resp.latitude]);
+    }
+
+    const el = markerObj.getElement();
+    el.innerHTML = `
+      <div class="custom-map-icon icon-unit ${resp.isCommunity ? 'icon-comm' : ''} ${resp.status === 'EN_ROUTE' ? 'pulse-enroute' : ''}">
+        <span>${resp.isCommunity ? '🧑‍⚕️' : isAmb ? '🚑' : '🚒'}</span>
+      </div>
+    `;
+    el.style.display = layers.value.responders ? 'block' : 'none';
+  });
+
+  responderMarkers.forEach((marker, id) => {
+    if (!activeIds.has(id)) {
+      marker.remove();
+      responderMarkers.delete(id);
+    }
+  });
+}
+
+function renderHospitals() {
+  if (!map) return;
+
+  const activeIds = new Set();
+
+  hospitalStore.hospitals.forEach(hosp => {
+    if (hosp.latitude == null || hosp.longitude == null) return;
+    activeIds.add(hosp.id);
+
+    let markerObj = hospitalMarkers.get(hosp.id);
+
+    if (!markerObj) {
+      const el = document.createElement('div');
+      el.className = 'maplibre-marker-wrapper';
+
+      const popup = new maplibregl.Popup({ offset: [0, -10] }).setHTML(`
+        <div class="map-popup-card">
+          <div class="popup-tag tag-hosp">HOSPITAL MATCH: ${hosp.matchScore || 90}%</div>
           <h4>${hosp.name}</h4>
           <p><strong>ICU Beds:</strong> ${hosp.availableIcu}/${hosp.totalIcu}</p>
           <p><strong>Trauma Beds:</strong> ${hosp.availableTrauma}/${hosp.totalTrauma}</p>
           <p><strong>Available Total Beds:</strong> ${hosp.availableBeds}/${hosp.totalBeds}</p>
         </div>
-      `, { offset: [0, -8] });
+      `);
 
-      markersLayer.addLayer(marker);
-    });
-  }
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        hospitalStore.selectHospital(hosp);
+      });
 
-  // 4. Shelters Markers
-  if (layers.value.shelters) {
-    disasterStore.shelters.forEach((shelter) => {
-      if (shelter.latitude == null || shelter.longitude == null) return;
-      const markerHtml = `
-        <div class="custom-map-icon icon-shelter">
-          <span>🏠</span>
-        </div>
-      `;
-      const icon = L.divIcon({ html: markerHtml, className: 'map-div-icon', iconSize: [26, 26] });
-      const marker = L.marker([shelter.latitude, shelter.longitude], { icon });
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat([hosp.longitude, hosp.latitude])
+        .setPopup(popup)
+        .addTo(map);
 
-      marker.bindPopup(`
+      hospitalMarkers.set(hosp.id, marker);
+      markerObj = marker;
+    } else {
+      markerObj.setLngLat([hosp.longitude, hosp.latitude]);
+    }
+
+    const el = markerObj.getElement();
+    el.innerHTML = `
+      <div class="custom-map-icon icon-hospital">
+        <span>🏥</span>
+      </div>
+    `;
+    el.style.display = layers.value.hospitals ? 'block' : 'none';
+  });
+
+  hospitalMarkers.forEach((marker, id) => {
+    if (!activeIds.has(id)) {
+      marker.remove();
+      hospitalMarkers.delete(id);
+    }
+  });
+}
+
+function renderShelters() {
+  if (!map) return;
+
+  const activeIds = new Set();
+
+  disasterStore.shelters.forEach(shelter => {
+    if (shelter.latitude == null || shelter.longitude == null) return;
+    activeIds.add(shelter.id);
+
+    let markerObj = shelterMarkers.get(shelter.id);
+
+    if (!markerObj) {
+      const el = document.createElement('div');
+      el.className = 'maplibre-marker-wrapper';
+
+      const popup = new maplibregl.Popup({ offset: [0, -10] }).setHTML(`
         <div class="map-popup-card">
           <div class="popup-tag tag-shelter">EVACUATION SHELTER</div>
           <h4>${shelter.name}</h4>
           <p><strong>Occupancy:</strong> ${shelter.currentOccupancy}/${shelter.capacity}</p>
           <p><strong>District:</strong> ${shelter.district}</p>
         </div>
-      `, { offset: [0, -6] });
+      `);
 
-      markersLayer.addLayer(marker);
-    });
-  }
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat([shelter.longitude, shelter.latitude])
+        .setPopup(popup)
+        .addTo(map);
 
-  // 5. Roadblocks Markers
-  if (layers.value.roadblocks) {
-    disasterStore.roadBlocks.forEach((rb) => {
-      if (rb.latitude == null || rb.longitude == null) return;
-      const markerHtml = `
-        <div class="custom-map-icon icon-roadblock">
-          <span>🚧</span>
-        </div>
-      `;
-      const icon = L.divIcon({ html: markerHtml, className: 'map-div-icon', iconSize: [26, 26] });
-      const marker = L.marker([rb.latitude, rb.longitude], { icon });
-      marker.bindPopup(`
+      shelterMarkers.set(shelter.id, marker);
+      markerObj = marker;
+    } else {
+      markerObj.setLngLat([shelter.longitude, shelter.latitude]);
+    }
+
+    const el = markerObj.getElement();
+    el.innerHTML = `
+      <div class="custom-map-icon icon-shelter">
+        <span>🏠</span>
+      </div>
+    `;
+    el.style.display = layers.value.shelters ? 'block' : 'none';
+  });
+
+  shelterMarkers.forEach((marker, id) => {
+    if (!activeIds.has(id)) {
+      marker.remove();
+      shelterMarkers.delete(id);
+    }
+  });
+}
+
+function renderRoadblocks() {
+  if (!map) return;
+
+  const activeIds = new Set();
+
+  disasterStore.roadBlocks.forEach(rb => {
+    if (rb.latitude == null || rb.longitude == null) return;
+    activeIds.add(rb.id);
+
+    let markerObj = roadblockMarkers.get(rb.id);
+
+    if (!markerObj) {
+      const el = document.createElement('div');
+      el.className = 'maplibre-marker-wrapper';
+
+      const popup = new maplibregl.Popup({ offset: [0, -10] }).setHTML(`
         <div class="map-popup-card">
           <div class="popup-tag tag-crit">ROAD BLOCK</div>
           <h4>${rb.name}</h4>
           <p>${rb.reason}</p>
         </div>
-      `, { offset: [0, -6] });
-      markersLayer.addLayer(marker);
-    });
-  }
-}
-
-function renderPolygons() {
-  if (!map || !polygonsLayer) return;
-  polygonsLayer.clearLayers();
-
-  if (layers.value.zones) {
-    disasterStore.zones.forEach((z) => {
-      const isDanger = z.riskLevel === 'DANGER';
-      const isEvac = z.riskLevel === 'EVACUATION';
-      const color = isDanger ? '#ef4444' : isEvac ? '#f97316' : '#eab308';
-
-      const polygon = L.polygon(z.coordinates, {
-        color: color,
-        fillColor: color,
-        fillOpacity: isDanger ? 0.28 : isEvac ? 0.22 : 0.16,
-        weight: isDanger ? 2.5 : 2,
-        dashArray: isDanger ? '6, 6' : isEvac ? '4, 4' : null
-      });
-
-      polygon.bindPopup(`
-        <div class="map-popup-card">
-          <div class="popup-tag" style="background: ${color}33; color: ${color};">
-            #${z.id} · ${z.riskLevel} ZONE (${z.severity || 'HIGH'})
-          </div>
-          <h4>${z.name}</h4>
-          <p><strong>Hazard Type:</strong> ${z.type}</p>
-          <p><strong>Status:</strong> <span class="text-emerald">ACTIVE SECTOR PERIMETER</span></p>
-          <p><strong>Est. Population:</strong> ~${(z.affectedPopulation || 15000).toLocaleString()} Persons</p>
-          <p class="text-cyan"><strong>Evac Corridor:</strong> ${z.evacuationRoute || 'Designated Radial Arterials'}</p>
-        </div>
       `);
-      polygonsLayer.addLayer(polygon);
-    });
-  }
+
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat([rb.longitude, rb.latitude])
+        .setPopup(popup)
+        .addTo(map);
+
+      roadblockMarkers.set(rb.id, marker);
+      markerObj = marker;
+    } else {
+      markerObj.setLngLat([rb.longitude, rb.latitude]);
+    }
+
+    const el = markerObj.getElement();
+    el.innerHTML = `
+      <div class="custom-map-icon icon-roadblock">
+        <span>🚧</span>
+      </div>
+    `;
+    el.style.display = layers.value.roadblocks ? 'block' : 'none';
+  });
+
+  roadblockMarkers.forEach((marker, id) => {
+    if (!activeIds.has(id)) {
+      marker.remove();
+      roadblockMarkers.delete(id);
+    }
+  });
 }
 
-async function renderHeatmap() {
-  if (!map) return;
+function renderHeatmap() {
+  if (!map || !map.getSource('incident-heatmap-source')) return;
 
-  // Clean up existing heatmap layer
-  if (heatmapLayer) {
-    map.removeLayer(heatmapLayer);
-    heatmapLayer = null;
-  }
-
-  if (layers.value.heatmap) {
-    if (!L.heatLayer) {
-      try {
-        await import('leaflet.heat');
-      } catch (err) {
-        console.warn('Could not load leaflet.heat', err);
+  const features = incidentStore.incidents
+    .filter(inc => inc.latitude != null && inc.longitude != null)
+    .map(inc => ({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [inc.longitude, inc.latitude]
+      },
+      properties: {
+        weight: inc.severity === 'CRITICAL' ? 1.0 : inc.severity === 'HIGH' ? 0.75 : 0.4
       }
-    }
+    }));
 
-    // Generate real heat points from active incidents
-    const heatPoints = incidentStore.incidents.map((inc) => {
-      const intensity = inc.severity === 'CRITICAL' ? 1.0 : inc.severity === 'HIGH' ? 0.75 : 0.5;
-      return [inc.latitude, inc.longitude, intensity];
-    });
-
-    if (heatPoints.length > 0 && typeof L.heatLayer === 'function') {
-      heatmapLayer = L.heatLayer(heatPoints, {
-        radius: 35,
-        blur: 20,
-        maxZoom: 16,
-        max: 1.0,
-        gradient: {
-          0.2: '#06b6d4',
-          0.4: '#10b981',
-          0.7: '#f59e0b',
-          1.0: '#ef4444'
-        }
-      }).addTo(map);
-    }
-  }
+  map.getSource('incident-heatmap-source').setData({
+    type: 'FeatureCollection',
+    features
+  });
 }
-
-const activeRouteType = ref('EMERGENCY'); // EMERGENCY | STANDARD | BOTH
-const routeMetrics = ref({
-  standardEta: 22,
-  standardDist: 3.4,
-  emergencyEta: 11,
-  emergencyDist: 2.8
-});
 
 async function fetchAndRenderRoutes() {
-  if (!map || !routeLayer) return;
-  routeLayer.clearLayers();
-
-  if (!layers.value.routes) return;
+  if (!map || !map.getSource('routes-source')) return;
 
   const start = [13.0780, 80.2650]; // Ambulance A12
   const end = incidentStore.selectedIncident
@@ -443,42 +785,47 @@ async function fetchAndRenderRoutes() {
       emergencyDist: data.emergencyRoute.distanceKm
     };
 
-    // 1. Render Standard Route (if active or both)
-    if (activeRouteType.value === 'STANDARD' || activeRouteType.value === 'BOTH') {
-      const stdPolyline = L.polyline(data.standardRoute.path, {
-        color: '#f59e0b',
-        weight: activeRouteType.value === 'STANDARD' ? 5 : 3,
-        opacity: activeRouteType.value === 'STANDARD' ? 0.9 : 0.4,
-        dashArray: '6, 8'
+    const features = [];
+
+    // Standard Route: [lat, lng] -> [lng, lat]
+    if (data.standardRoute?.path) {
+      features.push({
+        type: 'Feature',
+        properties: {
+          routeType: 'STANDARD',
+          eta: data.standardRoute.etaMinutes,
+          distance: data.standardRoute.distanceKm,
+          warning: data.standardRoute.warning
+        },
+        geometry: {
+          type: 'LineString',
+          coordinates: data.standardRoute.path.map(pt => [pt[1], pt[0]])
+        }
       });
-      stdPolyline.bindPopup(`
-        <div class="map-popup-card">
-          <div class="popup-tag tag-warn">STANDARD ROUTE (${data.standardRoute.etaMinutes} MIN)</div>
-          <h4>Congested Traffic Path</h4>
-          <p>Distance: ${data.standardRoute.distanceKm} km</p>
-          <p class="text-red">⚠️ ${data.standardRoute.warning}</p>
-        </div>
-      `);
-      routeLayer.addLayer(stdPolyline);
     }
 
-    // 2. Render Emergency Corridor Route (if active or both)
-    if (activeRouteType.value === 'EMERGENCY' || activeRouteType.value === 'BOTH') {
-      const emergPolyline = L.polyline(data.emergencyRoute.path, {
-        color: '#10b981',
-        weight: activeRouteType.value === 'EMERGENCY' ? 6 : 4,
-        opacity: 0.95
+    // Emergency Route: [lat, lng] -> [lng, lat]
+    if (data.emergencyRoute?.path) {
+      features.push({
+        type: 'Feature',
+        properties: {
+          routeType: 'EMERGENCY',
+          eta: data.emergencyRoute.etaMinutes,
+          distance: data.emergencyRoute.distanceKm
+        },
+        geometry: {
+          type: 'LineString',
+          coordinates: data.emergencyRoute.path.map(pt => [pt[1], pt[0]])
+        }
       });
-      emergPolyline.bindPopup(`
-        <div class="map-popup-card">
-          <div class="popup-tag tag-unit">EMERGENCY CORRIDOR (${data.emergencyRoute.etaMinutes} MIN)</div>
-          <h4>Dynamic Hazard Bypass Route</h4>
-          <p>Distance: ${data.emergencyRoute.distanceKm} km (50% Faster)</p>
-          <p class="text-emerald">✓ Bypasses Harbour Roadblock & Flood Zone</p>
-        </div>
-      `);
-      routeLayer.addLayer(emergPolyline);
     }
+
+    map.getSource('routes-source').setData({
+      type: 'FeatureCollection',
+      features
+    });
+
+    updateLayersVisibility();
   } catch (err) {
     console.warn('Failed to fetch optimized route', err.message);
   }
@@ -489,64 +836,62 @@ function setRouteType(type) {
   fetchAndRenderRoutes();
 }
 
-function renderRoute() {
-  fetchAndRenderRoutes();
-}
-
-// Queue -> Map Synchronization Handler
 function focusSelectedIncident() {
   const selected = incidentStore.selectedIncident;
-  if (!map || !selected) return;
+  if (!map || !selected || selected.longitude == null || selected.latitude == null) return;
 
-  const lat = selected.latitude;
-  const lng = selected.longitude;
+  map.flyTo({
+    center: [selected.longitude, selected.latitude],
+    zoom: 15,
+    essential: true,
+    speed: 1.2
+  });
 
-  if (lat && lng) {
-    // Smoothly fly to tactical zoom level
-    map.flyTo([lat, lng], 15, {
-      duration: 0.8,
-      easeLinearity: 0.25
-    });
+  renderIncidents();
 
-    // Re-render markers to update the selection halo
-    renderMarkers();
-
-    // Open popup for the selected marker
-    const marker = incidentMarkersMap.get(selected.id);
-    if (marker) {
-      setTimeout(() => {
-        marker.openPopup();
-      }, 850);
-    }
+  const marker = incidentMarkers.get(selected.id);
+  if (marker) {
+    setTimeout(() => {
+      marker.togglePopup();
+    }, 600);
   }
 }
 
-// Watch for Queue Selection changes
+// Watchers for Queue & Selection Changes
 watch(
   () => incidentStore.selectedIncident,
   (newVal, oldVal) => {
     if (newVal && newVal.id !== oldVal?.id) {
       focusSelectedIncident();
+      fetchAndRenderRoutes();
     }
   }
 );
 
-// Watch for Hospital Selection Focus
 watch(
   () => hospitalStore.selectedHospital,
   (newHosp) => {
     if (newHosp && map && newHosp.latitude && newHosp.longitude) {
-      map.flyTo([newHosp.latitude, newHosp.longitude], 15, { duration: 0.8 });
+      map.flyTo({
+        center: [newHosp.longitude, newHosp.latitude],
+        zoom: 15,
+        essential: true
+      });
     }
   }
 );
 
-// Watch for data updates
+// Watch for Real-time Store Updates
 watch(
-  () => [incidentStore.incidents, responderStore.responders, disasterStore.zones],
+  () => [incidentStore.incidents, responderStore.responders, disasterStore.zones, disasterStore.shelters, disasterStore.roadBlocks],
   () => {
-    renderMarkers();
-    renderPolygons();
+    renderIncidents();
+    renderResponders();
+    renderHospitals();
+    renderShelters();
+    renderRoadblocks();
+    renderDisasterZones();
+    renderHeatmap();
   },
   { deep: true }
 );
@@ -557,27 +902,34 @@ watch(
   position: relative;
   width: 100%;
   height: 100%;
+  min-height: 520px;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid rgba(51, 65, 85, 0.7);
+  background: #0b1120;
 }
 
 .map-view {
   width: 100%;
   height: 100%;
-  min-height: 480px;
+  min-height: 520px;
+}
+
+/* OpenFreeMap Dark Aesthetic Filter Overlay */
+.map-view .maplibregl-canvas {
+  filter: brightness(0.85) contrast(1.15) saturate(0.9);
 }
 
 .map-controls-panel {
   position: absolute;
   top: 12px;
   right: 12px;
-  background: rgba(15, 23, 42, 0.92);
+  background: rgba(15, 23, 42, 0.94);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(51, 65, 85, 0.8);
+  border: 1px solid rgba(51, 65, 85, 0.85);
   border-radius: 8px;
   padding: 0.75rem;
-  z-index: 1000;
+  z-index: 10;
   max-width: 220px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
 }
@@ -589,10 +941,18 @@ watch(
   font-size: 0.7rem;
   font-weight: 700;
   color: #94a3b8;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, monospace);
   margin-bottom: 0.5rem;
   border-bottom: 1px solid rgba(51, 65, 85, 0.6);
   padding-bottom: 0.35rem;
+}
+
+.pulse-icon {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 6px #38bdf8;
 }
 
 .layer-toggles {
@@ -653,10 +1013,61 @@ watch(
   background: rgba(37, 99, 235, 0.4);
 }
 
-/* Custom Marker Styles */
-.map-div-icon {
-  background: transparent;
-  border: none;
+/* Route Selector Box */
+.route-selector-box {
+  margin-top: 0.6rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(51, 65, 85, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.route-sel-hdr {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.route-btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.route-toggle-btn {
+  font-size: 0.65rem;
+  font-family: var(--font-mono, monospace);
+  padding: 0.25rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #6ee7b7;
+  cursor: pointer;
+  text-align: left;
+}
+
+.route-toggle-btn.active {
+  background: rgba(16, 185, 129, 0.35);
+  border-color: #10b981;
+  font-weight: 700;
+}
+
+.route-toggle-btn.btn-std {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fcd34d;
+}
+
+.route-toggle-btn.btn-std.active {
+  background: rgba(245, 158, 11, 0.35);
+  border-color: #f59e0b;
+  font-weight: 700;
+}
+
+/* Marker Wrapper & Styling */
+.maplibre-marker-wrapper {
+  cursor: pointer;
 }
 
 .custom-map-icon {
@@ -689,7 +1100,6 @@ watch(
   background: rgba(245, 158, 11, 0.3);
 }
 
-/* Selected Marker Tactical Halo */
 .marker-selected-halo {
   border: 3px solid #22d3ee !important;
   box-shadow: 0 0 16px #22d3ee, 0 0 30px rgba(34, 211, 238, 0.6) !important;
@@ -740,6 +1150,27 @@ watch(
   100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
 
+/* MapLibre Popup Styling to Match Dark Theme */
+.maplibregl-popup-content {
+  background: #0f172a !important;
+  border: 1px solid #334155 !important;
+  border-radius: 8px !important;
+  padding: 0.75rem !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7) !important;
+  color: #f8fafc !important;
+}
+
+.maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: #334155 !important; }
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: #334155 !important; }
+.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: #334155 !important; }
+.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: #334155 !important; }
+
+.maplibregl-popup-close-button {
+  color: #94a3b8 !important;
+  font-size: 1rem !important;
+  padding: 0.2rem 0.4rem !important;
+}
+
 .map-popup-card {
   font-family: 'Inter', sans-serif;
 }
@@ -783,58 +1214,7 @@ watch(
   font-weight: 600;
 }
 
-/* Route Selector Box */
-.route-selector-box {
-  margin-top: 0.6rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid rgba(51, 65, 85, 0.6);
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.route-sel-hdr {
-  font-size: 0.65rem;
-  color: #94a3b8;
-  font-weight: 700;
-}
-
-.route-btn-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.route-toggle-btn {
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(51, 65, 85, 0.7);
-  color: #cbd5e1;
-  font-size: 0.65rem;
-  font-family: var(--font-mono);
-  padding: 0.3rem 0.45rem;
-  border-radius: 5px;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.15s ease;
-}
-
-.route-toggle-btn:hover {
-  background: rgba(30, 41, 59, 0.85);
-  border-color: #38bdf8;
-}
-
-.route-toggle-btn.active {
-  background: rgba(16, 185, 129, 0.25);
-  border-color: #10b981;
-  color: #6ee7b7;
-  font-weight: 700;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
-}
-
-.route-toggle-btn.btn-std.active {
-  background: rgba(245, 158, 11, 0.25);
-  border-color: #f59e0b;
-  color: #fcd34d;
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
-}
+.text-emerald { color: #34d399; }
+.text-cyan { color: #22d3ee; }
+.text-red { color: #f87171; }
 </style>

@@ -204,9 +204,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import * as maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { useSocketService } from '../../services/socketService';
 import api from '../../services/api';
 
@@ -221,6 +221,29 @@ const selectedAlert = ref(null);
 const newAlertIds = ref(new Set());
 
 let modalMap = null;
+let modalMarker = null;
+
+function createGeoJSONCircle(center, radiusInKm, points = 64) {
+  const [lng, lat] = center;
+  const coords = [];
+  const distanceX = radiusInKm / (111.320 * Math.cos(lat * Math.PI / 180));
+  const distanceY = radiusInKm / 110.574;
+
+  for (let i = 0; i < points; i++) {
+    const theta = (i / points) * (2 * Math.PI);
+    const x = distanceX * Math.cos(theta);
+    const y = distanceY * Math.sin(theta);
+    coords.push([lng + x, lat + y]);
+  }
+  coords.push(coords[0]);
+  return {
+    type: 'Feature',
+    geometry: {
+      type: 'Polygon',
+      coordinates: [coords]
+    }
+  };
+}
 
 const criticalCount = computed(() => alerts.value.filter(a => a.severity === 'CRITICAL').length);
 const highCount = computed(() => alerts.value.filter(a => a.severity === 'HIGH').length);
@@ -266,6 +289,11 @@ function initModalMap(alert) {
   const container = document.getElementById('alert-leaflet-map');
   if (!container) return;
 
+  if (modalMarker) {
+    modalMarker.remove();
+    modalMarker = null;
+  }
+
   if (modalMap) {
     modalMap.remove();
     modalMap = null;
@@ -273,42 +301,69 @@ function initModalMap(alert) {
 
   const lat = alert.latitude || 13.0827;
   const lng = alert.longitude || 80.2707;
-
-  modalMap = L.map('alert-leaflet-map', {
-    center: [lat, lng],
-    zoom: 13,
-    zoomControl: false
-  });
-
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19,
-    attribution: '© CartoDB'
-  }).addTo(modalMap);
-
-  // Affected Zone Circle
-  const radius = (alert.radiusKm || 2.0) * 1000;
   const color = alert.severity === 'CRITICAL' ? '#ef4444' : alert.severity === 'HIGH' ? '#f59e0b' : '#3b82f6';
+  const radiusKm = alert.radiusKm || 2.0;
 
-  L.circle([lat, lng], {
-    color: color,
-    fillColor: color,
-    fillOpacity: 0.25,
-    radius: radius,
-    weight: 2
-  }).addTo(modalMap);
-
-  // Center Marker
-  const centerIcon = L.divIcon({
-    className: 'alert-pin',
-    html: `<div style="background:${color}; width:16px; height:16px; border-radius:50%; border:2px solid white; box-shadow:0 0 10px ${color};"></div>`,
-    iconSize: [16, 16],
-    iconAnchor: [8, 8]
+  modalMap = new maplibregl.Map({
+    container: 'alert-leaflet-map',
+    style: 'https://tiles.openfreemap.org/styles/liberty',
+    center: [lng, lat],
+    zoom: 13,
+    attributionControl: true
   });
 
-  L.marker([lat, lng], { icon: centerIcon })
-    .addTo(modalMap)
-    .bindPopup(`<strong>${alert.title}</strong><br>${alert.affectedArea || alert.district}`)
-    .openPopup();
+  modalMap.on('load', () => {
+    const circleGeoJSON = createGeoJSONCircle([lng, lat], radiusKm);
+
+    modalMap.addSource('alert-circle-source', {
+      type: 'geojson',
+      data: circleGeoJSON
+    });
+
+    modalMap.addLayer({
+      id: 'alert-circle-fill',
+      type: 'fill',
+      source: 'alert-circle-source',
+      paint: {
+        'fill-color': color,
+        'fill-opacity': 0.25
+      }
+    });
+
+    modalMap.addLayer({
+      id: 'alert-circle-outline',
+      type: 'line',
+      source: 'alert-circle-source',
+      paint: {
+        'line-color': color,
+        'line-width': 2
+      }
+    });
+
+    const el = document.createElement('div');
+    el.className = 'alert-pin';
+    el.style.background = color;
+    el.style.width = '16px';
+    el.style.height = '16px';
+    el.style.borderRadius = '50%';
+    el.style.border = '2px solid white';
+    el.style.boxShadow = `0 0 10px ${color}`;
+
+    const popup = new maplibregl.Popup({ offset: [0, -10] }).setHTML(
+      `<strong>${alert.title}</strong><br>${alert.affectedArea || alert.district}`
+    );
+
+    modalMarker = new maplibregl.Marker({ element: el })
+      .setLngLat([lng, lat])
+      .setPopup(popup)
+      .addTo(modalMap);
+
+    modalMarker.togglePopup();
+
+    setTimeout(() => {
+      if (modalMap) modalMap.resize();
+    }, 100);
+  });
 }
 
 function getCategoryIcon(cat) {
@@ -358,7 +413,11 @@ onMounted(() => {
   }
 });
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
+  if (modalMarker) {
+    modalMarker.remove();
+    modalMarker = null;
+  }
   if (modalMap) {
     modalMap.remove();
     modalMap = null;

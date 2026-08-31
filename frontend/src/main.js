@@ -1,8 +1,6 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import router from './router';
-import L from 'leaflet';
-window.L = L;
 
 import App from './App.vue';
 import './assets/main.css';

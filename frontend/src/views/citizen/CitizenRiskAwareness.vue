@@ -165,9 +165,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import * as maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import api from '../../services/api';
 
 const riskZones = ref([]);
@@ -176,8 +176,29 @@ const loading = ref(true);
 const fetchError = ref('');
 
 let mapInstance = null;
-let circleLayer = null;
-let markerLayer = null;
+let centerMarker = null;
+
+function createGeoJSONCircle(center, radiusInKm, points = 64) {
+  const [lng, lat] = center;
+  const coords = [];
+  const distanceX = radiusInKm / (111.320 * Math.cos(lat * Math.PI / 180));
+  const distanceY = radiusInKm / 110.574;
+
+  for (let i = 0; i < points; i++) {
+    const theta = (i / points) * (2 * Math.PI);
+    const x = distanceX * Math.cos(theta);
+    const y = distanceY * Math.sin(theta);
+    coords.push([lng + x, lat + y]);
+  }
+  coords.push(coords[0]);
+  return {
+    type: 'Feature',
+    geometry: {
+      type: 'Polygon',
+      coordinates: [coords]
+    }
+  };
+}
 
 async function loadRiskPredictions() {
   loading.value = true;
@@ -189,8 +210,6 @@ async function loadRiskPredictions() {
       riskZones.value = res.data.data;
       if (riskZones.value.length > 0) {
         selectedZone.value = riskZones.value[0];
-        await nextTick();
-        initMap();
       }
     }
   } catch (err) {
@@ -198,12 +217,20 @@ async function loadRiskPredictions() {
     fetchError.value = 'Failed to connect to AI Risk Telemetry Engine.';
   } finally {
     loading.value = false;
+    if (riskZones.value.length > 0 && selectedZone.value) {
+      await nextTick();
+      initMap();
+    }
   }
 }
 
 function selectZone(zone) {
   selectedZone.value = zone;
-  updateMap(zone);
+  if (!mapInstance) {
+    initMap();
+  } else {
+    updateMap(zone);
+  }
 }
 
 function initMap() {
@@ -218,52 +245,102 @@ function initMap() {
   const lat = selectedZone.value.latitude || 13.0827;
   const lng = selectedZone.value.longitude || 80.2707;
 
-  mapInstance = L.map('risk-impact-map', {
-    center: [lat, lng],
+  mapInstance = new maplibregl.Map({
+    container: 'risk-impact-map',
+    style: 'https://tiles.openfreemap.org/styles/liberty',
+    center: [lng, lat],
     zoom: 13,
-    zoomControl: false
+    attributionControl: true
   });
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19,
-    attribution: '© CartoDB'
-  }).addTo(mapInstance);
+  mapInstance.on('load', () => {
+    const zone = selectedZone.value;
+    const color = zone.riskLevel === 'CRITICAL' ? '#ef4444' : zone.riskLevel === 'HIGH' ? '#f59e0b' : '#3b82f6';
+    const circleGeoJSON = createGeoJSONCircle([lng, lat], zone.radiusKm || 2.0);
 
-  updateMap(selectedZone.value);
+    mapInstance.addSource('risk-circle-source', {
+      type: 'geojson',
+      data: circleGeoJSON
+    });
+
+    mapInstance.addLayer({
+      id: 'risk-circle-fill',
+      type: 'fill',
+      source: 'risk-circle-source',
+      paint: {
+        'fill-color': color,
+        'fill-opacity': 0.25
+      }
+    });
+
+    mapInstance.addLayer({
+      id: 'risk-circle-outline',
+      type: 'line',
+      source: 'risk-circle-source',
+      paint: {
+        'line-color': color,
+        'line-width': 2
+      }
+    });
+
+    updateMap(selectedZone.value);
+    setTimeout(() => {
+      if (mapInstance) mapInstance.resize();
+    }, 100);
+  });
 }
 
 function updateMap(zone) {
   if (!mapInstance || !zone) return;
 
-  if (circleLayer) mapInstance.removeLayer(circleLayer);
-  if (markerLayer) mapInstance.removeLayer(markerLayer);
-
   const lat = zone.latitude || 13.0827;
   const lng = zone.longitude || 80.2707;
-  const radius = (zone.radiusKm || 2.0) * 1000;
   const color = zone.riskLevel === 'CRITICAL' ? '#ef4444' : zone.riskLevel === 'HIGH' ? '#f59e0b' : '#3b82f6';
 
-  circleLayer = L.circle([lat, lng], {
-    color: color,
-    fillColor: color,
-    fillOpacity: 0.25,
-    radius: radius,
-    weight: 2
-  }).addTo(mapInstance);
+  // Update GeoJSON source
+  if (mapInstance.getSource('risk-circle-source')) {
+    const circleGeoJSON = createGeoJSONCircle([lng, lat], zone.radiusKm || 2.0);
+    mapInstance.getSource('risk-circle-source').setData(circleGeoJSON);
 
-  const pinIcon = L.divIcon({
-    className: 'risk-center-pin',
-    html: `<div style="background:${color}; width:16px; height:16px; border-radius:50%; border:2px solid white; box-shadow:0 0 10px ${color};"></div>`,
-    iconSize: [16, 16],
-    iconAnchor: [8, 8]
+    if (mapInstance.getLayer('risk-circle-fill')) {
+      mapInstance.setPaintProperty('risk-circle-fill', 'fill-color', color);
+    }
+    if (mapInstance.getLayer('risk-circle-outline')) {
+      mapInstance.setPaintProperty('risk-circle-outline', 'line-color', color);
+    }
+  }
+
+  // Update Marker
+  if (centerMarker) {
+    centerMarker.remove();
+    centerMarker = null;
+  }
+
+  const el = document.createElement('div');
+  el.className = 'risk-center-pin';
+  el.style.background = color;
+  el.style.width = '16px';
+  el.style.height = '16px';
+  el.style.borderRadius = '50%';
+  el.style.border = '2px solid white';
+  el.style.boxShadow = `0 0 10px ${color}`;
+
+  const popup = new maplibregl.Popup({ offset: [0, -10] }).setHTML(
+    `<strong>${zone.district}</strong><br>${zone.riskTitle}`
+  );
+
+  centerMarker = new maplibregl.Marker({ element: el })
+    .setLngLat([lng, lat])
+    .setPopup(popup)
+    .addTo(mapInstance);
+
+  centerMarker.togglePopup();
+
+  mapInstance.flyTo({
+    center: [lng, lat],
+    zoom: 13,
+    essential: true
   });
-
-  markerLayer = L.marker([lat, lng], { icon: pinIcon })
-    .addTo(mapInstance)
-    .bindPopup(`<strong>${zone.district}</strong><br>${zone.riskTitle}`)
-    .openPopup();
-
-  mapInstance.panTo([lat, lng]);
 }
 
 function getRiskIcon(lvl) {
@@ -316,7 +393,11 @@ onMounted(() => {
   loadRiskPredictions();
 });
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
+  if (centerMarker) {
+    centerMarker.remove();
+    centerMarker = null;
+  }
   if (mapInstance) {
     mapInstance.remove();
     mapInstance = null;
