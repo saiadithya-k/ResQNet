@@ -4,7 +4,7 @@
     <div class="header-card tactical-card">
       <div class="header-left">
         <router-link to="/citizen" class="back-link">← Back to Portal</router-link>
-        <h2>🎙️ MULTILINGUAL AI VOICE EMERGENCY INTAKE</h2>
+        <h2>MULTILINGUAL AI VOICE EMERGENCY INTAKE</h2>
         <p>Speak in Tamil, English, Hindi, or Telugu. AI extracts your emergency parameters for review and instant first responder dispatch.</p>
       </div>
       <div class="voice-status">
@@ -16,7 +16,7 @@
     <!-- Error / Alert Banner -->
     <div v-if="voiceError" class="tactical-card error-banner">
       <div class="err-content">
-        <span class="err-icon">⚠️</span>
+        <span class="err-icon">️</span>
         <span>{{ voiceError }}</span>
       </div>
       <button class="btn btn-xs btn-ghost" @click="voiceError = ''">Dismiss</button>
@@ -86,7 +86,7 @@
             :disabled="!transcription.trim() || analyzing"
           >
             <span v-if="analyzing" class="spinner-sm"></span>
-            <span>{{ analyzing ? 'Extracting Parameters...' : '⚡ Extract Emergency Parameters' }}</span>
+            <span>{{ analyzing ? 'Extracting Parameters...' : 'Extract Emergency Parameters' }}</span>
           </button>
         </div>
 
@@ -130,7 +130,7 @@
             <div class="card-top-line">
               <span class="box-lbl">WE HEARD:</span>
               <button class="btn-toggle-edit" @click="isEditingTranscript = !isEditingTranscript">
-                {{ isEditingTranscript ? '✓ Done Editing' : '✏️ Edit Text' }}
+                {{ isEditingTranscript ? '✓ Done Editing' : 'Edit Text' }}
               </button>
             </div>
 
@@ -159,11 +159,11 @@
               <div class="param-box">
                 <label class="param-lbl">INCIDENT CATEGORY</label>
                 <select v-model="extractionResult.incidentType" class="form-input form-input-sm">
-                  <option value="COLLAPSE">🏚️ Structural Collapse</option>
-                  <option value="FIRE">🔥 Fire / Explosion</option>
-                  <option value="HAZMAT">☣️ Hazmat / Chemical Leak</option>
-                  <option value="FLOOD">🌊 Flood / Water Rescue</option>
-                  <option value="MEDICAL">🚑 Medical Emergency</option>
+                  <option value="COLLAPSE">Structural Collapse</option>
+                  <option value="FIRE">Fire / Explosion</option>
+                  <option value="HAZMAT">Hazmat / Chemical Leak</option>
+                  <option value="FLOOD">Flood / Water Rescue</option>
+                  <option value="MEDICAL">Medical Emergency</option>
                 </select>
               </div>
 
@@ -171,10 +171,10 @@
               <div class="param-box">
                 <label class="param-lbl">OPERATIONAL SEVERITY</label>
                 <select v-model="extractionResult.severity" class="form-input form-input-sm">
-                  <option value="CRITICAL">🔴 CRITICAL</option>
-                  <option value="HIGH">🟡 HIGH</option>
-                  <option value="MEDIUM">🔵 MEDIUM</option>
-                  <option value="LOW">🟢 LOW</option>
+                  <option value="CRITICAL">CRITICAL</option>
+                  <option value="HIGH">HIGH</option>
+                  <option value="MEDIUM">MEDIUM</option>
+                  <option value="LOW">LOW</option>
                 </select>
               </div>
 
@@ -194,7 +194,7 @@
               <div class="param-box">
                 <label class="param-lbl">VOICE SIGNAL</label>
                 <span class="val-distress font-mono text-amber">
-                  {{ extractionResult.emotion?.urgency === 'HIGH' ? '⚡ High Distress Detected' : 'Normal Urgency Signal' }}
+                  {{ extractionResult.emotion?.urgency === 'HIGH' ? 'High Distress Detected' : 'Normal Urgency Signal' }}
                 </span>
               </div>
 
@@ -203,7 +203,7 @@
                 <div class="loc-lbl-row">
                   <label class="param-lbl">VERIFY INCIDENT LOCATION</label>
                   <button type="button" class="btn-gps-auto" @click="detectGPS">
-                    📍 {{ gpsLocked ? '✓ GPS Locked' : 'Auto-Detect GPS' }}
+                    {{ gpsLocked ? '✓ GPS Locked' : 'Auto-Detect GPS' }}
                   </button>
                 </div>
                 <input
@@ -221,19 +221,19 @@
               <div class="hazard-checkboxes">
                 <label class="hazard-chk">
                   <input type="checkbox" v-model="extractionResult.hasTrapped" />
-                  <span>⛓️ People Trapped</span>
+                  <span>People Trapped</span>
                 </label>
                 <label class="hazard-chk">
                   <input type="checkbox" v-model="extractionResult.hasInjuries" />
-                  <span>🩸 Severe Injuries</span>
+                  <span>Severe Injuries</span>
                 </label>
                 <label class="hazard-chk">
                   <input type="checkbox" v-model="extractionResult.hasFire" />
-                  <span>🔥 Fire / Smoke</span>
+                  <span>Fire / Smoke</span>
                 </label>
                 <label class="hazard-chk">
                   <input type="checkbox" v-model="extractionResult.hasHazmat" />
-                  <span>☣️ Hazmat / Toxic</span>
+                  <span>Hazmat / Toxic</span>
                 </label>
               </div>
             </div>
@@ -257,7 +257,7 @@
                 :disabled="transmitting"
               >
                 <span v-if="transmitting" class="spinner-sm"></span>
-                <span>{{ transmitting ? 'Transmitting to Dispatch...' : '🚨 CONFIRM & TRANSMIT EMERGENCY' }}</span>
+                <span>{{ transmitting ? 'Transmitting to Dispatch...' : ' CONFIRM & TRANSMIT EMERGENCY' }}</span>
               </button>
               <button
                 type="button"
@@ -288,6 +288,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useIncidentStore } from '../../stores/incidentStore';
+import geocodingService from '../../services/geocoding';
 import api from '../../services/api';
 
 const router = useRouter();
@@ -412,7 +413,6 @@ async function analyzeText(text, lang) {
   } catch (err) {
     console.error('AI Extraction failed', err);
     voiceError.value = 'Automatic AI analysis unavailable. Manual review form loaded so you can continue reporting.';
-    // Fallback basic extraction so citizen is NEVER blocked
     extractionResult.value = {
       incidentType: 'COLLAPSE',
       severity: 'CRITICAL',
@@ -445,15 +445,22 @@ function detectGPS() {
   }
 
   navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      gpsCoordinates.value = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    async (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      gpsCoordinates.value = { lat, lng };
       gpsLocked.value = true;
-      incidentLocation.value = `GPS Locked Location (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`;
+      try {
+        const geo = await geocodingService.reverseGeocode(lat, lng);
+        incidentLocation.value = geo.shortAddress || geo.displayName;
+      } catch (e) {
+        incidentLocation.value = `GPS Locked (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+      }
     },
     (err) => {
       gpsLocked.value = false;
     },
-    { timeout: 5000 }
+    { enableHighAccuracy: true, timeout: 8000 }
   );
 }
 
@@ -462,6 +469,22 @@ async function transmitEmergency() {
   transmitting.value = true;
 
   try {
+    let finalLat = gpsCoordinates.value.lat;
+    let finalLng = gpsCoordinates.value.lng;
+    let source = gpsLocked.value ? 'GPS' : 'SEARCH';
+
+    if (!gpsLocked.value && incidentLocation.value && incidentLocation.value.trim()) {
+      try {
+        const matches = await geocodingService.search(incidentLocation.value);
+        if (matches && matches.length > 0) {
+          finalLat = matches[0].latitude;
+          finalLng = matches[0].longitude;
+        }
+      } catch (geoErr) {
+        console.warn('Geocoding search failed in voice report', geoErr);
+      }
+    }
+
     const payload = {
       title: `${extractionResult.value.incidentType} Voice SOS Report`,
       description: transcription.value || 'Multilingual Voice Emergency Report',
@@ -472,8 +495,11 @@ async function transmitEmergency() {
       hasFire: !!extractionResult.value.hasFire,
       hasHazmat: !!extractionResult.value.hasHazmat,
       address: incidentLocation.value || 'GPS Locked Coordinates',
-      latitude: gpsCoordinates.value.lat,
-      longitude: gpsCoordinates.value.lng,
+      location: incidentLocation.value || 'GPS Locked Coordinates',
+      locationSource: source,
+      district: 'Central Zone',
+      latitude: Number(finalLat),
+      longitude: Number(finalLng),
       language: selectedLang.value,
       priorityScore: extractionResult.value.priorityScore || 88,
       severity: extractionResult.value.severity || 'HIGH'
@@ -508,8 +534,7 @@ function resetFlow() {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  max-width: 1040px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .header-card {
@@ -526,6 +551,10 @@ function resetFlow() {
   font-weight: 600;
   display: inline-block;
   margin-bottom: 0.25rem;
+
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
 }
 
 .back-link:hover {

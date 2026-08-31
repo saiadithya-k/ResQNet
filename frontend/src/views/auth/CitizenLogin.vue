@@ -5,7 +5,7 @@
         <router-link to="/login" class="back-link">
           ← Back to Gateway
         </router-link>
-        <span class="citizen-badge">👤 CITIZEN ACCESS</span>
+        <span class="citizen-badge"> CITIZEN ACCESS</span>
       </div>
 
       <div class="card-header">
@@ -14,10 +14,10 @@
       </div>
 
       <div v-if="errorMsg" class="alert-banner error">
-        <span>⚠️ {{ errorMsg }}</span>
+        <span>{{ errorMsg }}</span>
       </div>
       <div v-if="successMsg" class="alert-banner success">
-        <span>✅ {{ successMsg }}</span>
+        <span>✓ {{ successMsg }}</span>
       </div>
 
       <form @submit.prevent="handleSubmit" class="auth-form">
@@ -37,7 +37,7 @@
         <div class="form-group">
           <label for="citiMobile">Mobile Number</label>
           <div class="input-with-prefix">
-            <span class="prefix">🇮🇳 +91</span>
+            <span class="prefix"> +91</span>
             <input
               id="citiMobile"
               type="tel"
@@ -87,7 +87,7 @@
 
         <button type="submit" class="submit-btn" :disabled="loading">
           <span v-if="loading">Verifying credentials...</span>
-          <span v-else>{{ isRegistering ? '✨ Register Citizen Account' : '🔐 Sign In to Emergency Portal' }}</span>
+          <span v-else>{{ isRegistering ? ' Register Citizen Account' : ' Sign In to Emergency Portal' }}</span>
         </button>
       </form>
 
@@ -101,7 +101,7 @@
       <div class="demo-box">
         <span class="demo-label">Demo Citizen Profile:</span>
         <button class="demo-btn" @click="fillDemoCitizen">
-          👤 Autofill Demo Citizen (+91 9876543210)
+           Autofill Demo Citizen (+91 9876543210)
         </button>
       </div>
     </div>
@@ -210,6 +210,10 @@ async function handleSubmit() {
   text-decoration: none;
   font-size: 0.8rem;
   transition: color 0.2s;
+
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
 }
 
 .back-link:hover {

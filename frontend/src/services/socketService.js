@@ -19,7 +19,7 @@ export function useSocketService() {
     });
 
     socket.on('connect', () => {
-      console.log('📡 Connected to ResQNet Real-Time Engine (Socket.IO ID:', socket.id, ')');
+      console.log(' Connected to ResQNet Real-Time Engine (Socket.IO ID:', socket.id, ')');
     });
 
     socket.on('incident:created', (incident) => {
@@ -27,7 +27,7 @@ export function useSocketService() {
       const notificationStore = useNotificationStore();
       incidentStore.addOrUpdateIncident(incident);
       notificationStore.addNotification({
-        title: `🚨 NEW INCIDENT: ${incident.title}`,
+        title: ` NEW INCIDENT: ${incident.title}`,
         message: `Severity: ${incident.severity} | Priority: ${incident.priorityScore}`,
         type: 'INCIDENT'
       });
@@ -54,7 +54,7 @@ export function useSocketService() {
       disasterStore.isDisasterMode = data.active;
       disasterStore.activeDisaster = data.disaster;
       notificationStore.addNotification({
-        title: data.active ? '🚨 DISASTER MODE ACTIVATED' : 'Disaster Stand-Down',
+        title: data.active ? ' DISASTER MODE ACTIVATED' : 'Disaster Stand-Down',
         message: data.disaster?.type || 'Operational State Changed',
         type: 'ALERT'
       });

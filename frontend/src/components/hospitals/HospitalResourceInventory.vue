@@ -2,7 +2,7 @@
   <div class="resource-inventory-panel">
     <div class="panel-header">
       <div class="header-left">
-        <h4>📦 Hospital Resource Inventory</h4>
+        <h4> Hospital Resource Inventory</h4>
         <span class="sub-text">Critical Equipment & Medical Supplies Management</span>
       </div>
       <div class="filter-controls">
@@ -96,15 +96,15 @@ export default {
   methods: {
     getCategoryIcon(cat) {
       switch ((cat || '').toUpperCase()) {
-        case 'OXYGEN': return '💨';
+        case 'OXYGEN': return '';
         case 'BLOOD': return '🩸';
         case 'VENTILATOR': return '🫁';
-        case 'PPE': return '🥽';
-        case 'MEDICATION': return '💊';
-        case 'AMBULANCE': return '🚑';
+        case 'PPE': return '';
+        case 'MEDICATION': return '';
+        case 'AMBULANCE': return '';
         case 'TRAUMA_KIT': return '🩹';
-        case 'GENERATOR': return '⚡';
-        default: return '📦';
+        case 'GENERATOR': return '';
+        default: return '';
       }
     },
     getStatusClass(st) {

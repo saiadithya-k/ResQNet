@@ -58,6 +58,25 @@ h1, h2, h3, h4, h5, h6 {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Global Back Link */
+.back-link {
+  font-size: 0.75rem;
+  color: #38bdf8;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap !important;
+  margin-bottom: 0.35rem;
+  transition: color 0.15s ease;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+  color: #7dd3fc;
+}
+
 .tactical-card:hover {
   border-color: rgba(59, 130, 246, 0.4);
   box-shadow: 0 6px 24px -4px rgba(0, 0, 0, 0.7), 0 0 12px -3px rgba(59, 130, 246, 0.2);

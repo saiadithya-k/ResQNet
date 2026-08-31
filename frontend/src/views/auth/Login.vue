@@ -8,7 +8,7 @@
       </div>
 
       <div v-if="errorMsg" class="login-err-banner">
-        <span>⚠️ {{ errorMsg }}</span>
+        <span>{{ errorMsg }}</span>
       </div>
 
       <form @submit.prevent="handleLogin" class="login-form">
@@ -22,7 +22,7 @@
         </div>
         <button type="submit" class="btn btn-primary btn-block" :disabled="loading">
           <span v-if="loading">Verifying credentials...</span>
-          <span v-else>🔐 Authenticate & Enter Portal</span>
+          <span v-else> Authenticate & Enter Portal</span>
         </button>
       </form>
 
@@ -30,10 +30,10 @@
       <div class="demo-logins">
         <span class="demo-tag">Fast Demo Login Profiles:</span>
         <div class="role-pills">
-          <button @click="fillLogin('admin@resqnet.org')">🚨 Admin</button>
-          <button @click="fillLogin('responder@resqnet.org')">🚑 Responder</button>
-          <button @click="fillLogin('hospital@resqnet.org')">🏥 Hospital</button>
-          <button @click="fillLogin('citizen@resqnet.org')">👤 Citizen</button>
+          <button @click="fillLogin('admin@resqnet.org')"> Admin</button>
+          <button @click="fillLogin('responder@resqnet.org')"> Responder</button>
+          <button @click="fillLogin('hospital@resqnet.org')"> Hospital</button>
+          <button @click="fillLogin('citizen@resqnet.org')"> Citizen</button>
         </div>
       </div>
     </div>

@@ -4,7 +4,7 @@
     <div class="header-card tactical-card">
       <div class="header-left">
         <router-link to="/citizen" class="back-link">← Back to Portal</router-link>
-        <h2>🚨 MY REPORTED EMERGENCIES</h2>
+        <h2> MY REPORTED EMERGENCIES</h2>
         <p>Live status, AI priority triage, and responder dispatch updates for your emergency reports.</p>
       </div>
 
@@ -64,10 +64,10 @@
           type="text"
           v-model="searchQuery"
           class="search-input"
-          placeholder="🔍 Search by ID, type, address..."
+          placeholder=" Search by ID, type, address..."
         />
         <button class="btn btn-ghost btn-xs" @click="loadMyEmergencies" :disabled="loading">
-          {{ loading ? 'Refreshing...' : '🔄 Refresh' }}
+          {{ loading ? 'Refreshing...' : ' Refresh' }}
         </button>
       </div>
     </div>
@@ -80,7 +80,7 @@
 
     <!-- Error State -->
     <div v-else-if="fetchError" class="tactical-card state-panel error">
-      <span class="state-icon">⚠️</span>
+      <span class="state-icon">️</span>
       <strong>Unable to load your emergencies.</strong>
       <p class="text-xs text-muted">{{ fetchError }}</p>
       <button class="btn btn-primary btn-sm mt-2" @click="loadMyEmergencies">Retry Connection</button>
@@ -88,7 +88,7 @@
 
     <!-- Empty State -->
     <div v-else-if="filteredIncidents.length === 0" class="tactical-card empty-panel">
-      <span class="empty-icon">🛡️</span>
+      <span class="empty-icon">️</span>
       <h3>NO ACTIVE EMERGENCIES</h3>
       <p>
         {{ activeFilter === 'ALL'
@@ -97,7 +97,7 @@
         }}
       </p>
       <router-link to="/citizen/report" class="btn btn-primary mt-3">
-        🚨 File Emergency Report
+         File Emergency Report
       </router-link>
     </div>
 
@@ -121,7 +121,7 @@
         <!-- Title & Location -->
         <div class="inc-main-info">
           <strong class="inc-title">{{ inc.title }}</strong>
-          <span class="inc-loc">📍 {{ inc.address || 'Reported Location' }}</span>
+          <span class="inc-loc"> {{ inc.address || 'Reported Location' }}</span>
         </div>
 
         <!-- Badges: Status, Severity, Priority -->
@@ -146,13 +146,13 @@
         <!-- Metadata & Evidence Indicators -->
         <div class="inc-footer-row">
           <div class="meta-indicators">
-            <span v-if="inc.victimCount" class="meta-tag">👥 {{ inc.victimCount }} Victim(s)</span>
-            <span v-if="inc.hasTrapped" class="meta-tag red">⛓️ Trapped</span>
+            <span v-if="inc.victimCount" class="meta-tag"> {{ inc.victimCount }} Victim(s)</span>
+            <span v-if="inc.hasTrapped" class="meta-tag red">️ Trapped</span>
             <span v-if="inc.hasInjuries" class="meta-tag red">🩸 Injuries</span>
-            <span v-if="inc.hasFire" class="meta-tag amber">🔥 Fire</span>
-            <span v-if="inc.hasHazmat" class="meta-tag amber">☣️ Hazmat</span>
+            <span v-if="inc.hasFire" class="meta-tag amber"> Fire</span>
+            <span v-if="inc.hasHazmat" class="meta-tag amber">️ Hazmat</span>
             <span v-if="inc.evidenceFiles?.length" class="meta-tag green">
-              📷 {{ inc.evidenceFiles.length }} Evidence File(s)
+               {{ inc.evidenceFiles.length }} Evidence File(s)
             </span>
           </div>
 
@@ -244,14 +244,14 @@ function goToIncidentDetails(id) {
 }
 
 function getCategoryIcon(type) {
-  if (type === 'COLLAPSE') return '🏚️';
-  if (type === 'FIRE') return '🔥';
-  if (type === 'HAZMAT') return '☣️';
-  if (type === 'FLOOD') return '🌊';
-  if (type === 'MEDICAL') return '🚑';
-  if (type === 'EXPLOSION') return '💥';
-  if (type === 'ELECTRICAL') return '⚡';
-  return '🚨';
+  if (type === 'COLLAPSE') return '️';
+  if (type === 'FIRE') return '';
+  if (type === 'HAZMAT') return '️';
+  if (type === 'FLOOD') return '';
+  if (type === 'MEDICAL') return '';
+  if (type === 'EXPLOSION') return '';
+  if (type === 'ELECTRICAL') return '';
+  return '';
 }
 
 function formatStatus(status) {
@@ -306,8 +306,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  max-width: 960px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .header-card {
@@ -324,6 +323,10 @@ onUnmounted(() => {
   font-weight: 600;
   display: inline-block;
   margin-bottom: 0.25rem;
+
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
 }
 
 .back-link:hover {

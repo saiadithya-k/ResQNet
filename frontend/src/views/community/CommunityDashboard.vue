@@ -2,14 +2,14 @@
   <div class="community-view">
     <div class="header-card tactical-card">
       <div>
-        <h2>🧑‍🚒 COMMUNITY RESPONDER MESH (500M HYPER-LOCAL)</h2>
+        <h2>COMMUNITY RESPONDER MESH (500M HYPER-LOCAL)</h2>
         <p>Verified CPR & First Aid certified citizen responders receiving instant localized alerts within 500 meters of critical incidents.</p>
       </div>
     </div>
 
     <div class="community-grid">
       <div class="tactical-card nearby-card">
-        <div class="section-title">🚨 NEARBY EMERGENCY ALERTS (WITHIN 500m)</div>
+        <div class="section-title">NEARBY EMERGENCY ALERTS (WITHIN 500m)</div>
         <div class="alert-box">
           <div class="alert-top">
             <span class="badge badge-critical">280 METERS AWAY</span>
@@ -33,15 +33,15 @@
         <div class="section-title">VERIFIED SKILLS & CERTIFICATIONS</div>
         <div class="cert-list">
           <div class="cert-item">
-            <span>🫀 Advanced CPR Certified</span>
+            <span>Advanced CPR Certified</span>
             <span class="badge badge-success">VERIFIED</span>
           </div>
           <div class="cert-item">
-            <span>🩹 Red Cross Emergency First Aid</span>
+            <span>Red Cross Emergency First Aid</span>
             <span class="badge badge-success">VERIFIED</span>
           </div>
           <div class="cert-item">
-            <span>🧯 Basic Fire Extinguisher Handling</span>
+            <span>Basic Fire Extinguisher Handling</span>
             <span class="badge badge-success">VERIFIED</span>
           </div>
         </div>
@@ -59,7 +59,7 @@ async function acceptAssistance() {
     incidentId: 'INC-1042',
     status: 'ON_SCENE'
   });
-  alert('✅ Checked in on scene! Command Center notified via Socket.IO.');
+  alert('Checked in on scene! Command Center notified via Socket.IO.');
 }
 </script>
 

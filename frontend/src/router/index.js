@@ -8,6 +8,7 @@ import DisasterSimulation from '../views/admin/DisasterSimulation.vue';
 import Analytics from '../views/admin/Analytics.vue';
 import EvidenceAudit from '../views/admin/EvidenceAudit.vue';
 import AuditLogs from '../views/admin/AuditLogs.vue';
+import TacticalWorkflow from '../views/admin/TacticalWorkflow.vue';
 
 import CitizenDashboard from '../views/citizen/CitizenDashboard.vue';
 import ReportEmergency from '../views/citizen/ReportEmergency.vue';
@@ -29,8 +30,10 @@ import OperationsLogin from '../views/auth/OperationsLogin.vue';
 import LandingPage from '../views/LandingPage.vue';
 
 const routes = [
-  // Public Landing Page
+  // Public Landing Page & Tactical Architecture Workflow (Zero login required for faculty/evaluators)
   { path: '/', name: 'LandingPage', component: LandingPage, meta: { public: true } },
+  { path: '/workflow', name: 'TacticalWorkflowPublic', component: TacticalWorkflow, meta: { public: true } },
+  { path: '/admin/workflow', name: 'TacticalWorkflow', component: TacticalWorkflow, meta: { public: true } },
 
   // Citizen Platform (Team 1)
   { path: '/citizen', name: 'CitizenDashboard', component: CitizenDashboard, meta: { requiresAuth: true } },
@@ -65,13 +68,19 @@ const routes = [
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition;
+    }
+    return { top: 0, left: 0 };
+  }
 });
 
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
-  if (to.path === '/' || to.path.startsWith('/login') || to.meta.public) {
-    // Allow viewing public landing page and auth portals
+  // Allow public access to Landing, Login, and Workflow pages without any login requirement
+  if (to.path === '/' || to.path === '/workflow' || to.path === '/admin/workflow' || to.path.startsWith('/login') || to.meta.public) {
     next();
   } else if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login');
@@ -85,6 +94,30 @@ router.beforeEach((to, from, next) => {
   } else {
     next();
   }
+});
+
+// Always reset viewport and window scroll position to the very top upon navigation
+router.afterEach(() => {
+  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  const viewport = document.querySelector('.content-viewport');
+  if (viewport) {
+    viewport.scrollTop = 0;
+    viewport.scrollLeft = 0;
+  }
+  // Secondary frame check after components render dynamic headers
+  requestAnimationFrame(() => {
+    const el = document.querySelector('.content-viewport');
+    if (el) {
+      el.scrollTop = 0;
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  });
+  setTimeout(() => {
+    const el = document.querySelector('.content-viewport');
+    if (el) {
+      el.scrollTop = 0;
+    }
+  }, 50);
 });
 
 export default router;

@@ -35,7 +35,7 @@
 
         <!-- Audio Mute Control -->
         <button class="btn-mute-toggle font-mono" @click="toggleAudioMute" :title="isMuted ? 'Unmute tactical audio alert' : 'Mute tactical audio alert'">
-          {{ isMuted ? '🔇 AUDIO OFF' : '🔊 AUDIO ON' }}
+          {{ isMuted ? ' AUDIO OFF' : ' AUDIO ON' }}
         </button>
 
         <div class="telemetry-pill">
@@ -47,30 +47,35 @@
           <span class="t-lbl">OPS CLOCK:</span>
           <span class="t-val text-cyan font-mono">{{ operationalTime }}</span>
         </div>
+
+        <!-- Tactical Workflow Workspace Launch Button -->
+        <router-link to="/workflow" class="btn-workflow-launch font-mono" title="Open Full-Screen Tactical Emergency Workflow Mesh (No login required)">
+          ⚡ WORKFLOW
+        </router-link>
       </div>
     </header>
 
     <!-- DISASTER MODE ACTIVE OPERATIONAL SURGE BANNER -->
     <div v-if="disasterStore.isDisasterMode" class="disaster-surge-banner font-mono">
       <div class="surge-hdr">
-        <span class="surge-icon">🚨</span>
+        <span class="surge-icon"></span>
         <strong>LEVEL 3 DISASTER STATE ACTIVE — METROPOLITAN JOINT SURGE PROTOCOL ENFORCED</strong>
       </div>
       <div class="surge-details-grid">
         <div v-if="surgeWarnings.highHospitals.length" class="surge-warning-pill warn-hosp">
-          🏥 <strong>HOSPITAL SURGE ALERT:</strong>
+           <strong>HOSPITAL SURGE ALERT:</strong>
           <span v-for="h in surgeWarnings.highHospitals" :key="h.id">
             {{ h.name }} ({{ Math.round(((h.totalBeds - h.availableBeds)/h.totalBeds)*100) }}% Beds Full)
           </span>
         </div>
         <div v-if="surgeWarnings.highShelters.length" class="surge-warning-pill warn-shelter">
-          🏠 <strong>SHELTER CAPACITY ALERT:</strong>
+           <strong>SHELTER CAPACITY ALERT:</strong>
           <span v-for="s in surgeWarnings.highShelters" :key="s.id">
             {{ s.name }} ({{ Math.round((s.currentOccupancy/s.capacity)*100) }}% Occupancy)
           </span>
         </div>
         <div class="surge-warning-pill warn-zones">
-          ⚠️ <strong>EVACUATION PERIMETERS:</strong> Chemical Plume & Harbour Danger Sectors Cleared
+          ️ <strong>EVACUATION PERIMETERS:</strong> Chemical Plume & Harbour Danger Sectors Cleared
         </div>
       </div>
     </div>
@@ -78,50 +83,65 @@
     <!-- DERIVED LIVE KPI STRIP -->
     <section class="kpi-strip">
       <div class="kpi-box tactical-card">
-        <div class="kpi-icon-wrap icon-red">🚨</div>
+        <div class="kpi-icon-wrap icon-red">
+          <span class="kpi-box-metric text-red font-mono">{{ criticalCount }}</span>
+        </div>
         <div class="kpi-data">
           <span class="kpi-name">CRITICAL INCIDENTS</span>
-          <span class="kpi-metric text-red">{{ criticalCount }}</span>
+          <span class="kpi-sub">Priority 1 Triage</span>
         </div>
       </div>
 
       <div class="kpi-box tactical-card">
-        <div class="kpi-icon-wrap icon-amber">⚡</div>
+        <div class="kpi-icon-wrap icon-amber">
+          <span class="kpi-box-metric text-amber font-mono">{{ activeCount }}</span>
+        </div>
         <div class="kpi-data">
           <span class="kpi-name">ACTIVE INCIDENTS</span>
-          <span class="kpi-metric text-amber">{{ activeCount }}</span>
+          <span class="kpi-sub">Active Response</span>
         </div>
       </div>
 
       <div class="kpi-box tactical-card">
-        <div class="kpi-icon-wrap icon-blue">🚑</div>
+        <div class="kpi-icon-wrap icon-blue">
+          <span class="kpi-box-metric text-blue font-mono">{{ availableAmbulanceCount }}</span>
+        </div>
         <div class="kpi-data">
           <span class="kpi-name">AMBULANCES AVAILABLE</span>
-          <span class="kpi-metric text-blue">{{ availableAmbulanceCount }}</span>
+          <span class="kpi-sub">Standby Units</span>
         </div>
       </div>
 
       <div class="kpi-box tactical-card">
-        <div class="kpi-icon-wrap icon-emerald">🧑‍🚒</div>
+        <div class="kpi-icon-wrap icon-emerald">
+          <span class="kpi-box-metric text-emerald font-mono">{{ totalResponderCount }}</span>
+        </div>
         <div class="kpi-data">
           <span class="kpi-name">ACTIVE RESPONDERS</span>
-          <span class="kpi-metric text-emerald">{{ totalResponderCount }}</span>
+          <span class="kpi-sub">Field Deployed</span>
         </div>
       </div>
 
       <div class="kpi-box tactical-card">
-        <div class="kpi-icon-wrap icon-purple">🏥</div>
+        <div class="kpi-icon-wrap icon-purple">
+          <span class="kpi-box-metric text-purple font-mono" style="font-size: 0.95rem;">{{ hospitalBedUtilization }}%</span>
+        </div>
         <div class="kpi-data">
           <span class="kpi-name">HOSPITAL CAPACITY</span>
-          <span class="kpi-metric text-purple">{{ hospitalBedUtilization }}%</span>
+          <span class="kpi-sub">ICU &amp; Trauma Beds</span>
         </div>
       </div>
 
       <div class="kpi-box tactical-card">
-        <div class="kpi-icon-wrap icon-cyan">⏱️</div>
+        <div class="kpi-icon-wrap icon-cyan">
+          <div class="kpi-eta-metric text-cyan font-mono">
+            <span class="eta-num">{{ averageEtaNumber }}</span>
+            <span class="eta-unit">min</span>
+          </div>
+        </div>
         <div class="kpi-data">
           <span class="kpi-name">AVERAGE ETA</span>
-          <span class="kpi-metric text-cyan">{{ averageEtaDisplay }}</span>
+          <span class="kpi-sub">Dispatch Response</span>
         </div>
       </div>
     </section>
@@ -158,16 +178,16 @@
               <div class="card-titles">
                 <span class="inc-id font-mono">#{{ inc.id }} · {{ inc.incidentType }}</span>
                 <span class="inc-name">{{ inc.title }}</span>
-                <span class="inc-address font-mono text-xs">📍 {{ inc.address || inc.district }}</span>
+                <span class="inc-address font-mono text-xs"> {{ inc.address || inc.district }}</span>
               </div>
             </div>
 
             <div class="card-badges-row">
               <StatusBadge :status="inc.severity" />
               <span class="status-indicator-tag font-mono">{{ inc.status }}</span>
-              <span class="badge-mini font-mono">👤 {{ inc.victimCount }} Victims</span>
+              <span class="badge-mini font-mono"> {{ inc.victimCount }} Victims</span>
               <span v-if="getAssignedResponder(inc)" class="badge-assigned font-mono">
-                🚑 {{ getAssignedResponder(inc) }}
+                 {{ getAssignedResponder(inc) }}
               </span>
             </div>
           </div>
@@ -191,7 +211,7 @@
           <div class="sh-left">
             <span class="font-mono text-cyan font-bold text-sm">SELECTED INCIDENT #{{ incidentStore.selectedIncident.id }}</span>
             <span class="font-mono text-muted text-xs">TYPE: {{ incidentStore.selectedIncident.incidentType }}</span>
-            <span class="font-mono text-xs text-slate-300">📍 {{ incidentStore.selectedIncident.address || incidentStore.selectedIncident.district }}</span>
+            <span class="font-mono text-xs text-slate-300"> {{ incidentStore.selectedIncident.address || incidentStore.selectedIncident.district }}</span>
           </div>
           <div class="sh-right">
             <StatusBadge :status="incidentStore.selectedIncident.severity" />
@@ -246,18 +266,18 @@
             </div>
 
             <div v-else class="resolved-banner font-mono">
-              ✅ INCIDENT FULLY RESOLVED & OPERATIONAL CLOSEOUT COMPLETE
+              ✓ INCIDENT FULLY RESOLVED & OPERATIONAL CLOSEOUT COMPLETE
             </div>
 
             <div v-if="transitionError" class="transition-error-alert font-mono">
-              ⚠️ {{ transitionError }}
+              ️ {{ transitionError }}
             </div>
           </div>
         </div>
       </div>
 
       <div v-else class="no-selection-banner font-mono">
-        <span class="glyph">🚨</span>
+        <span class="glyph"></span>
         <strong>NO INCIDENT CURRENTLY SELECTED</strong>
         <p>Click any emergency from the Priority Queue above to inspect operational telemetry, advance the lifecycle state machine, and allocate responders.</p>
       </div>
@@ -267,7 +287,7 @@
     <section class="row-3-dispatch-sim tactical-card">
       <div class="section-title-strip font-mono">
         <div class="st-left">
-          <span class="icon">⚡</span>
+          <span class="icon"></span>
           <h3>TACTICAL RESPONDER DISPATCH & LIVE TELEMETRY</h3>
         </div>
         <span class="badge badge-success font-mono">{{ availableUnitsCount }} UNITS READY</span>
@@ -280,7 +300,7 @@
           <div>
             <span class="font-mono text-xs text-slate-400">ACTIVELY ASSIGNED UNIT:</span>
             <strong class="text-emerald text-sm block font-mono">
-              {{ currentAssignedUnit.isCommunity ? '🧑‍⚕️' : currentAssignedUnit.type === 'PARAMEDIC' ? '🚑' : '🚒' }}
+              {{ currentAssignedUnit.isCommunity ? '‍️' : currentAssignedUnit.type === 'PARAMEDIC' ? '' : '' }}
               {{ currentAssignedUnit.badgeNumber }} · {{ currentAssignedUnit.name }}
             </strong>
           </div>
@@ -307,7 +327,7 @@
             >
               <div class="r-card-header">
                 <div class="r-title-row">
-                  <span class="r-icon">{{ r.isCommunity ? '🧑‍⚕️' : r.type === 'PARAMEDIC' ? '🚑' : '🚒' }}</span>
+                  <span class="r-icon">{{ r.isCommunity ? '‍️' : r.type === 'PARAMEDIC' ? '' : '' }}</span>
                   <strong class="font-mono">{{ r.badgeNumber }}</strong>
                 </div>
                 <StatusBadge :status="r.status" />
@@ -316,7 +336,7 @@
               <div class="r-card-body">
                 <span class="r-name">{{ r.name }}</span>
                 <div class="r-telemetry-tags font-mono">
-                  <span>📍 {{ calculateDistance(r) }} km</span>
+                  <span> {{ calculateDistance(r) }} km</span>
                   <span class="text-cyan">ETA {{ r.etaMinutes || calculateEta(r) }}m</span>
                   <span>Fatigue: <strong :class="r.fatigueScore > 40 ? 'text-amber' : 'text-emerald'">{{ r.fatigueScore }}%</strong></span>
                 </div>
@@ -334,16 +354,16 @@
               :disabled="isDispatching || !canDispatchSelected"
               @click="executeDispatch"
             >
-              <span v-if="isDispatching">⚡ Transmitting Dispatch Directives...</span>
+              <span v-if="isDispatching"> Transmitting Dispatch Directives...</span>
               <span v-else-if="currentAssignedUnit && currentAssignedUnit.id === selectedResponderId">
                 ✓ {{ currentAssignedUnit.badgeNumber }} Already Assigned to Selected Incident
               </span>
               <span v-else>
-                ⚡ DISPATCH {{ getSelectedResponderBadge }} TO INCIDENT #{{ incidentStore.selectedIncident?.id || '1042' }}
+                 DISPATCH {{ getSelectedResponderBadge }} TO INCIDENT #{{ incidentStore.selectedIncident?.id || '1042' }}
               </span>
             </button>
             <div v-if="dispatchError" class="dispatch-error-msg font-mono">
-              ⚠️ {{ dispatchError }}
+              ️ {{ dispatchError }}
             </div>
           </div>
         </div>
@@ -379,7 +399,7 @@
                   class="btn btn-primary btn-sm flex-1 font-mono"
                   @click="startGpsSim"
                 >
-                  🚀 START GPS SIMULATION
+                   START GPS SIMULATION
                 </button>
 
                 <button
@@ -399,7 +419,7 @@
                 </button>
 
                 <div v-else-if="simState.status === 'COMPLETED'" class="sim-completed-tag font-mono flex-1">
-                  🎯 A12 ARRIVED ON SCENE (AT TARGET)
+                   A12 ARRIVED ON SCENE (AT TARGET)
                 </div>
 
                 <button
@@ -408,7 +428,7 @@
                   @click="resetGpsSim"
                   title="Reset Simulation"
                 >
-                  🔄 RESET
+                   RESET
                 </button>
               </div>
             </div>
@@ -430,19 +450,19 @@
           :class="['ops-tab-link', 'font-mono', { active: activeSubTab === 'units' }]"
           @click="activeSubTab = 'units'"
         >
-          🚑 Active Responder Telemetry ({{ responderStore.responders.length }})
+           Active Responder Telemetry ({{ responderStore.responders.length }})
         </button>
         <button
           :class="['ops-tab-link', 'font-mono', { active: activeSubTab === 'hospitals' }]"
           @click="activeSubTab = 'hospitals'"
         >
-          🏥 Hospital Capacity Intel ({{ hospitalStore.hospitals.length }})
+           Hospital Capacity Intel ({{ hospitalStore.hospitals.length }})
         </button>
         <button
           :class="['ops-tab-link', 'font-mono', { active: activeSubTab === 'shelters' }]"
           @click="activeSubTab = 'shelters'"
         >
-          🏠 Shelter Occupancy Intel ({{ disasterStore.shelters.length }})
+           Shelter Occupancy Intel ({{ disasterStore.shelters.length }})
         </button>
       </div>
 
@@ -501,11 +521,11 @@
             <div class="h-card-header">
               <div class="h-name-box">
                 <strong>{{ h.name }}</strong>
-                <span class="h-loc text-slate-400 text-xs font-mono">📍 {{ h.district }}</span>
+                <span class="h-loc text-slate-400 text-xs font-mono"> {{ h.district }}</span>
               </div>
               <div class="h-badge-box">
                 <span v-if="h.totalBeds && ((h.totalBeds - h.availableBeds)/h.totalBeds) >= 0.8" class="badge-surge-pill font-mono">
-                  ⚠️ >80% FULL
+                  ️ >80% FULL
                 </span>
                 <span class="font-mono text-cyan font-bold text-xs">Match: {{ h.matchScore || 85 }}%</span>
               </div>
@@ -523,7 +543,7 @@
                 Trauma: <strong class="text-red">{{ h.availableTrauma || 0 }}/{{ h.totalTrauma || 0 }}</strong>
               </span>
               <span class="h-chip text-emerald">
-                {{ h.isAccepting ? '✓ ACCEPTING' : '🛑 DIVERT' }}
+                {{ h.isAccepting ? '✓ ACCEPTING' : ' DIVERT' }}
               </span>
             </div>
           </div>
@@ -541,10 +561,10 @@
             <div class="s-card-header">
               <div>
                 <strong>#{{ s.id }} · {{ s.name }}</strong>
-                <span class="s-loc text-slate-400 text-xs block font-mono">📍 {{ s.district }}</span>
+                <span class="s-loc text-slate-400 text-xs block font-mono"> {{ s.district }}</span>
               </div>
               <span v-if="s.capacity && (s.currentOccupancy/s.capacity) >= 0.8" class="badge-surge-pill font-mono">
-                ⚠️ >80% CAPACITY
+                ️ >80% CAPACITY
               </span>
             </div>
 
@@ -576,6 +596,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useUiStore } from '../../stores/uiStore';
 import { useIncidentStore } from '../../stores/incidentStore';
 import { useResponderStore } from '../../stores/responderStore';
 import { useHospitalStore } from '../../stores/hospitalStore';
@@ -585,6 +606,7 @@ import { audioAlert } from '../../utils/audioAlert';
 import EmergencyMap from '../../components/map/EmergencyMap.vue';
 import StatusBadge from '../../components/common/StatusBadge.vue';
 
+const uiStore = useUiStore();
 const incidentStore = useIncidentStore();
 const responderStore = useResponderStore();
 const hospitalStore = useHospitalStore();
@@ -607,6 +629,13 @@ let clockTimer = null;
 let simUnsubscribe = null;
 
 onMounted(async () => {
+  // Ensure the command dashboard viewport starts at the top
+  const viewport = document.querySelector('.content-viewport');
+  if (viewport) {
+    viewport.scrollTop = 0;
+  }
+  window.scrollTo(0, 0);
+
   updateOperationalClock();
   clockTimer = setInterval(updateOperationalClock, 1000);
 
@@ -626,6 +655,11 @@ onMounted(async () => {
     hospitalStore.fetchHospitals(),
     disasterStore.fetchStatus()
   ]);
+
+  // Second pass to ensure top alignment after children/map render
+  if (viewport) {
+    viewport.scrollTop = 0;
+  }
 });
 
 onUnmounted(() => {
@@ -653,11 +687,15 @@ const hospitalBedUtilization = computed(() => {
   return totalBeds ? Math.round(((totalBeds - availBeds) / totalBeds) * 100) : 0;
 });
 
-const averageEtaDisplay = computed(() => {
+const averageEtaNumber = computed(() => {
   const dispatchedUnits = responderStore.responders.filter(r => r.etaMinutes);
-  if (dispatchedUnits.length === 0) return '4.8 min';
+  if (dispatchedUnits.length === 0) return '5.0';
   const sum = dispatchedUnits.reduce((acc, r) => acc + r.etaMinutes, 0);
-  return `${(sum / dispatchedUnits.length).toFixed(1)} min`;
+  return (sum / dispatchedUnits.length).toFixed(1);
+});
+
+const averageEtaDisplay = computed(() => {
+  return `${averageEtaNumber.value} min`;
 });
 
 const filteredIncidents = computed(() => {
@@ -740,16 +778,16 @@ const lifecycleStates = [
 ];
 
 const nextActionTransitions = {
-  'REPORTED': { next: 'AI_ANALYZING', label: '🤖 INITIATE AI TRIAGE & ANALYSIS', note: 'AI dispatched triage assessment' },
+  'REPORTED': { next: 'AI_ANALYZING', label: ' INITIATE AI TRIAGE & ANALYSIS', note: 'AI dispatched triage assessment' },
   'AI_ANALYZING': { next: 'VERIFIED', label: '✓ VERIFY INCIDENT INTEGRITY', note: 'Incident verified by supervisor' },
-  'VERIFIED': { next: 'PRIORITIZED', label: '⚡ COMPUTE PRIORITY MATRIX', note: 'Dynamic priority ranking computed' },
-  'PRIORITIZED': { next: 'DISPATCHING', label: '🚨 INITIATE DISPATCH PROTOCOL', note: 'Dispatch channel opened' },
-  'DISPATCHING': { next: 'ASSIGNED', label: '🚑 ASSIGN FIELD RESPONDER', note: 'Field responder units locked' },
-  'ASSIGNED': { next: 'EN_ROUTE', label: '🛰️ SET RESPONDER EN ROUTE', note: 'Unit moving with active GPS telemetry' },
-  'EN_ROUTE': { next: 'ON_SCENE', label: '📍 CONFIRM ARRIVAL ON SCENE', note: 'Unit on scene establishing perimeter' },
-  'ON_SCENE': { next: 'TRANSPORTING', label: '🚑 COMMENCE PATIENT TRANSPORT', note: 'Patient in transit to medical hub' },
-  'TRANSPORTING': { next: 'HOSPITAL_RECEIVED', label: '🏨 CONFIRM HOSPITAL HANDOFF', note: 'Trauma team received patients' },
-  'HOSPITAL_RECEIVED': { next: 'RESOLVED', label: '✅ RESOLVE & CLOSE INCIDENT', note: 'Emergency operations completed' },
+  'VERIFIED': { next: 'PRIORITIZED', label: ' COMPUTE PRIORITY MATRIX', note: 'Dynamic priority ranking computed' },
+  'PRIORITIZED': { next: 'DISPATCHING', label: ' INITIATE DISPATCH PROTOCOL', note: 'Dispatch channel opened' },
+  'DISPATCHING': { next: 'ASSIGNED', label: ' ASSIGN FIELD RESPONDER', note: 'Field responder units locked' },
+  'ASSIGNED': { next: 'EN_ROUTE', label: '️ SET RESPONDER EN ROUTE', note: 'Unit moving with active GPS telemetry' },
+  'EN_ROUTE': { next: 'ON_SCENE', label: ' CONFIRM ARRIVAL ON SCENE', note: 'Unit on scene establishing perimeter' },
+  'ON_SCENE': { next: 'TRANSPORTING', label: ' COMMENCE PATIENT TRANSPORT', note: 'Patient in transit to medical hub' },
+  'TRANSPORTING': { next: 'HOSPITAL_RECEIVED', label: ' CONFIRM HOSPITAL HANDOFF', note: 'Trauma team received patients' },
+  'HOSPITAL_RECEIVED': { next: 'RESOLVED', label: '✓ RESOLVE & CLOSE INCIDENT', note: 'Emergency operations completed' },
   'RESOLVED': null
 };
 
@@ -1126,37 +1164,87 @@ function focusHospitalOnMap(hosp) {
 }
 
 .kpi-icon-wrap {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.15rem;
   flex-shrink: 0;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.4);
 }
 
-.icon-red { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); }
-.icon-amber { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); }
-.icon-blue { background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); }
-.icon-emerald { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); }
-.icon-purple { background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.4); }
-.icon-cyan { background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.4); }
+.kpi-box-metric {
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.kpi-eta-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1;
+  width: 100%;
+}
+
+.eta-num {
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+}
+
+.eta-unit {
+  font-size: 0.50rem;
+  font-weight: 700;
+  color: #67e8f9;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  margin-top: 2px;
+  text-align: center;
+}
+
+.icon-red { background: rgba(239, 68, 68, 0.18); border: 1px solid rgba(239, 68, 68, 0.5); box-shadow: 0 0 12px rgba(239, 68, 68, 0.2); }
+.icon-amber { background: rgba(245, 158, 11, 0.18); border: 1px solid rgba(245, 158, 11, 0.5); box-shadow: 0 0 12px rgba(245, 158, 11, 0.2); }
+.icon-blue { background: rgba(59, 130, 246, 0.18); border: 1px solid rgba(59, 130, 246, 0.5); box-shadow: 0 0 12px rgba(59, 130, 246, 0.2); }
+.icon-emerald { background: rgba(16, 185, 129, 0.18); border: 1px solid rgba(16, 185, 129, 0.5); box-shadow: 0 0 12px rgba(16, 185, 129, 0.2); }
+.icon-purple { background: rgba(168, 85, 247, 0.18); border: 1px solid rgba(168, 85, 247, 0.5); box-shadow: 0 0 12px rgba(168, 85, 247, 0.2); }
+.icon-cyan { background: rgba(6, 182, 212, 0.18); border: 1px solid rgba(6, 182, 212, 0.5); box-shadow: 0 0 12px rgba(6, 182, 212, 0.2); }
 
 .kpi-data {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  justify-content: center;
 }
 
 .kpi-name {
-  font-size: 0.6rem;
-  color: #94a3b8;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #cbd5e1;
   font-family: var(--font-mono);
   letter-spacing: 0.04em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.kpi-sub {
+  font-size: 0.58rem;
+  color: #64748b;
+  font-family: var(--font-mono);
+  letter-spacing: 0.03em;
+  margin-top: 1px;
 }
 
 .kpi-metric {
@@ -2131,5 +2219,31 @@ function focusHospitalOnMap(hosp) {
   .shelters-summary-flow-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ─── Workflow Launch Button in Top Command Bar ─── */
+.btn-workflow-launch {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.25));
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  color: #38bdf8;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.btn-workflow-launch:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.35), rgba(129, 140, 248, 0.45));
+  border-color: #38bdf8;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
 }
 </style>

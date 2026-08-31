@@ -4,7 +4,7 @@
     <div class="header-card tactical-card">
       <div class="header-left">
         <router-link to="/citizen" class="back-link">← Back to Portal</router-link>
-        <h2>🔮 AI RISK & HAZARD FORECAST AWARENESS</h2>
+        <h2> AI RISK & HAZARD FORECAST AWARENESS</h2>
         <p>Predictive hazard telemetry on storm surge pressures, flood risks, and localized crowd surges.</p>
       </div>
 
@@ -14,7 +14,7 @@
           <span>LIVE TELEMETRY STREAM</span>
         </div>
         <button class="btn btn-ghost btn-xs" @click="loadRiskPredictions" :disabled="loading">
-          {{ loading ? 'Updating...' : '🔄 Refresh Forecasts' }}
+          {{ loading ? 'Updating...' : ' Refresh Forecasts' }}
         </button>
       </div>
     </div>
@@ -22,7 +22,7 @@
     <!-- Official Alert vs AI Forecast Distinction Notice -->
     <div class="tactical-card advisory-notice">
       <div class="notice-left">
-        <span class="notice-icon">⚠️</span>
+        <span class="notice-icon">️</span>
         <div class="notice-text">
           <strong>PREDICTIVE INTELLIGENCE ADVISORY</strong>
           <p>
@@ -44,7 +44,7 @@
 
     <!-- Error State -->
     <div v-else-if="fetchError" class="tactical-card state-panel error">
-      <span class="state-icon">⚠️</span>
+      <span class="state-icon">️</span>
       <strong>RISK DATA UNAVAILABLE</strong>
       <p class="text-xs text-muted">{{ fetchError }}</p>
       <button class="btn btn-primary btn-sm mt-2" @click="loadRiskPredictions">Retry Connection</button>
@@ -52,11 +52,11 @@
 
     <!-- Empty State -->
     <div v-else-if="riskZones.length === 0" class="tactical-card empty-panel">
-      <span class="empty-icon">🛡️</span>
+      <span class="empty-icon">️</span>
       <h3>NO CURRENT RISK FORECAST</h3>
       <p>Risk prediction data is currently unavailable. Environmental sensor streams report baseline normal levels.</p>
       <button class="btn btn-ghost btn-sm mt-2" @click="loadRiskPredictions">
-        🔄 Refresh Streams
+         Refresh Streams
       </button>
     </div>
 
@@ -135,7 +135,7 @@
               class="link-official-alert font-mono"
               @click.stop
             >
-              📢 View Official Alert ({{ zone.relatedAlertId }}) →
+               View Official Alert ({{ zone.relatedAlertId }}) →
             </router-link>
           </div>
         </div>
@@ -344,10 +344,10 @@ function updateMap(zone) {
 }
 
 function getRiskIcon(lvl) {
-  if (lvl === 'CRITICAL') return '🔴';
-  if (lvl === 'HIGH') return '🟡';
-  if (lvl === 'MEDIUM') return '🔵';
-  return '🟢';
+  if (lvl === 'CRITICAL') return '';
+  if (lvl === 'HIGH') return '';
+  if (lvl === 'MEDIUM') return '';
+  return '';
 }
 
 function getRiskChipClass(lvl) {
@@ -410,8 +410,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  max-width: 1040px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .header-card {
@@ -428,6 +427,10 @@ onBeforeUnmount(() => {
   font-weight: 600;
   display: inline-block;
   margin-bottom: 0.25rem;
+
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
 }
 
 .back-link:hover {

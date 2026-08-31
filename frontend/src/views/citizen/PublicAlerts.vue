@@ -4,7 +4,7 @@
     <div class="header-card tactical-card">
       <div class="header-left">
         <router-link to="/citizen" class="back-link">← Back to Portal</router-link>
-        <h2>📢 PUBLIC DISASTER & SAFETY ALERTS</h2>
+        <h2> PUBLIC DISASTER & SAFETY ALERTS</h2>
         <p>Official real-time civil defense advisories, severe hazard alerts, and zone evacuation directives.</p>
       </div>
 
@@ -14,7 +14,7 @@
           <span>{{ isSocketConnected ? 'LIVE ALERTS ACTIVE' : 'LIVE UPDATES DISCONNECTED' }}</span>
         </div>
         <button class="btn btn-ghost btn-xs" @click="loadAlerts" :disabled="loading">
-          {{ loading ? 'Refreshing...' : '🔄 Refresh Alerts' }}
+          {{ loading ? 'Refreshing...' : ' Refresh Alerts' }}
         </button>
       </div>
     </div>
@@ -34,21 +34,21 @@
           :class="['pill-btn critical', { active: activeSeverityFilter === 'CRITICAL' }]"
           @click="activeSeverityFilter = 'CRITICAL'"
         >
-          🔴 CRITICAL ({{ criticalCount }})
+           CRITICAL ({{ criticalCount }})
         </button>
         <button
           type="button"
           :class="['pill-btn high', { active: activeSeverityFilter === 'HIGH' }]"
           @click="activeSeverityFilter = 'HIGH'"
         >
-          🟡 HIGH ({{ highCount }})
+           HIGH ({{ highCount }})
         </button>
         <button
           type="button"
           :class="['pill-btn medium', { active: activeSeverityFilter === 'MEDIUM' }]"
           @click="activeSeverityFilter = 'MEDIUM'"
         >
-          🔵 ADVISORY ({{ mediumCount }})
+           ADVISORY ({{ mediumCount }})
         </button>
       </div>
 
@@ -65,7 +65,7 @@
 
     <!-- Error State -->
     <div v-else-if="fetchError && alerts.length === 0" class="tactical-card state-panel error">
-      <span class="state-icon">⚠️</span>
+      <span class="state-icon">️</span>
       <strong>UNABLE TO LOAD PUBLIC ALERTS</strong>
       <p class="text-xs text-muted">{{ fetchError }}</p>
       <button class="btn btn-primary btn-sm mt-2" @click="loadAlerts">Retry Connection</button>
@@ -73,7 +73,7 @@
 
     <!-- Empty State -->
     <div v-else-if="filteredAlerts.length === 0" class="tactical-card empty-panel">
-      <span class="empty-icon">🛡️</span>
+      <span class="empty-icon">️</span>
       <h3>NO ACTIVE ALERTS</h3>
       <p>
         {{ activeSeverityFilter === 'ALL'
@@ -82,7 +82,7 @@
         }}
       </p>
       <button class="btn btn-ghost btn-sm mt-2" @click="loadAlerts">
-        🔄 Refresh Feed
+         Refresh Feed
       </button>
     </div>
 
@@ -113,7 +113,7 @@
         <div class="alert-body">
           <h3 class="alert-title">{{ alert.title }}</h3>
           <div class="alert-area-tag">
-            <span>📍 AFFECTED AREA:</span>
+            <span> AFFECTED AREA:</span>
             <strong>{{ alert.affectedArea || alert.district }}</strong>
           </div>
           <p class="alert-msg-text">{{ alert.message }}</p>
@@ -121,7 +121,7 @@
 
         <!-- Recommended Action Box -->
         <div v-if="alert.recommendedAction" class="recommended-action-box">
-          <span class="action-tag font-mono">⚠️ RECOMMENDED ACTION</span>
+          <span class="action-tag font-mono">️ RECOMMENDED ACTION</span>
           <p class="action-desc">{{ alert.recommendedAction }}</p>
         </div>
 
@@ -158,7 +158,7 @@
           <div class="modal-meta-grid">
             <div class="m-box">
               <span class="m-lbl">AFFECTED AREA</span>
-              <strong class="m-val text-white">📍 {{ selectedAlert.affectedArea || selectedAlert.district }}</strong>
+              <strong class="m-val text-white"> {{ selectedAlert.affectedArea || selectedAlert.district }}</strong>
             </div>
             <div class="m-box">
               <span class="m-lbl">TIMELINE</span>
@@ -178,7 +178,7 @@
 
           <!-- Recommended Safety Actions -->
           <div v-if="selectedAlert.recommendedAction" class="modal-section safety-directive">
-            <span class="sec-lbl text-amber">⚠️ MANDATORY CIVIL SAFETY GUIDANCE</span>
+            <span class="sec-lbl text-amber">️ MANDATORY CIVIL SAFETY GUIDANCE</span>
             <p class="safety-text">{{ selectedAlert.recommendedAction }}</p>
           </div>
 
@@ -191,7 +191,7 @@
           <!-- Action Buttons -->
           <div class="modal-actions">
             <router-link to="/citizen/report" class="btn btn-primary btn-block text-center" @click="selectedAlert = null">
-              🚨 Report Incident in this Area
+               Report Incident in this Area
             </router-link>
             <button class="btn btn-ghost btn-block" @click="selectedAlert = null">
               Close Directive
@@ -367,21 +367,21 @@ function initModalMap(alert) {
 }
 
 function getCategoryIcon(cat) {
-  if (!cat) return '📢';
+  if (!cat) return '';
   const c = cat.toUpperCase();
-  if (c.includes('FLOOD')) return '🌊';
-  if (c.includes('FIRE')) return '🔥';
-  if (c.includes('HAZMAT') || c.includes('CHEMICAL')) return '☣️';
-  if (c.includes('WEATHER') || c.includes('STORM')) return '🌪️';
-  if (c.includes('EVACUATION')) return '🚨';
-  return '📢';
+  if (c.includes('FLOOD')) return '';
+  if (c.includes('FIRE')) return '';
+  if (c.includes('HAZMAT') || c.includes('CHEMICAL')) return '️';
+  if (c.includes('WEATHER') || c.includes('STORM')) return '️';
+  if (c.includes('EVACUATION')) return '';
+  return '';
 }
 
 function getSeverityIcon(sev) {
-  if (sev === 'CRITICAL') return '🔴';
-  if (sev === 'HIGH') return '🟡';
-  if (sev === 'MEDIUM') return '🔵';
-  return '🟢';
+  if (sev === 'CRITICAL') return '';
+  if (sev === 'HIGH') return '';
+  if (sev === 'MEDIUM') return '';
+  return '';
 }
 
 function getSeverityBadgeClass(sev) {
@@ -430,8 +430,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  max-width: 960px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .header-card {
@@ -448,6 +447,10 @@ onBeforeUnmount(() => {
   font-weight: 600;
   display: inline-block;
   margin-bottom: 0.25rem;
+
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
 }
 
 .back-link:hover {

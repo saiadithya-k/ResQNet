@@ -3,7 +3,6 @@
     <!-- Disaster Mode Escalation Header Card -->
     <div class="tactical-card disaster-banner-card" :class="{ 'active-mode': disasterStore.isDisasterMode }">
       <div class="banner-left">
-        <div class="siren-circle">🚨</div>
         <div>
           <h2>TACTICAL DISASTER MODE CONTROLLER</h2>
           <p>Instantly escalates platform state, activates multi-agency resource sharing, and issues geo-targeted broadcast alerts.</p>
@@ -16,7 +15,7 @@
           class="btn btn-danger btn-lg"
           @click="activateDisaster"
         >
-          🚨 ACTIVATE DISASTER MODE
+           ACTIVATE DISASTER MODE
         </button>
         <button
           v-else
@@ -33,7 +32,7 @@
       <!-- 1. Active Disaster Zones -->
       <div class="tactical-card panel-card">
         <div class="panel-header">
-          <h3>⚠️ AFFECTED DISASTER ZONES</h3>
+          <h3>️ AFFECTED DISASTER ZONES</h3>
           <span class="badge badge-critical">{{ disasterStore.zones.length }} Active</span>
         </div>
         <div class="zone-list">
@@ -50,7 +49,7 @@
       <!-- 2. Evacuation Shelters Status -->
       <div class="tactical-card panel-card">
         <div class="panel-header">
-          <h3>🏠 EVACUATION SHELTERS & OCCUPANCY</h3>
+          <h3> EVACUATION SHELTERS & OCCUPANCY</h3>
           <span class="badge badge-success">{{ disasterStore.shelters.length }} Open</span>
         </div>
         <div class="shelter-list">
@@ -66,9 +65,9 @@
               ></div>
             </div>
             <div class="shelter-badges">
-              <span>🍲 Food: {{ s.foodSupply }}</span>
-              <span>💧 Water: {{ s.waterSupply }}</span>
-              <span>🏥 Medical: {{ s.medicalStation ? 'READY' : 'NO' }}</span>
+              <span> Food: {{ s.foodSupply }}</span>
+              <span> Water: {{ s.waterSupply }}</span>
+              <span> Medical: {{ s.medicalStation ? 'READY' : 'NO' }}</span>
             </div>
           </div>
         </div>
@@ -77,13 +76,13 @@
       <!-- 3. Public Emergency Alert Broadcast -->
       <div class="tactical-card panel-card">
         <div class="panel-header">
-          <h3>📢 PUBLIC EMERGENCY BROADCAST</h3>
+          <h3> PUBLIC EMERGENCY BROADCAST</h3>
           <span class="badge badge-high">SMS / Web Push</span>
         </div>
         <form class="alert-form" @submit.prevent="broadcastAlert">
           <div>
             <label>Alert Title:</label>
-            <input type="text" v-model="alertTitle" class="form-input" placeholder="e.g. ⚠️ FLOOD LEVEL 3 WARNING" required />
+            <input type="text" v-model="alertTitle" class="form-input" placeholder="e.g. ️ FLOOD LEVEL 3 WARNING" required />
           </div>
           <div>
             <label>Message Content:</label>
@@ -99,7 +98,7 @@
             </select>
           </div>
           <button type="submit" class="btn btn-danger">
-            📡 Broadcast Emergency Alert Now
+             Broadcast Emergency Alert Now
           </button>
         </form>
       </div>
@@ -114,7 +113,7 @@ import StatusBadge from '../../components/common/StatusBadge.vue';
 import api from '../../services/api';
 
 const disasterStore = useDisasterStore();
-const alertTitle = ref('⚠️ FLASH FLOOD EVACUATION WARNING');
+const alertTitle = ref('️ FLASH FLOOD EVACUATION WARNING');
 const alertMessage = ref('Water levels rising rapidly in low-lying river areas. Move to designated high-ground shelters immediately.');
 const alertDistrict = ref('Riverbank South');
 
@@ -137,7 +136,7 @@ async function broadcastAlert() {
     district: alertDistrict.value,
     severity: 'CRITICAL'
   });
-  alert('📢 Emergency Broadcast Dispatched to All Citizen Terminals & Push Channels!');
+  alert(' Emergency Broadcast Dispatched to All Citizen Terminals & Push Channels!');
 }
 </script>
 
@@ -166,18 +165,6 @@ async function broadcastAlert() {
   display: flex;
   align-items: center;
   gap: 1rem;
-}
-
-.siren-circle {
-  font-size: 2rem;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  background: rgba(239, 68, 68, 0.2);
-  border: 2px solid #ef4444;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .disaster-banner-card h2 {

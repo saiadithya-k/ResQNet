@@ -1,7 +1,7 @@
 <template>
   <div class="dispatch-panel">
     <div class="panel-header">
-      <h3>🚨 Smart Dispatch & Matching Engine</h3>
+      <h3> Smart Dispatch & Matching Engine</h3>
       <span class="decision-support-tag">Decision-Support Mode</span>
     </div>
 
@@ -74,7 +74,7 @@
         <div class="card-footer">
           <div class="matched-pills">
             <span v-for="s in m.matchedSkills" :key="s" class="pill skill-pill">✓ {{ s }}</span>
-            <span v-for="e in m.matchedEquipment" :key="e" class="pill eq-pill">🧰 {{ e }}</span>
+            <span v-for="e in m.matchedEquipment" :key="e" class="pill eq-pill"> {{ e }}</span>
           </div>
           <button 
             class="dispatch-btn" 

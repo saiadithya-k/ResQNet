@@ -2,7 +2,7 @@
   <div class="coordination-panel">
     <div class="panel-header">
       <div class="header-left">
-        <h4>🤝 Cross-Agency Resource Coordination</h4>
+        <h4> Cross-Agency Resource Coordination</h4>
         <span class="sub-text">Inter-Hospital Emergency Resource Sharing & Requests</span>
       </div>
       <div class="tabs">
@@ -11,14 +11,14 @@
           :class="{ active: activeTab === 'discover' }" 
           @click="activeTab = 'discover'"
         >
-          🔍 External Inventory
+           External Inventory
         </button>
         <button 
           class="tab-btn" 
           :class="{ active: activeTab === 'requests' }" 
           @click="activeTab = 'requests'"
         >
-          📋 Coordination Queue ({{ coordinationRequests.length }})
+           Coordination Queue ({{ coordinationRequests.length }})
         </button>
       </div>
     </div>
@@ -37,7 +37,7 @@
               <span class="res-badge">{{ res.category }}</span>
             </div>
             <span class="hospital-badge">
-              🏥 {{ res.hospital?.hospitalName || 'External Facility' }}
+               {{ res.hospital?.hospitalName || 'External Facility' }}
             </span>
           </div>
 
@@ -47,7 +47,7 @@
               <span class="avail-val">{{ res.availableQty }} {{ res.unit || 'units' }}</span>
             </div>
             <div class="district-row">
-              <span>📍 {{ res.district || res.hospital?.district || 'Central Zone' }}</span>
+              <span> {{ res.district || res.hospital?.district || 'Central Zone' }}</span>
             </div>
           </div>
 
@@ -88,9 +88,9 @@
 
           <div class="req-details">
             <div class="agency-route">
-              <span>🏥 From: <strong>{{ req.fromHospital?.hospitalName || 'Source Hospital' }}</strong></span>
-              <span class="route-arrow">➔</span>
-              <span>🏥 To: <strong>{{ req.toHospital?.hospitalName || 'Destination Hospital' }}</strong></span>
+              <span> From: <strong>{{ req.fromHospital?.hospitalName || 'Source Hospital' }}</strong></span>
+              <span class="route-arrow">→</span>
+              <span> To: <strong>{{ req.toHospital?.hospitalName || 'Destination Hospital' }}</strong></span>
             </div>
             <div v-if="req.notes" class="req-notes">
               <em>"{{ req.notes }}"</em>
@@ -100,10 +100,10 @@
           <!-- Actions for Source Hospital -->
           <div v-if="req.status === 'REQUESTED' && isSourceHospital(req)" class="req-actions">
             <button class="btn-approve" @click="$emit('approve-request', req.id)">
-              ✅ Approve Coordination
+              ✓ Approve Coordination
             </button>
             <button class="btn-reject" @click="$emit('reject-request', req.id)">
-              ❌ Reject
+              ✕ Reject
             </button>
           </div>
         </div>

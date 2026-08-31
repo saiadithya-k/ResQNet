@@ -2,7 +2,7 @@
   <div class="hospital-view">
     <div class="header-card tactical-card">
       <div>
-        <h2>🏥 HOSPITAL EMERGENCY NETWORK & CAPACITY MANAGEMENT</h2>
+        <h2>HOSPITAL EMERGENCY NETWORK & CAPACITY MANAGEMENT</h2>
         <p>Live ICU, Trauma, and Bed availability synchronization with incoming patient emergency notifications.</p>
       </div>
     </div>

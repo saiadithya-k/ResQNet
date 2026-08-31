@@ -4,7 +4,7 @@
     <div class="header-card tactical-card">
       <div class="header-left">
         <router-link to="/citizen/family" class="back-link">← Back to Family Safety</router-link>
-        <h2>🛡️ SURVIVOR SAFETY CHECK-IN</h2>
+        <h2>️ SURVIVOR SAFETY CHECK-IN</h2>
         <p>Rapid emergency status broadcasting for disaster response coordination and family notification.</p>
       </div>
 
@@ -16,7 +16,7 @@
 
     <!-- Step 5: Success State -->
     <div v-if="submissionSuccess" class="tactical-card success-panel">
-      <div class="success-icon">✅</div>
+      <div class="success-icon">✓</div>
       <h3>CHECK-IN RECORDED & BROADCASTED</h3>
       <p class="success-desc">
         Your safety status update has been successfully transmitted to the Disaster Command Center and synchronized with your Family Safety Network.
@@ -59,7 +59,7 @@
       <!-- Error Banner -->
       <div v-if="errorMessage" class="error-banner">
         <div class="err-content">
-          <span class="err-icon">⚠️</span>
+          <span class="err-icon">️</span>
           <span>{{ errorMessage }}</span>
         </div>
         <button class="btn btn-xs btn-ghost" @click="errorMessage = ''">Dismiss</button>
@@ -80,7 +80,7 @@
             :class="['status-big-btn safe', { selected: selectedStatus === 'SAFE' }]"
             @click="selectStatus('SAFE')"
           >
-            <span class="status-btn-icon">🟢</span>
+            <span class="status-btn-icon"></span>
             <div class="status-btn-text">
               <strong>I'M SAFE</strong>
               <span>Uninjured · In Safe Location / Shelter</span>
@@ -94,7 +94,7 @@
             :class="['status-big-btn injured', { selected: selectedStatus === 'INJURED' }]"
             @click="selectStatus('INJURED')"
           >
-            <span class="status-btn-icon">🟡</span>
+            <span class="status-btn-icon"></span>
             <div class="status-btn-text">
               <strong>I'M INJURED</strong>
               <span>Require Medical Attention / First Aid</span>
@@ -108,7 +108,7 @@
             :class="['status-big-btn missing', { selected: selectedStatus === 'MISSING' }]"
             @click="selectStatus('MISSING')"
           >
-            <span class="status-btn-icon">🔴</span>
+            <span class="status-btn-icon"></span>
             <div class="status-btn-text">
               <strong>I'M MISSING / TRAPPED</strong>
               <span>Need Immediate Search & Rescue</span>
@@ -133,7 +133,7 @@
             :class="['target-pill', { active: targetType === 'MYSELF' }]"
             @click="targetType = 'MYSELF'"
           >
-            👤 MYSELF ({{ authStore.user?.name || 'Vignesh Kumar' }})
+             MYSELF ({{ authStore.user?.name || 'Vignesh Kumar' }})
           </button>
 
           <button
@@ -141,7 +141,7 @@
             :class="['target-pill', { active: targetType === 'FAMILY' }]"
             @click="targetType = 'FAMILY'"
           >
-            👨‍👩‍👧 A FAMILY MEMBER
+            ‍‍ A FAMILY MEMBER
           </button>
         </div>
 
@@ -185,7 +185,7 @@
               @click="detectGPSLocation"
               :disabled="detectingGPS"
             >
-              <span>📍</span>
+              <span></span>
               <span>{{ detectingGPS ? 'Detecting GPS...' : gpsLocked ? '✓ GPS Locked' : 'Auto-Detect Location' }}</span>
             </button>
           </div>
@@ -266,7 +266,7 @@
             @click="currentStep = 2"
             :disabled="submitting"
           >
-            ✏️ Change Details
+            ️ Change Details
           </button>
         </div>
       </div>
@@ -423,8 +423,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  max-width: 760px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .header-card {
@@ -441,6 +440,10 @@ onMounted(() => {
   font-weight: 600;
   display: inline-block;
   margin-bottom: 0.25rem;
+
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
 }
 
 .back-link:hover {

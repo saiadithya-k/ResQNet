@@ -2,7 +2,7 @@
   <div class="responder-view">
     <div class="header-card tactical-card">
       <div>
-        <h2>🚑 PROFESSIONAL RESPONDER OPERATIONS CONSOLE</h2>
+        <h2>PROFESSIONAL RESPONDER OPERATIONS CONSOLE</h2>
         <p>Field unit terminal with GPS telemetry, incident acceptance, and fatigue monitoring.</p>
       </div>
       <div class="duty-pill">
@@ -25,10 +25,10 @@
           
           <div class="action-row">
             <button class="btn btn-primary" @click="updateStatus('ON_SCENE')">
-              📍 Arrived On Scene
+              Arrived On Scene
             </button>
             <button class="btn btn-ghost" @click="updateStatus('TRANSPORTING')">
-              🚑 Transport to Hospital
+              Transport to Hospital
             </button>
           </div>
         </div>

@@ -26,20 +26,20 @@
         <!-- Emergency & Safety -->
         <div class="nav-group">
           <div class="group-title">EMERGENCY & SAFETY</div>
-          <router-link to="/citizen" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">🏠</span>
+          <router-link to="/citizen" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Citizen Dashboard</span>
           </router-link>
-          <router-link to="/citizen/report" class="nav-item emergency-highlight" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">🚨</span>
+          <router-link to="/citizen/report" class="nav-item emergency-highlight" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Report Incident</span>
           </router-link>
-          <router-link to="/citizen/voice" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">🎙️</span>
+          <router-link to="/citizen/voice" class="nav-item" @click="handleNavClick">
+            <span class="icon">️</span>
             <span class="label">Multilingual Voice SOS</span>
           </router-link>
-          <router-link to="/citizen/alerts" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">📢</span>
+          <router-link to="/citizen/alerts" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Public Safety Alerts</span>
           </router-link>
         </div>
@@ -47,20 +47,20 @@
         <!-- My Safety Circle -->
         <div class="nav-group">
           <div class="group-title">MY SAFETY & TRACKING</div>
-          <router-link to="/citizen/emergencies" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">📋</span>
+          <router-link to="/citizen/emergencies" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">My Emergencies</span>
           </router-link>
-          <router-link to="/citizen/family" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">👨‍👩‍👧</span>
+          <router-link to="/citizen/family" class="nav-item" @click="handleNavClick">
+            <span class="icon">‍‍</span>
             <span class="label">Family Safety Circle</span>
           </router-link>
-          <router-link to="/citizen/survivor" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">🟢</span>
+          <router-link to="/citizen/survivor" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Survivor Check-In</span>
           </router-link>
-          <router-link to="/citizen/risk" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">🔮</span>
+          <router-link to="/citizen/risk" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Risk & Hazard Models</span>
           </router-link>
         </div>
@@ -68,12 +68,12 @@
         <!-- Account -->
         <div class="nav-group">
           <div class="group-title">ACCOUNT</div>
-          <router-link to="/citizen/profile" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">👤</span>
+          <router-link to="/citizen/profile" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Citizen Profile</span>
           </router-link>
           <button class="nav-item logout-nav-btn" @click="handleLogout">
-            <span class="icon">🚪</span>
+            <span class="icon"></span>
             <span class="label">Logout</span>
           </button>
         </div>
@@ -84,28 +84,28 @@
         <!-- Command & Operations -->
         <div class="nav-group">
           <div class="group-title">COMMAND & OPERATIONS</div>
-          <router-link to="/admin/command" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">🚨</span>
+          <router-link to="/admin/command" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Command Center</span>
           </router-link>
-          <router-link to="/admin/disaster" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">🌪️</span>
+          <router-link to="/admin/disaster" class="nav-item" @click="handleNavClick">
+            <span class="icon">️</span>
             <span class="label">Disaster Mode</span>
           </router-link>
-          <router-link to="/admin/simulation" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">🧪</span>
+          <router-link to="/admin/simulation" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Disaster Simulator</span>
           </router-link>
-          <router-link to="/admin/analytics" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">📊</span>
+          <router-link to="/admin/analytics" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Command Analytics</span>
           </router-link>
-          <router-link to="/admin/evidence" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">🔐</span>
+          <router-link to="/admin/evidence" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Evidence Vault (SHA)</span>
           </router-link>
-          <router-link to="/admin/audit" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">🧾</span>
+          <router-link to="/admin/audit" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Audit Logs</span>
           </router-link>
         </div>
@@ -113,16 +113,16 @@
         <!-- Tactical Resource Mesh -->
         <div class="nav-group">
           <div class="group-title">RESOURCE & RESPONSE MESH</div>
-          <router-link to="/responder" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">🚑</span>
+          <router-link to="/responder" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Responder Units</span>
           </router-link>
-          <router-link to="/community" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">🧑‍🚒</span>
+          <router-link to="/community" class="nav-item" @click="handleNavClick">
+            <span class="icon">‍</span>
             <span class="label">Community Mesh</span>
           </router-link>
-          <router-link to="/hospital" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">🏥</span>
+          <router-link to="/hospital" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Hospital Capacity</span>
           </router-link>
         </div>
@@ -131,7 +131,7 @@
         <div class="nav-group">
           <div class="group-title">ACCOUNT</div>
           <button class="nav-item logout-nav-btn" @click="handleLogout">
-            <span class="icon">🚪</span>
+            <span class="icon"></span>
             <span class="label">Logout</span>
           </button>
         </div>
@@ -141,16 +141,16 @@
       <template v-else-if="isResponder">
         <div class="nav-group">
           <div class="group-title">FIELD RESPONSE CONSOLE</div>
-          <router-link to="/responder" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">🚑</span>
+          <router-link to="/responder" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Responder Dashboard</span>
           </router-link>
-          <router-link to="/hospital" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">🏥</span>
+          <router-link to="/hospital" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Hospital Intake Mesh</span>
           </router-link>
-          <router-link to="/citizen/alerts" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">📢</span>
+          <router-link to="/citizen/alerts" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Public Safety Alerts</span>
           </router-link>
         </div>
@@ -158,7 +158,7 @@
         <div class="nav-group">
           <div class="group-title">ACCOUNT</div>
           <button class="nav-item logout-nav-btn" @click="handleLogout">
-            <span class="icon">🚪</span>
+            <span class="icon"></span>
             <span class="label">Logout</span>
           </button>
         </div>
@@ -168,12 +168,12 @@
       <template v-else-if="isCommunity">
         <div class="nav-group">
           <div class="group-title">COMMUNITY MESH CONSOLE</div>
-          <router-link to="/community" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">🧑‍🚒</span>
+          <router-link to="/community" class="nav-item" @click="handleNavClick">
+            <span class="icon">‍</span>
             <span class="label">Community Dashboard</span>
           </router-link>
-          <router-link to="/citizen/alerts" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">📢</span>
+          <router-link to="/citizen/alerts" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Public Safety Alerts</span>
           </router-link>
         </div>
@@ -181,7 +181,7 @@
         <div class="nav-group">
           <div class="group-title">ACCOUNT</div>
           <button class="nav-item logout-nav-btn" @click="handleLogout">
-            <span class="icon">🚪</span>
+            <span class="icon"></span>
             <span class="label">Logout</span>
           </button>
         </div>
@@ -191,12 +191,12 @@
       <template v-else-if="isHospital">
         <div class="nav-group">
           <div class="group-title">HOSPITAL NETWORK</div>
-          <router-link to="/hospital" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">🏥</span>
+          <router-link to="/hospital" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Hospital Capacity & Intake</span>
           </router-link>
-          <router-link to="/citizen/alerts" class="nav-item" @click="uiStore.closeSidebarOnMobile">
-            <span class="icon">📢</span>
+          <router-link to="/citizen/alerts" class="nav-item" @click="handleNavClick">
+            <span class="icon"></span>
             <span class="label">Public Safety Alerts</span>
           </router-link>
         </div>
@@ -204,7 +204,7 @@
         <div class="nav-group">
           <div class="group-title">ACCOUNT</div>
           <button class="nav-item logout-nav-btn" @click="handleLogout">
-            <span class="icon">🚪</span>
+            <span class="icon"></span>
             <span class="label">Logout</span>
           </button>
         </div>
@@ -239,6 +239,16 @@ const sidebarTitle = computed(() => {
   if (isHospital.value) return 'HOSPITAL MESH';
   return 'RESQNET PORTAL';
 });
+
+function handleNavClick() {
+  uiStore.closeSidebarOnMobile();
+  const vp = document.querySelector('.content-viewport');
+  if (vp) {
+    vp.scrollTop = 0;
+    vp.scrollLeft = 0;
+  }
+  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+}
 
 function handleLogout() {
   authStore.logout();

@@ -2,7 +2,7 @@
   <div class="evidence-view">
     <div class="header-card tactical-card">
       <div class="hdr-text">
-        <h2>🔐 EVIDENCE VAULT & CLIENT-SIDE SHA-256 TAMPER VERIFICATION</h2>
+        <h2> EVIDENCE VAULT & CLIENT-SIDE SHA-256 TAMPER VERIFICATION</h2>
         <p>Cryptographically verify media artifacts, citizen upload byte streams, and immutable incident chain of custody using browser-native Web Crypto API.</p>
       </div>
       <div class="crypto-standard-badge font-mono">
@@ -21,7 +21,7 @@
             :class="['artifact-item', { active: selectedEvidence?.id === ev.id }]"
             @click="selectEvidence(ev)"
           >
-            <div class="art-icon">{{ ev.fileType.includes('video') ? '📹' : ev.fileType.includes('image') ? '📷' : '📄' }}</div>
+            <div class="art-icon">{{ ev.fileType.includes('video') ? '' : ev.fileType.includes('image') ? '' : '' }}</div>
             <div class="art-meta">
               <strong>{{ ev.fileName }}</strong>
               <span class="font-mono text-xs text-slate-400">#{{ ev.incidentId }} · {{ ev.fileSize }}</span>
@@ -34,7 +34,7 @@
         <!-- Custom Local File Verification Dropzone -->
         <div class="custom-file-upload-box">
           <label class="custom-drop-label font-mono">
-            <span>📁 Test Custom File Hash:</span>
+            <span> Test Custom File Hash:</span>
             <input type="file" @change="handleFileUpload" class="file-input-hidden" />
             <span class="btn btn-ghost btn-sm font-mono upload-btn-trigger">Browse File</span>
           </label>
@@ -85,10 +85,10 @@
           <!-- Action Verification Buttons -->
           <div class="audit-btn-row">
             <button class="btn btn-primary btn-audit font-mono" @click="runClientSha256Audit" :disabled="verifying">
-              ⚡ {{ verifying ? 'Computing Web Crypto SHA-256...' : 'Verify Cryptographic Integrity Now' }}
+               {{ verifying ? 'Computing Web Crypto SHA-256...' : 'Verify Cryptographic Integrity Now' }}
             </button>
             <button class="btn btn-ghost font-mono" @click="simulateTamperTest" :disabled="verifying" title="Test tamper detection alert">
-              🧪 Test Tamper Alert
+               Test Tamper Alert
             </button>
           </div>
 
@@ -103,7 +103,7 @@
 
           <div v-else-if="verificationResult === 'MISMATCH'" class="audit-result-box mismatch-box">
             <div class="result-header text-red">
-              <span class="check-icon">❌</span>
+              <span class="check-icon">✕</span>
               <h4 class="font-mono text-red">HASH MISMATCH — POTENTIAL FILE TAMPERING DETECTED</h4>
             </div>
             <p class="result-text font-mono text-red">The calculated client-side cryptographic digest does not match the immutable ingestion hash. Artifact may have been modified or corrupted in transit.</p>

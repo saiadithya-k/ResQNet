@@ -2,7 +2,7 @@
   <div class="simulation-view">
     <div class="header-card tactical-card">
       <div class="hdr-text">
-        <h2>🧪 DISASTER IMPACT SIMULATOR & PRE-POSITIONING ENGINE</h2>
+        <h2> DISASTER IMPACT SIMULATOR & PRE-POSITIONING ENGINE</h2>
         <p>Run predictive scenario-based disaster modeling to forecast casualty surge, hospital/shelter demand, and compute resource deficits prior to emergency escalation.</p>
       </div>
       <div class="sandbox-badge font-mono">
@@ -19,11 +19,11 @@
         <div class="control-group">
           <label>Disaster Scenario Type:</label>
           <select v-model="disasterType" class="sim-input font-mono">
-            <option value="FLOOD">🌊 Urban Flash Flood & River Inundation</option>
-            <option value="EARTHQUAKE">🏢 Seismic Structural Collapse (M7.2)</option>
-            <option value="HAZMAT">☣️ Industrial Toxic Chemical Dispersion</option>
-            <option value="CYCLONE">🌪️ Category 4 Coastal Cyclone & Surge</option>
-            <option value="FIRE">🔥 Urban Conflagration / Wildfire Front</option>
+            <option value="FLOOD"> Urban Flash Flood & River Inundation</option>
+            <option value="EARTHQUAKE"> Seismic Structural Collapse (M7.2)</option>
+            <option value="HAZMAT">️ Industrial Toxic Chemical Dispersion</option>
+            <option value="CYCLONE">️ Category 4 Coastal Cyclone & Surge</option>
+            <option value="FIRE"> Urban Conflagration / Wildfire Front</option>
           </select>
         </div>
 
@@ -64,7 +64,7 @@
 
         <div class="sim-actions-row">
           <button class="btn btn-primary btn-run flex-1 font-mono" @click="runSimulation" :disabled="loading">
-            ⚡ {{ loading ? 'Simulating...' : 'RUN SIMULATION' }}
+             {{ loading ? 'Simulating...' : 'RUN SIMULATION' }}
           </button>
           <button class="btn btn-ghost btn-reset font-mono" @click="resetParameters" :disabled="loading" title="Reset parameters to default">
             ↺ RESET
@@ -79,7 +79,7 @@
         <div v-if="results" class="results-content">
           <!-- Sandbox Disclaimer -->
           <div class="sandbox-disclaimer font-mono">
-            ⚠️ <strong>PROJECTION NOTICE:</strong> Figures below are predictive estimates derived from epidemiological and disaster physics models. Current real-time incidents are unaffected.
+            ️ <strong>PROJECTION NOTICE:</strong> Figures below are predictive estimates derived from epidemiological and disaster physics models. Current real-time incidents are unaffected.
           </div>
 
           <!-- KPI Summary Cards -->
@@ -103,7 +103,7 @@
             <h4 class="font-mono text-cyan">PROJECTED ASSET DEMAND VS LIVE INVENTORY:</h4>
             <div class="asset-pills">
               <div class="asset-pill">
-                <span>🚑 ALS Ambulances:</span>
+                <span> ALS Ambulances:</span>
                 <div>
                   <strong class="text-cyan font-mono">{{ results.resourceRequirements.ambulancesNeeded }} Units</strong>
                   <span v-if="results.inventoryDeficits?.ambulanceDeficit > 0" class="deficit-tag font-mono">
@@ -112,7 +112,7 @@
                 </div>
               </div>
               <div class="asset-pill">
-                <span>🏥 ICU Beds:</span>
+                <span> ICU Beds:</span>
                 <div>
                   <strong class="text-purple font-mono">{{ results.resourceRequirements.icuBedsNeeded }} Beds</strong>
                   <span v-if="results.inventoryDeficits?.icuDeficit > 0" class="deficit-tag font-mono">
@@ -121,7 +121,7 @@
                 </div>
               </div>
               <div class="asset-pill">
-                <span>🧑‍🚒 Responders:</span>
+                <span>‍ Responders:</span>
                 <div>
                   <strong class="text-emerald font-mono">{{ results.resourceRequirements.respondersNeeded }} Staff</strong>
                   <span v-if="results.inventoryDeficits?.responderDeficit > 0" class="deficit-tag font-mono">
@@ -130,7 +130,7 @@
                 </div>
               </div>
               <div class="asset-pill">
-                <span>🏠 Relief Shelters:</span>
+                <span> Relief Shelters:</span>
                 <div>
                   <strong class="text-amber font-mono">{{ results.resourceRequirements.sheltersNeeded }} Sites</strong>
                   <span v-if="results.inventoryDeficits?.shelterDeficit > 0" class="deficit-tag font-mono">
@@ -139,11 +139,11 @@
                 </div>
               </div>
               <div v-if="results.resourceRequirements.emergencyBoatsNeeded > 0" class="asset-pill">
-                <span>🚤 Rescue Boats:</span>
+                <span> Rescue Boats:</span>
                 <strong class="text-cyan font-mono">{{ results.resourceRequirements.emergencyBoatsNeeded }} Boats</strong>
               </div>
               <div v-if="results.resourceRequirements.fireUnitsNeeded > 0" class="asset-pill">
-                <span>🚒 Fire & Hazmat Engines:</span>
+                <span> Fire & Hazmat Engines:</span>
                 <strong class="text-amber font-mono">{{ results.resourceRequirements.fireUnitsNeeded }} Engines</strong>
               </div>
             </div>
@@ -151,7 +151,7 @@
 
           <!-- Pre-positioning Tactical Advice -->
           <div class="advice-box">
-            <h4 class="font-mono text-emerald">🧠 TACTICAL PRE-POSITIONING DIRECTIVES:</h4>
+            <h4 class="font-mono text-emerald"> TACTICAL PRE-POSITIONING DIRECTIVES:</h4>
             <ul>
               <li v-for="(adv, idx) in results.prepositioningAdvice" :key="idx" class="font-mono">
                 {{ adv }}
@@ -161,7 +161,7 @@
         </div>
 
         <div v-else class="empty-state font-mono">
-          <span>⚡ Select disaster scenario parameters on the left and execute simulation.</span>
+          <span> Select disaster scenario parameters on the left and execute simulation.</span>
         </div>
       </div>
     </div>

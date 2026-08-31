@@ -2,7 +2,7 @@
   <div class="patient-intake-panel">
     <div class="panel-header">
       <div class="header-left">
-        <h4>🚑 Incoming Patient Intake & Triage Queue</h4>
+        <h4> Incoming Patient Intake & Triage Queue</h4>
         <span class="sub-text">Operational Arrival & Check-In Management</span>
       </div>
       <div class="status-filter">

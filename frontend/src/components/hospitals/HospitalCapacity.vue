@@ -1,7 +1,7 @@
 <template>
   <div class="hospital-capacity-card">
     <div class="capacity-header">
-      <h4>🏥 {{ capacity.hospitalName || 'Hospital Capacity Overview' }}</h4>
+      <h4> {{ capacity.hospitalName || 'Hospital Capacity Overview' }}</h4>
       <span class="status-badge" :class="capacity.isAccepting ? 'status-active' : 'status-inactive'">
         {{ capacity.isAccepting ? 'ACCEPTING PATIENTS' : 'STANDBY / NOT ACCEPTING' }}
       </span>

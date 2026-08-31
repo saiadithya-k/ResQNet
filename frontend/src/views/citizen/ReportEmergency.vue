@@ -1,197 +1,177 @@
 <template>
   <div class="report-view">
     <!-- Header -->
-    <div class="header-card tactical-card">
+    <div class="header-card glass">
       <div class="header-left">
-        <router-link to="/citizen" class="back-link">← Back to Portal</router-link>
-        <h2>📝 FILE EMERGENCY REPORT</h2>
-        <p>Your transmission is analyzed in real-time by the AI Emergency Intelligence Pipeline for priority dispatch.</p>
+        <router-link to="/citizen/emergencies" class="back-link">
+          <span class="back-arrow">←</span>
+          <span class="back-text">Back to Citizen Portal</span>
+        </router-link>
+        <div class="header-title-block">
+          <h1 class="page-title">
+            <span class="pulse-icon">🚨</span> REPORT CRITICAL EMERGENCY
+          </h1>
+          <p class="subtitle">AI-assisted triage and high-precision tactical geo-dispatch protocol</p>
+        </div>
       </div>
-      <div class="status-indicator">
-        <span class="live-dot"></span>
-        <span class="status-text">DISPATCH CHANNELS ACTIVE</span>
+      <div class="header-right">
+        <div class="status-indicator">
+          <span class="live-beacon"></span>
+          <span class="status-text font-mono">PRIORITY 1 DISPATCH CHANNEL OPEN</span>
+        </div>
       </div>
     </div>
 
-    <!-- Success Confirmation View -->
-    <div v-if="submissionSuccess" class="tactical-card success-panel">
-      <div class="success-icon">✅</div>
-      <h3>EMERGENCY TRANSMITTED & PRIORITIZED</h3>
-      <p class="success-desc">
-        Your emergency report has been logged and broadcasted to the Command Center and nearest first responders.
-      </p>
+    <!-- TRANSMISSION SUCCESS SCREEN -->
+    <div v-if="submissionSuccess" class="submission-success-card glass animate-fade-in">
+      <div class="success-header">
+        <div class="success-icon-badge">✓</div>
+        <div>
+          <h2>EMERGENCY REPORT TRANSMITTED</h2>
+          <p class="success-sub">Disaster Command Center & Tactical Units have been notified with high priority.</p>
+        </div>
+      </div>
 
-      <div class="incident-summary-card">
-        <div class="summary-row">
-          <span class="lbl">INCIDENT ID:</span>
-          <span class="val font-mono">{{ submittedIncident?.id || 'INC-CONFIRMED' }}</span>
+      <div class="success-details-grid">
+        <div class="detail-box">
+          <span class="detail-label">INCIDENT TRACKING ID</span>
+          <span class="detail-value font-mono text-cyan">{{ submittedIncident?.id || 'INC-PENDING' }}</span>
         </div>
-        <div class="summary-row">
-          <span class="lbl">EMERGENCY TYPE:</span>
-          <span class="val">{{ submittedIncident?.incidentType }}</span>
+        <div class="detail-box">
+          <span class="detail-label">PRIORITY SCORE</span>
+          <span class="detail-value font-mono text-danger">{{ submittedIncident?.priorityScore || 'COMPUTING...' }} / 100</span>
         </div>
-        <div class="summary-row">
-          <span class="lbl">INITIAL SEVERITY:</span>
-          <span class="val text-red font-bold">{{ submittedIncident?.severity || 'HIGH' }}</span>
+        <div class="detail-box">
+          <span class="detail-label">INCIDENT STATUS</span>
+          <span class="detail-value font-mono text-warning">DISPATCHING TEAMS</span>
         </div>
-        <div class="summary-row">
-          <span class="lbl">AI PRIORITY SCORE:</span>
-          <span class="val text-amber font-mono font-bold">{{ submittedIncident?.priorityScore || '88' }}/100</span>
-        </div>
-        <div class="summary-row">
-          <span class="lbl">LOCATION:</span>
-          <span class="val">{{ submittedIncident?.address }}</span>
-        </div>
-        <div v-if="submittedIncident?.evidenceFiles?.length" class="summary-row">
-          <span class="lbl">SEALED EVIDENCE:</span>
-          <span class="val text-emerald font-bold">
-            ✓ {{ submittedIncident.evidenceFiles.length }} File(s) (SHA-256 Chain of Custody)
+        <div class="detail-box">
+          <span class="detail-label">SEALED COORDINATES</span>
+          <span class="detail-value font-mono text-cyan">
+            {{ Number(form.latitude).toFixed(6) }}, {{ Number(form.longitude).toFixed(6) }} ({{ form.locationSource }})
           </span>
         </div>
       </div>
 
       <div class="success-actions">
-        <router-link to="/citizen" class="btn btn-primary">
-          View in My Emergencies
+        <router-link :to="`/citizen/emergencies/${submittedIncident?.id || ''}`" class="btn btn-primary">
+          Track Live Incident Status →
         </router-link>
-        <button class="btn btn-ghost" @click="resetForm">
-          Report Another Incident
+        <button class="btn btn-secondary" @click="resetForm">
+          Report Another Emergency
         </button>
       </div>
     </div>
 
-    <!-- Review & Confirmation Step (Step 2) -->
-    <div v-else-if="isReviewing" class="tactical-card form-panel">
-      <div class="panel-header-review">
-        <div class="panel-title">
-          <span class="dot-amber"></span>
-          <h3>CONFIRM & REVIEW EMERGENCY REPORT</h3>
-        </div>
-        <span class="step-badge">STEP 2 OF 2: VERIFICATION</span>
-      </div>
-
-      <p class="review-intro">
-        Please review your emergency details and attached evidence before final transmission to the Command Center.
-      </p>
-
-      <!-- Review Summary Grid -->
-      <div class="review-summary-grid">
-        <div class="review-item">
-          <span class="rev-lbl">CATEGORY & TITLE</span>
-          <strong class="rev-val">{{ form.incidentType }} — {{ form.title }}</strong>
-        </div>
-        <div class="review-item">
-          <span class="rev-lbl">LOCATION</span>
-          <span class="rev-val">📍 {{ form.address }} ({{ form.latitude.toFixed(4) }}, {{ form.longitude.toFixed(4) }})</span>
-        </div>
-        <div class="review-item full-width">
-          <span class="rev-lbl">SCENE DESCRIPTION</span>
-          <p class="rev-desc">"{{ form.description }}"</p>
-        </div>
-        <div class="review-item">
-          <span class="rev-lbl">VICTIMS & VULNERABILITIES</span>
-          <span class="rev-val">
-            👥 {{ form.victimCount }} Victim(s)
-            <span v-if="form.vulnerableGroups.length"> · ({{ form.vulnerableGroups.join(', ') }})</span>
-          </span>
-        </div>
-        <div class="review-item">
-          <span class="rev-lbl">HAZARD CONDITIONS</span>
-          <div class="hazard-summary-tags">
-            <span v-if="form.hasInjuries" class="badge-tag red">🩸 Injuries</span>
-            <span v-if="form.hasTrapped" class="badge-tag red">⛓️ Trapped</span>
-            <span v-if="form.hasFire" class="badge-tag amber">🔥 Fire/Smoke</span>
-            <span v-if="form.hasHazmat" class="badge-tag amber">☣️ Hazmat</span>
-            <span v-if="!form.hasInjuries && !form.hasTrapped && !form.hasFire && !form.hasHazmat" class="text-muted text-xs">None flagged</span>
+    <!-- TRANSMISSION REVIEW MODAL -->
+    <div v-else-if="isReviewing" class="review-modal-overlay">
+      <div class="review-modal-content glass animate-scale-up">
+        <div class="review-header">
+          <div class="review-title-group">
+            <span class="review-shield-icon">🛡️</span>
+            <div>
+              <h3>CONFIRM EMERGENCY TRANSMISSION</h3>
+              <p class="review-subtext">Verify critical emergency data before broadcasting to responders</p>
+            </div>
           </div>
+          <button class="btn-modal-close" @click="isReviewing = false">✕</button>
         </div>
-      </div>
 
-      <!-- Attached Evidence Review -->
-      <div class="review-evidence-section">
-        <div class="rev-lbl mb-2">ATTACHED EMERGENCY EVIDENCE ({{ evidenceList.length }})</div>
-        <div v-if="evidenceList.length === 0" class="no-evidence-note">
-          No media files attached. Emergency will be dispatched based on text/GPS data.
-        </div>
-        <div v-else class="evidence-review-list">
-          <div v-for="item in evidenceList" :key="item.id" class="evidence-review-item">
-            <div class="ev-rev-left">
-              <span class="ev-rev-icon">{{ getMediaIcon(item.fileType) }}</span>
-              <div class="ev-rev-info">
-                <strong>{{ item.fileName }}</strong>
-                <span>{{ item.fileSize }} · {{ item.fileType.toUpperCase() }}</span>
+        <div class="review-summary-body">
+          <div class="summary-card">
+            <div class="summary-section-title">INCIDENT OVERVIEW</div>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <span class="lbl">TYPE</span>
+                <span class="val font-mono tag-badge">{{ form.incidentType }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="lbl">ESTIMATED VICTIMS</span>
+                <span class="val font-mono text-danger">{{ form.victimCount }} PERSON(S)</span>
+              </div>
+              <div class="summary-item full">
+                <span class="lbl">TITLE</span>
+                <span class="val font-mono">{{ form.title }}</span>
+              </div>
+              <div class="summary-item full">
+                <span class="lbl">INCIDENT LOCATION</span>
+                <span class="val font-mono text-cyan">📍 {{ form.address }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="lbl">COORDINATES</span>
+                <span class="val font-mono text-cyan">{{ Number(form.latitude).toFixed(6) }}, {{ Number(form.longitude).toFixed(6) }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="lbl">LOCATION SOURCE</span>
+                <span class="val font-mono tag-source">{{ form.locationSource }} VERIFIED</span>
+              </div>
+              <div class="summary-item full">
+                <span class="lbl">DISTRICT / ZONE</span>
+                <span class="val font-mono">{{ form.district || 'Harbour Zone' }}</span>
+              </div>
+              <div class="summary-item full">
+                <span class="lbl">DESCRIPTION</span>
+                <span class="val desc-box">{{ form.description }}</span>
               </div>
             </div>
-            <div class="ev-rev-right">
-              <span v-if="item.uploadStatus === 'UPLOADED'" class="seal-badge">
-                ✓ SHA-256 SEALED
+          </div>
+
+          <!-- Hazards & Evidence in Review -->
+          <div class="summary-card">
+            <div class="summary-section-title">OBSERVED HAZARDS & ATTACHED MEDIA</div>
+            <div class="hazards-list">
+              <span v-if="form.hasInjuries" class="hazard-badge-active">🩸 Severe Injuries</span>
+              <span v-if="form.hasTrapped" class="hazard-badge-active">⚠️ Trapped Victims</span>
+              <span v-if="form.hasFire" class="hazard-badge-active">🔥 Active Fire / Toxic Smoke</span>
+              <span v-if="form.hasHazmat" class="hazard-badge-active">☣️ Hazardous Materials</span>
+              <span v-if="!form.hasInjuries && !form.hasTrapped && !form.hasFire && !form.hasHazmat" class="hazard-badge-none">
+                No immediate structural hazards flagged
               </span>
-              <span v-else-if="item.uploadStatus === 'UPLOADING'" class="uploading-badge">
-                UPLOADING...
-              </span>
-              <span v-else class="pending-badge">
-                READY
-              </span>
+            </div>
+
+            <div class="review-evidence-summary">
+              <span class="lbl">ATTACHED EVIDENCE ({{ evidenceList.length }} FILES):</span>
+              <div v-if="evidenceList.length > 0" class="review-file-pills">
+                <span v-for="ev in evidenceList" :key="ev.id" class="review-file-pill font-mono">
+                  {{ ev.fileType.toUpperCase() }}: {{ ev.fileName }} ({{ ev.fileSize }})
+                </span>
+              </div>
+              <span v-else class="text-muted font-mono" style="font-size: 0.75rem;">No media attached</span>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Error message during submission -->
-      <div v-if="errorMessage" class="error-banner mt-3">
-        <div class="err-content">
-          <span class="err-icon">⚠️</span>
-          <span>{{ errorMessage }}</span>
+        <div v-if="errorMessage" class="error-banner">
+          ⚠️ {{ errorMessage }}
         </div>
-        <button class="btn btn-xs btn-ghost" @click="errorMessage = ''">Dismiss</button>
-      </div>
 
-      <!-- Review Action Buttons -->
-      <div class="review-actions">
-        <button
-          type="button"
-          class="btn btn-emergency-submit"
-          @click="submitReport"
-          :disabled="submitting || isAnyFileUploading"
-        >
-          <span v-if="submitting" class="spinner-sm"></span>
-          <span>{{ submitting ? 'Transmitting to Command Center...' : '🚨 TRANSMIT EMERGENCY REPORT' }}</span>
-        </button>
-
-        <button
-          type="button"
-          class="btn btn-ghost"
-          @click="isReviewing = false"
-          :disabled="submitting"
-        >
-          ✏️ Edit Report Details
-        </button>
+        <div class="review-footer">
+          <button class="btn btn-secondary" :disabled="submitting" @click="isReviewing = false">
+            ← Edit Details
+          </button>
+          <button class="btn btn-emergency-confirm" :disabled="submitting" @click="submitReport">
+            <span v-if="submitting">TRANSMITTING TO DISPATCH...</span>
+            <span v-else>🚨 CONFIRM & BROADCAST TO RESPONDERS</span>
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- Main Reporting Form (Step 1) -->
-    <div v-else class="tactical-card form-panel">
-      <!-- Error Banner -->
-      <div v-if="errorMessage" class="error-banner">
-        <div class="err-content">
-          <span class="err-icon">⚠️</span>
-          <span>{{ errorMessage }}</span>
-        </div>
-        <button class="btn btn-xs btn-ghost" @click="errorMessage = ''">Dismiss</button>
-      </div>
-
-      <form @submit.prevent="proceedToReview" class="report-form">
-        <!-- Row 1: Emergency Type & Title -->
+    <!-- MAIN REPORTING FORM -->
+    <div v-else class="form-container glass animate-fade-in">
+      <form @submit.prevent="proceedToReview" class="emergency-form">
+        <!-- Row 1: Type and Title -->
         <div class="form-row">
           <div class="form-group flex-1">
-            <label for="incidentType">Emergency Category <span class="req">*</span></label>
-            <select id="incidentType" v-model="form.incidentType" class="form-input" required>
-              <option value="COLLAPSE">🏚️ Structural Collapse / Trapped</option>
-              <option value="FIRE">🔥 Fire & Active Smoke</option>
-              <option value="HAZMAT">☣️ Toxic Chemical / Gas Leak</option>
-              <option value="FLOOD">🌊 Flash Flood / Inundation</option>
-              <option value="MEDICAL">🚑 Critical Medical / Trauma</option>
-              <option value="EXPLOSION">💥 Explosion / Blast</option>
+            <label for="incidentType">Incident Classification <span class="req">*</span></label>
+            <select id="incidentType" v-model="form.incidentType" class="form-select" required>
+              <option value="COLLAPSE">🏚️ Structural Collapse</option>
+              <option value="FIRE">🔥 Active Fire / Explosion</option>
+              <option value="FLOOD">🌊 Flash Flood / Water Inundation</option>
+              <option value="HAZMAT">☣️ Hazmat / Chemical Spill</option>
+              <option value="MEDICAL">🚑 Mass Casualty / Medical Trauma</option>
+              <option value="CYCLONE">🌪️ Cyclone / Extreme Storm</option>
+              <option value="LANDSLIDE">⛰️ Landslide / Mudflow</option>
               <option value="ELECTRICAL">⚡ Electrical Hazard / Power Surge</option>
             </select>
           </div>
@@ -209,33 +189,14 @@
           </div>
         </div>
 
-        <!-- Row 2: Location & GPS Auto-detection -->
-        <div class="form-group">
-          <div class="label-with-action">
-            <label for="address">Incident Location / Landmark <span class="req">*</span></label>
-            <button
-              type="button"
-              class="btn-detect-gps"
-              @click="detectGPSLocation"
-              :disabled="detectingLocation"
-            >
-              <span>📍</span>
-              <span>{{ detectingLocation ? 'Detecting GPS...' : locationLocked ? '✓ GPS Locked' : 'Auto-Detect GPS Location' }}</span>
-            </button>
-          </div>
-          <input
-            id="address"
-            type="text"
-            v-model="form.address"
-            class="form-input"
-            placeholder="e.g. Near Harbour Gate 4, Sector 12"
-            required
-          />
-          <div class="location-meta" v-if="form.latitude && form.longitude">
-            <span class="coord-tag">GPS: {{ form.latitude.toFixed(4) }}, {{ form.longitude.toFixed(4) }}</span>
-            <span v-if="locationError" class="coord-warn">{{ locationError }}</span>
-          </div>
-        </div>
+        <!-- Row 2: Tactical Incident Location Picker (GPS / Search / Map Pin) -->
+        <LocationPicker
+          v-model:latitude="form.latitude"
+          v-model:longitude="form.longitude"
+          v-model:address="form.address"
+          v-model:locationSource="form.locationSource"
+          v-model:district="form.district"
+        />
 
         <!-- Row 3: Scene Description -->
         <div class="form-group">
@@ -274,7 +235,7 @@
               </label>
               <label :class="['pill-check', { active: form.vulnerableGroups.includes('Elderly') }]">
                 <input type="checkbox" value="Elderly" v-model="form.vulnerableGroups" />
-                <span>👴 Elderly</span>
+                <span>👵 Elderly</span>
               </label>
               <label :class="['pill-check', { active: form.vulnerableGroups.includes('Pregnant') }]">
                 <input type="checkbox" value="Pregnant" v-model="form.vulnerableGroups" />
@@ -298,7 +259,7 @@
             </label>
             <label :class="['toggle-pill', { active: form.hasTrapped }]">
               <input type="checkbox" v-model="form.hasTrapped" />
-              <span>⛓️ People Trapped / Stranded</span>
+              <span>⚠️ People Trapped / Stranded</span>
             </label>
             <label :class="['toggle-pill', { active: form.hasFire }]">
               <input type="checkbox" v-model="form.hasFire" />
@@ -311,7 +272,7 @@
           </div>
         </div>
 
-        <!-- Row 6: EMERGENCY EVIDENCE & MEDIA ATTACHMENTS (Phase 2) -->
+        <!-- Row 6: EMERGENCY EVIDENCE & MEDIA ATTACHMENTS -->
         <div class="evidence-upload-section">
           <div class="evidence-header">
             <div>
@@ -398,7 +359,6 @@
             >
               <!-- Media Thumbnail/Preview Area -->
               <div class="media-preview-area">
-                <!-- Image Preview -->
                 <img
                   v-if="item.fileType === 'image'"
                   :src="item.previewUrl"
@@ -406,7 +366,6 @@
                   class="preview-img"
                 />
 
-                <!-- Video Preview -->
                 <video
                   v-else-if="item.fileType === 'video'"
                   :src="item.previewUrl"
@@ -415,9 +374,8 @@
                   preload="metadata"
                 ></video>
 
-                <!-- Audio Preview -->
                 <div v-else-if="item.fileType === 'audio'" class="preview-audio-container">
-                  <span class="audio-icon">🎧</span>
+                  <span class="audio-icon">🎙️</span>
                   <audio :src="item.previewUrl" controls class="preview-audio-player"></audio>
                 </div>
               </div>
@@ -473,7 +431,7 @@
             class="btn btn-emergency-submit"
             :disabled="isAnyFileUploading"
           >
-            <span>🚨 Review & Transmit Emergency Report →</span>
+            <span>Review & Transmit Emergency Report →</span>
           </button>
         </div>
       </form>
@@ -484,6 +442,7 @@
 <script setup>
 import { reactive, ref, computed } from 'vue';
 import { useIncidentStore } from '../../stores/incidentStore';
+import LocationPicker from '../../components/common/LocationPicker.vue';
 import api from '../../services/api';
 
 const incidentStore = useIncidentStore();
@@ -493,9 +452,6 @@ const videoInputRef = ref(null);
 const audioInputRef = ref(null);
 
 const submitting = ref(false);
-const detectingLocation = ref(false);
-const locationLocked = ref(false);
-const locationError = ref('');
 const errorMessage = ref('');
 const mediaValidationError = ref('');
 const isReviewing = ref(false);
@@ -509,10 +465,12 @@ const form = reactive({
   title: '',
   incidentType: 'COLLAPSE',
   description: '',
-  address: '',
+  address: '42 Harbour Road, Sector 4',
   victimCount: 1,
-  latitude: 13.0827,
-  longitude: 80.2707,
+  latitude: 13.082680,
+  longitude: 80.270718,
+  locationSource: 'SEARCH', // 'GPS' | 'SEARCH' | 'MAP_PIN'
+  district: 'Harbour Zone',
   hasInjuries: true,
   hasTrapped: false,
   hasFire: false,
@@ -623,44 +581,13 @@ function removeEvidence(index) {
   evidenceList.value.splice(index, 1);
 }
 
-function getMediaIcon(type) {
-  if (type === 'image') return '📷';
-  if (type === 'video') return '🎥';
-  if (type === 'audio') return '🎙️';
-  return '📁';
-}
-
-function detectGPSLocation() {
-  if (!navigator.geolocation) {
-    locationError.value = 'Geolocation is not supported by your browser. Please enter location manually.';
-    return;
-  }
-
-  detectingLocation.value = true;
-  locationError.value = '';
-
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      form.latitude = pos.coords.latitude;
-      form.longitude = pos.coords.longitude;
-      locationLocked.value = true;
-      detectingLocation.value = false;
-      if (!form.address) {
-        form.address = `GPS Location (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`;
-      }
-    },
-    (err) => {
-      detectingLocation.value = false;
-      locationLocked.value = false;
-      locationError.value = 'Unable to detect GPS position. You can manually enter the address above.';
-    },
-    { enableHighAccuracy: true, timeout: 8000 }
-  );
-}
-
 function proceedToReview() {
   if (!form.title || !form.description || !form.address) {
     errorMessage.value = 'Please fill in all required fields marked with *.';
+    return;
+  }
+  if (!form.latitude || !form.longitude || isNaN(form.latitude) || isNaN(form.longitude)) {
+    errorMessage.value = 'Please select a valid incident location on the map or via search.';
     return;
   }
   errorMessage.value = '';
@@ -677,8 +604,11 @@ async function submitReport() {
       description: form.description,
       incidentType: form.incidentType,
       address: form.address,
-      latitude: form.latitude,
-      longitude: form.longitude,
+      location: form.address,
+      district: form.district || 'Harbour Zone',
+      latitude: Number(form.latitude),
+      longitude: Number(form.longitude),
+      locationSource: form.locationSource || 'SEARCH',
       victimCount: form.victimCount,
       hasInjuries: form.hasInjuries,
       hasTrapped: form.hasTrapped,
@@ -699,7 +629,6 @@ async function submitReport() {
     const res = await api.post('/incidents', payload);
     const incidentData = res.data.data;
     
-    // Add to incident store
     if (incidentData) {
       incidentStore.addOrUpdateIncident(incidentData);
       submittedIncident.value = incidentData;
@@ -719,8 +648,12 @@ function resetForm() {
   form.title = '';
   form.incidentType = 'COLLAPSE';
   form.description = '';
-  form.address = '';
+  form.address = '42 Harbour Road, Sector 4';
   form.victimCount = 1;
+  form.latitude = 13.082680;
+  form.longitude = 80.270718;
+  form.locationSource = 'SEARCH';
+  form.district = 'Harbour Zone';
   form.hasInjuries = false;
   form.hasTrapped = false;
   form.hasFire = false;
@@ -740,8 +673,7 @@ function resetForm() {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  max-width: 880px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .header-card {
@@ -752,58 +684,70 @@ function resetForm() {
 }
 
 .back-link {
-  font-size: 0.75rem;
-  color: #38bdf8;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-cyan, #00f2fe);
   text-decoration: none;
-  font-weight: 600;
-  display: inline-block;
-  margin-bottom: 0.25rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+  white-space: nowrap !important;
 }
 
 .back-link:hover {
   text-decoration: underline;
 }
 
-.header-card h2 {
-  font-size: 1.25rem;
-  color: #f8fafc;
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.header-card p {
-  font-size: 0.8rem;
-  color: #94a3b8;
+.subtitle {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 0.25rem;
 }
 
 .status-indicator {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.75rem;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  border-radius: 6px;
+  gap: 0.6rem;
+  background: rgba(255, 0, 85, 0.1);
+  border: 1px solid rgba(255, 0, 85, 0.3);
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
 }
 
-.live-dot {
+.live-beacon {
   width: 8px;
   height: 8px;
+  background: #ff0055;
   border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 6px #10b981;
+  box-shadow: 0 0 8px #ff0055;
+  animation: pulse-red 1.5s infinite;
 }
 
 .status-text {
-  font-size: 0.675rem;
-  font-family: var(--font-mono);
+  font-size: 0.75rem;
   font-weight: 700;
-  color: #34d399;
+  color: #ff4d88;
 }
 
-.form-panel {
+/* Main Form Card */
+.form-container {
   padding: 1.75rem;
 }
 
-.report-form {
+.emergency-form {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -824,179 +768,156 @@ function resetForm() {
 }
 
 .form-group label {
-  font-size: 0.775rem;
-  color: #cbd5e1;
+  font-size: 0.8rem;
+  font-family: var(--font-mono, monospace);
+  color: rgba(255, 255, 255, 0.8);
   font-weight: 600;
+  letter-spacing: 0.03em;
 }
 
 .req {
-  color: #ef4444;
+  color: #ff0055;
 }
 
-.label-with-action {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.btn-detect-gps {
-  background: rgba(59, 130, 246, 0.15);
-  border: 1px solid rgba(59, 130, 246, 0.4);
-  color: #60a5fa;
-  font-size: 0.725rem;
-  font-weight: 600;
-  padding: 0.25rem 0.6rem;
-  border-radius: 4px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  transition: all 0.15s;
-}
-
-.btn-detect-gps:hover {
-  background: rgba(59, 130, 246, 0.3);
-  border-color: #3b82f6;
-}
-
-.form-input, .form-textarea {
-  background: #090e1a;
-  border: 1px solid #334155;
-  color: white;
-  padding: 0.65rem 0.85rem;
+.form-input, .form-select, .form-textarea {
+  background: rgba(10, 15, 29, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 6px;
-  font-size: 0.825rem;
-  transition: border-color 0.2s;
+  padding: 0.65rem 0.9rem;
+  color: #fff;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
 }
 
-.form-input:focus, .form-textarea:focus {
-  border-color: #3b82f6;
+.form-input:focus, .form-select:focus, .form-textarea:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: var(--color-cyan, #00f2fe);
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.25);
+  background: rgba(10, 15, 29, 0.95);
 }
 
-.location-meta {
+.checkbox-pills {
   display: flex;
-  gap: 0.75rem;
-  align-items: center;
-  font-size: 0.7rem;
-}
-
-.coord-tag {
-  color: #38bdf8;
-  font-family: var(--font-mono);
-}
-
-.coord-warn {
-  color: #f59e0b;
-}
-
-/* Checkbox & Toggle Pills */
-.checkbox-pills, .hazard-toggles {
-  display: flex;
-  flex-wrap: wrap;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
-.pill-check, .toggle-pill {
+.pill-check {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 0.45rem 0.75rem;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid #334155;
-  border-radius: 6px;
-  color: #cbd5e1;
-  font-size: 0.75rem;
+  border-radius: 4px;
   cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
   user-select: none;
-  transition: all 0.15s;
 }
 
-.pill-check input, .toggle-pill input {
+.pill-check input {
   display: none;
 }
 
 .pill-check.active {
-  background: rgba(59, 130, 246, 0.2);
-  border-color: #3b82f6;
-  color: #93c5fd;
+  background: rgba(0, 242, 254, 0.15);
+  border-color: var(--color-cyan, #00f2fe);
+  color: var(--color-cyan, #00f2fe);
+}
+
+.hazard-toggles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.6rem;
+}
+
+.toggle-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.65rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.toggle-pill input {
+  display: none;
 }
 
 .toggle-pill.active {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: #ef4444;
-  color: #fca5a5;
+  background: rgba(255, 0, 85, 0.15);
+  border-color: #ff0055;
+  color: #ff80a0;
+  box-shadow: 0 0 10px rgba(255, 0, 85, 0.2);
 }
 
-/* ===================================================================
-   PHASE 2: EMERGENCY EVIDENCE SECTION STYLING
-   =================================================================== */
+/* Evidence Section */
 .evidence-upload-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  border-top: 1px solid rgba(51, 65, 85, 0.6);
-  padding-top: 1.25rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 1.25rem;
 }
 
 .section-heading {
-  font-size: 0.8rem;
-  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-family: var(--font-mono, monospace);
   font-weight: 700;
-  color: #38bdf8;
+  color: #fff;
+  letter-spacing: 0.05em;
 }
 
 .evidence-subtext {
-  font-size: 0.725rem;
-  color: #94a3b8;
-  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 0.2rem;
 }
 
 .media-trigger-buttons {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 0.75rem;
+  margin-top: 1rem;
 }
 
 .btn-media-action {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
   padding: 0.75rem 1rem;
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid #334155;
-  border-radius: 8px;
-  color: #cbd5e1;
   cursor: pointer;
+  transition: all 0.2s ease;
   text-align: left;
-  transition: all 0.2s;
+  color: #fff;
 }
 
 .btn-media-action:hover {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: #3b82f6;
-  color: #f1f5f9;
+  background: rgba(0, 242, 254, 0.1);
+  border-color: var(--color-cyan, #00f2fe);
 }
 
 .media-btn-icon {
-  font-size: 1.5rem;
-  line-height: 1;
-}
-
-.media-btn-text {
-  display: flex;
-  flex-direction: column;
+  font-size: 1.4rem;
 }
 
 .media-btn-text strong {
+  display: block;
   font-size: 0.8rem;
-  color: #f8fafc;
+  letter-spacing: 0.05em;
 }
 
 .media-btn-text span {
-  font-size: 0.65rem;
-  color: #94a3b8;
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .hidden-file-input {
@@ -1004,38 +925,38 @@ function resetForm() {
 }
 
 .media-val-err {
+  margin-top: 0.75rem;
+  background: rgba(255, 170, 0, 0.15);
+  border: 1px solid #ffaa00;
+  color: #ffbb33;
+  padding: 0.5rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(245, 158, 11, 0.15);
-  border: 1px solid rgba(245, 158, 11, 0.4);
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  color: #fcd34d;
-  font-size: 0.75rem;
 }
 
 .btn-clear-err {
   background: transparent;
   border: none;
-  color: #fbbf24;
-  font-size: 0.7rem;
+  color: #ffbb33;
   cursor: pointer;
-  text-decoration: underline;
+  font-weight: 700;
+  font-size: 0.75rem;
 }
 
-/* Evidence Cards Grid */
 .evidence-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 0.75rem;
-  margin-top: 0.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
 .evidence-card {
-  background: rgba(9, 14, 26, 0.85);
-  border: 1px solid rgba(51, 65, 85, 0.7);
-  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -1043,12 +964,11 @@ function resetForm() {
 
 .media-preview-area {
   height: 120px;
-  background: #040711;
+  background: #000;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  position: relative;
 }
 
 .preview-img {
@@ -1067,18 +987,14 @@ function resetForm() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  width: 100%;
+  gap: 0.4rem;
   padding: 0.5rem;
-}
-
-.audio-icon {
-  font-size: 1.75rem;
+  width: 100%;
 }
 
 .preview-audio-player {
   width: 90%;
-  height: 32px;
+  height: 30px;
 }
 
 .media-meta-card {
@@ -1096,330 +1012,116 @@ function resetForm() {
 
 .media-name {
   font-size: 0.75rem;
-  color: #f1f5f9;
   font-weight: 600;
+  color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 180px;
+  max-width: 150px;
 }
 
 .btn-remove-media {
-  background: rgba(239, 68, 68, 0.2);
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  color: #f87171;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
   cursor: pointer;
-  font-size: 0.65rem;
-  line-height: 1;
+  font-size: 0.8rem;
 }
 
 .btn-remove-media:hover {
-  background: #ef4444;
-  color: white;
+  color: #ff0055;
 }
 
 .media-submeta {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.675rem;
-  color: #94a3b8;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .media-type-pill {
-  background: rgba(59, 130, 246, 0.2);
-  color: #60a5fa;
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  font-weight: 700;
-  padding: 0.1rem 0.3rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.1rem 0.4rem;
   border-radius: 3px;
 }
 
 .upload-status-row {
-  margin-top: 0.25rem;
+  margin-top: 0.3rem;
 }
 
 .progress-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
+  background: rgba(255, 255, 255, 0.1);
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
 }
 
 .progress-bar {
-  height: 4px;
-  background: #3b82f6;
-  border-radius: 2px;
-  transition: width 0.2s;
+  background: var(--color-cyan, #00f2fe);
+  height: 100%;
+  transition: width 0.2s ease;
 }
 
 .progress-lbl {
   font-size: 0.65rem;
-  color: #93c5fd;
-  font-family: var(--font-mono);
+  color: var(--color-cyan, #00f2fe);
+  margin-top: 2px;
+  display: block;
 }
 
 .status-uploaded {
-  font-size: 0.675rem;
-  color: #34d399;
-  font-weight: 700;
-  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: #00ff88;
+  font-family: var(--font-mono, monospace);
 }
 
 .status-failed {
+  font-size: 0.68rem;
+  color: #ff0055;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.675rem;
-  color: #f87171;
 }
 
 .btn-retry-file {
-  background: transparent;
-  border: none;
-  color: #fca5a5;
-  text-decoration: underline;
-  cursor: pointer;
+  background: rgba(255, 0, 85, 0.2);
+  border: 1px solid #ff0055;
+  color: #fff;
   font-size: 0.65rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  cursor: pointer;
 }
 
 .status-ready {
-  font-size: 0.675rem;
-  color: #94a3b8;
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.5);
 }
 
-/* ===================================================================
-   REVIEW PANEL STYLES
-   =================================================================== */
-.panel-header-review {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid rgba(51, 65, 85, 0.6);
-  padding-bottom: 0.6rem;
-  margin-bottom: 1rem;
-}
-
-.panel-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.dot-amber {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #f59e0b;
-  box-shadow: 0 0 6px #f59e0b;
-}
-
-.step-badge {
-  font-size: 0.65rem;
-  font-family: var(--font-mono);
-  background: rgba(245, 158, 11, 0.15);
-  border: 1px solid rgba(245, 158, 11, 0.4);
-  color: #fbbf24;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  font-weight: 700;
-}
-
-.review-intro {
-  font-size: 0.8rem;
-  color: #94a3b8;
-  margin-bottom: 1.25rem;
-}
-
-.review-summary-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.85rem;
-  background: rgba(9, 14, 26, 0.85);
-  border: 1px solid rgba(51, 65, 85, 0.7);
-  border-radius: 8px;
-  padding: 1.25rem;
-}
-
-.review-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.review-item.full-width {
-  grid-column: span 2;
-}
-
-.rev-lbl {
-  font-size: 0.675rem;
-  font-family: var(--font-mono);
-  color: #94a3b8;
-  text-transform: uppercase;
-}
-
-.rev-val {
-  font-size: 0.825rem;
-  color: #f1f5f9;
-}
-
-.rev-desc {
-  font-size: 0.8rem;
-  color: #cbd5e1;
-  font-style: italic;
-}
-
-.hazard-summary-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.15rem;
-}
-
-.badge-tag {
-  font-size: 0.65rem;
-  padding: 0.15rem 0.4rem;
-  border-radius: 4px;
-  font-weight: 600;
-}
-.badge-tag.red { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
-.badge-tag.amber { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
-
-.review-evidence-section {
-  margin-top: 1.25rem;
-}
-
-.evidence-review-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.evidence-review-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(51, 65, 85, 0.6);
-  border-radius: 6px;
-  padding: 0.65rem 0.85rem;
-}
-
-.ev-rev-left {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.ev-rev-icon {
-  font-size: 1.25rem;
-}
-
-.ev-rev-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.ev-rev-info strong {
-  font-size: 0.775rem;
-  color: #f8fafc;
-}
-
-.ev-rev-info span {
-  font-size: 0.675rem;
-  color: #94a3b8;
-}
-
-.seal-badge {
-  font-size: 0.65rem;
-  font-family: var(--font-mono);
-  font-weight: 700;
-  color: #34d399;
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-}
-
-.uploading-badge {
-  font-size: 0.65rem;
-  font-family: var(--font-mono);
-  color: #60a5fa;
-}
-
-.pending-badge {
-  font-size: 0.65rem;
-  color: #94a3b8;
-}
-
-.no-evidence-note {
-  font-size: 0.75rem;
-  color: #94a3b8;
-  font-style: italic;
-  padding: 0.5rem 0;
-}
-
-.review-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
-}
-
-/* Error Banner */
-.error-banner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.5);
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  color: #fca5a5;
-  font-size: 0.8rem;
-  margin-bottom: 1rem;
-}
-
-.err-content {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/* Submit Action */
+/* Form Actions */
 .form-actions {
-  margin-top: 0.5rem;
+  margin-top: 1rem;
 }
 
 .btn-emergency-submit {
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: linear-gradient(135deg, #dc2626, #991b1b);
-  border: 2px solid #ef4444;
-  border-radius: 8px;
-  color: white;
-  font-size: 0.95rem;
+  background: linear-gradient(135deg, #ff0055 0%, #b3003b 100%);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.9rem 1.5rem;
+  font-size: 1rem;
   font-weight: 800;
-  font-family: var(--font-display);
+  letter-spacing: 0.05em;
+  border-radius: 6px;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
-  transition: all 0.2s;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 20px rgba(255, 0, 85, 0.35);
 }
 
 .btn-emergency-submit:hover:not(:disabled) {
-  background: linear-gradient(135deg, #ef4444, #b91c1c);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 25px rgba(220, 38, 38, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(255, 0, 85, 0.6);
 }
 
 .btn-emergency-submit:disabled {
@@ -1427,103 +1129,334 @@ function resetForm() {
   cursor: not-allowed;
 }
 
-/* Success Panel */
-.success-panel {
+/* Modal Review */
+.review-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.review-modal-content {
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 1.75rem;
+  border: 1px solid rgba(255, 0, 85, 0.4);
+  box-shadow: 0 0 40px rgba(255, 0, 85, 0.25);
   display: flex;
   flex-direction: column;
+  gap: 1.25rem;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  text-align: center;
-  padding: 2.5rem 1.5rem;
+}
+
+.review-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.review-shield-icon {
+  font-size: 1.8rem;
+}
+
+.review-header h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #ff4d88;
+}
+
+.review-subtext {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.btn-modal-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.review-summary-body {
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
 }
 
-.success-icon {
-  font-size: 3rem;
+.summary-card {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 1rem;
 }
 
-.success-panel h3 {
-  font-size: 1.25rem;
-  color: #f8fafc;
+.summary-section-title {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.4rem;
 }
 
-.success-desc {
-  font-size: 0.825rem;
-  color: #94a3b8;
-  max-width: 500px;
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
 }
 
-.incident-summary-card {
-  width: 100%;
-  max-width: 500px;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
+.summary-item {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  text-align: left;
+  gap: 0.2rem;
 }
 
-.summary-row {
+.summary-item.full {
+  grid-column: 1 / -1;
+}
+
+.summary-item .lbl {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: var(--font-mono, monospace);
+}
+
+.summary-item .val {
+  font-size: 0.85rem;
+  color: #fff;
+}
+
+.tag-badge {
+  color: #ff80a0;
+  font-weight: 700;
+}
+
+.tag-source {
+  color: #00f2fe;
+  font-weight: 700;
+}
+
+.desc-box {
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.hazards-list {
   display: flex;
-  justify-content: space-between;
-  font-size: 0.775rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
 }
 
-.summary-row .lbl {
-  color: #94a3b8;
-  font-weight: 600;
+.hazard-badge-active {
+  background: rgba(255, 0, 85, 0.2);
+  border: 1px solid #ff0055;
+  color: #ff80a0;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 
-.summary-row .val {
-  color: #f1f5f9;
+.hazard-badge-none {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.font-mono { font-family: var(--font-mono); }
-.font-bold { font-weight: 700; }
-.text-red { color: #f87171; }
-.text-amber { color: #fbbf24; }
-.text-emerald { color: #34d399; }
-.text-muted { color: #64748b; }
-.text-xs { font-size: 0.7rem; }
-.mt-3 { margin-top: 0.75rem; }
-.mb-2 { margin-bottom: 0.5rem; }
+.review-evidence-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.review-file-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.review-file-pill {
+  background: rgba(0, 242, 254, 0.1);
+  border: 1px solid rgba(0, 242, 254, 0.3);
+  color: var(--color-cyan, #00f2fe);
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
+}
+
+.review-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.btn-emergency-confirm {
+  background: linear-gradient(135deg, #ff0055 0%, #cc0044 100%);
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-weight: 800;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(255, 0, 85, 0.4);
+}
+
+.btn-emergency-confirm:hover:not(:disabled) {
+  box-shadow: 0 0 30px rgba(255, 0, 85, 0.7);
+}
+
+/* Success Card */
+.submission-success-card {
+  padding: 2rem;
+  border: 1px solid rgba(0, 255, 136, 0.4);
+  box-shadow: 0 0 40px rgba(0, 255, 136, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.success-header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.success-icon-badge {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: rgba(0, 255, 136, 0.15);
+  border: 2px solid #00ff88;
+  color: #00ff88;
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.success-header h2 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #00ff88;
+  letter-spacing: 0.05em;
+}
+
+.success-sub {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+}
+
+.success-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.detail-box {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1rem;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.detail-label {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.detail-value {
+  font-size: 1rem;
+  font-weight: 700;
+}
 
 .success-actions {
   display: flex;
-  gap: 0.75rem;
-  margin-top: 1rem;
+  gap: 1rem;
+  margin-top: 0.5rem;
 }
 
-.spinner-sm {
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.btn {
+  padding: 0.75rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.btn-primary {
+  background: var(--color-cyan, #00f2fe);
+  color: #030712;
+  border: none;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.error-banner {
+  background: rgba(255, 0, 85, 0.15);
+  border: 1px solid #ff0055;
+  color: #ff80a0;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+@keyframes pulse-red {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.7; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
 }
 
 @media (max-width: 768px) {
-  .media-trigger-buttons {
-    grid-template-columns: 1fr;
-  }
-  .review-summary-grid {
-    grid-template-columns: 1fr;
-  }
-  .review-item.full-width {
-    grid-column: span 1;
-  }
-}
-
-@media (max-width: 640px) {
   .form-row {
     flex-direction: column;
+  }
+  .summary-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

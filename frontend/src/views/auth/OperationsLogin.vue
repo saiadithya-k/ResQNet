@@ -5,7 +5,7 @@
         <router-link to="/login" class="back-link">
           ← Back to Gateway
         </router-link>
-        <span class="ops-badge">🚨 OPERATIONS & COMMAND</span>
+        <span class="ops-badge"> OPERATIONS & COMMAND</span>
       </div>
 
       <div class="card-header">
@@ -14,14 +14,14 @@
       </div>
 
       <div v-if="errorMsg" class="alert-banner error">
-        <span>⚠️ {{ errorMsg }}</span>
+        <span>{{ errorMsg }}</span>
       </div>
 
       <form @submit.prevent="handleSubmit" class="auth-form">
         <div class="form-group">
           <label for="opsMobile">Registered Mobile Number / Call Sign</label>
           <div class="input-with-prefix">
-            <span class="prefix">🇮🇳 +91</span>
+            <span class="prefix"> +91</span>
             <input
               id="opsMobile"
               type="tel"
@@ -48,16 +48,16 @@
 
         <button type="submit" class="submit-btn" :disabled="loading">
           <span v-if="loading">Verifying clearance credentials...</span>
-          <span v-else>🔐 Authenticate & Enter Tactical Console</span>
+          <span v-else> Authenticate & Enter Tactical Console</span>
         </button>
       </form>
 
       <!-- Fast Demo Profile Quick-Select -->
       <div class="demo-box">
-        <span class="demo-label">⚡ Fast Demo Staff Profiles:</span>
+        <span class="demo-label"> Fast Demo Staff Profiles:</span>
         <div class="role-grid">
           <button class="role-chip admin" @click="fillDemo('9876543211')">
-            <span class="chip-icon">🚨</span>
+            <span class="chip-icon"></span>
             <div class="chip-text">
               <strong>Admin</strong>
               <small>+91 9876543211</small>
@@ -65,7 +65,7 @@
           </button>
 
           <button class="role-chip disp" @click="fillDemo('9876543212')">
-            <span class="chip-icon">🛰️</span>
+            <span class="chip-icon">️</span>
             <div class="chip-text">
               <strong>Dispatcher</strong>
               <small>+91 9876543212</small>
@@ -73,7 +73,7 @@
           </button>
 
           <button class="role-chip resp" @click="fillDemo('9876543213')">
-            <span class="chip-icon">🚑</span>
+            <span class="chip-icon"></span>
             <div class="chip-text">
               <strong>Paramedic</strong>
               <small>+91 9876543213</small>
@@ -81,7 +81,7 @@
           </button>
 
           <button class="role-chip comm" @click="fillDemo('9876543214')">
-            <span class="chip-icon">🤝</span>
+            <span class="chip-icon"></span>
             <div class="chip-text">
               <strong>Community</strong>
               <small>+91 9876543214</small>
@@ -89,7 +89,7 @@
           </button>
 
           <button class="role-chip hosp" @click="fillDemo('9876543215')">
-            <span class="chip-icon">🏥</span>
+            <span class="chip-icon"></span>
             <div class="chip-text">
               <strong>Hospital</strong>
               <small>+91 9876543215</small>
@@ -193,6 +193,10 @@ async function handleSubmit() {
   text-decoration: none;
   font-size: 0.8rem;
   transition: color 0.2s;
+
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
 }
 
 .back-link:hover {

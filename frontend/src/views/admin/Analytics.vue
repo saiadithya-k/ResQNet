@@ -2,7 +2,7 @@
   <div class="analytics-view">
     <div class="header-card tactical-card">
       <div class="hdr-text">
-        <h2>📊 RESQNET COMMAND & OPERATIONAL ANALYTICS</h2>
+        <h2> RESQNET COMMAND & OPERATIONAL ANALYTICS</h2>
         <p>Real-time emergency volume distribution, response velocity benchmarks, and end-to-end incident lifecycle duration tracking.</p>
       </div>
       <div class="hdr-kpis" v-if="stats">
@@ -34,7 +34,7 @@
           <div v-for="h in stats.hourlyVolume || []" :key="h.hour" class="h-col">
             <div class="h-vals">
               <span class="h-total font-mono">{{ h.total }}</span>
-              <span class="h-crit font-mono text-red" v-if="h.critical">({{ h.critical }}⚡)</span>
+              <span class="h-crit font-mono text-red" v-if="h.critical">({{ h.critical }})</span>
             </div>
             <div class="h-bar-track">
               <div class="h-bar-fill fill-crit" :style="{ height: `${(h.critical / 15) * 100}%` }"></div>
@@ -119,7 +119,7 @@
 
     <!-- Empty Loading State Fallback -->
     <div v-else class="tactical-card empty-loading font-mono">
-      <span>⚡ Synchronizing real-time operational analytics stream...</span>
+      <span> Synchronizing real-time operational analytics stream...</span>
     </div>
   </div>
 </template>

@@ -4,12 +4,12 @@
     <div class="header-card tactical-card">
       <div class="header-left">
         <router-link to="/citizen" class="back-link">← Back to Portal</router-link>
-        <h2>👨‍👩‍👧 FAMILY SAFETY NETWORK</h2>
+        <h2>‍‍ FAMILY SAFETY NETWORK</h2>
         <p>Private status monitoring for your registered family members and instant survivor safety check-ins.</p>
       </div>
       <div class="header-action">
         <button class="btn btn-ghost btn-xs" @click="loadFamilyMembers" :disabled="loading">
-          {{ loading ? 'Refreshing...' : '🔄 Refresh Network' }}
+          {{ loading ? 'Refreshing...' : ' Refresh Network' }}
         </button>
       </div>
     </div>
@@ -30,13 +30,13 @@
 
         <!-- Error State -->
         <div v-else-if="fetchError" class="state-box-error">
-          <span>⚠️ {{ fetchError }}</span>
+          <span>️ {{ fetchError }}</span>
           <button class="btn btn-primary btn-xs mt-2" @click="loadFamilyMembers">Try Again</button>
         </div>
 
         <!-- Empty State -->
         <div v-else-if="familyMembers.length === 0" class="empty-box">
-          <span class="empty-icon">👨‍👩‍👧</span>
+          <span class="empty-icon">‍‍</span>
           <strong>No Family Members Registered</strong>
           <p>Link your family members by phone number to track their safety during emergency situations.</p>
         </div>
@@ -50,7 +50,7 @@
                 <span class="fam-rel">{{ mem.relationship }}</span>
               </div>
               <div class="fam-meta">
-                <span>📍 {{ mem.location || 'Location Pending' }}</span>
+                <span> {{ mem.location || 'Location Pending' }}</span>
                 <span>⏱️ {{ mem.time || 'Recent' }}</span>
               </div>
             </div>
@@ -77,7 +77,7 @@
 
         <!-- Feedback Alert -->
         <div v-if="checkinSuccess" class="checkin-success-banner">
-          <span>✅ Safety check-in transmitted to family and emergency authorities!</span>
+          <span>✓ Safety check-in transmitted to family and emergency authorities!</span>
         </div>
 
         <form @submit.prevent="submitCheckin" class="checkin-form">
@@ -95,9 +95,9 @@
           <div class="form-group">
             <label for="survivorStatus">Your Current Condition:</label>
             <select id="survivorStatus" v-model="form.status" class="form-input">
-              <option value="SAFE">🟢 SAFE (Uninjured / Sheltered)</option>
-              <option value="INJURED">🟡 INJURED (Need Medical Attention)</option>
-              <option value="MISSING">🔴 MISSING / STRANDED (Need Rescue)</option>
+              <option value="SAFE"> SAFE (Uninjured / Sheltered)</option>
+              <option value="INJURED"> INJURED (Need Medical Attention)</option>
+              <option value="MISSING"> MISSING / STRANDED (Need Rescue)</option>
             </select>
           </div>
 
@@ -122,7 +122,7 @@
           </button>
 
           <router-link to="/citizen/survivor" class="btn btn-ghost btn-block btn-xs mt-2 text-center">
-            🛡️ Open Full Dedicated Survivor Check-In →
+            ️ Open Full Dedicated Survivor Check-In →
           </router-link>
         </form>
       </div>
@@ -206,8 +206,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  max-width: 960px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .header-card {
@@ -224,6 +223,10 @@ onMounted(() => {
   font-weight: 600;
   display: inline-block;
   margin-bottom: 0.25rem;
+
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
 }
 
 .back-link:hover {

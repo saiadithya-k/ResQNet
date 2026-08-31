@@ -2,7 +2,7 @@
   <div class="community-panel">
     <div class="panel-header">
       <div class="header-left">
-        <h3>🤝 Community First Responder Terminal</h3>
+        <h3> Community First Responder Terminal</h3>
         <span class="volunteer-tag">Verified Volunteer Mesh</span>
       </div>
       <div class="availability-toggle">
@@ -23,7 +23,7 @@
     <!-- Active Assigned Task (if any) -->
     <div v-if="activeTask" class="active-task-banner">
       <div class="task-top">
-        <span class="active-badge">⚡ ACTIVE ASSIGNMENT</span>
+        <span class="active-badge"> ACTIVE ASSIGNMENT</span>
         <span class="task-status-pill">{{ activeTask.status }}</span>
       </div>
       <h4>{{ activeTask.incident ? activeTask.incident.title : 'Assigned Emergency Task' }}</h4>

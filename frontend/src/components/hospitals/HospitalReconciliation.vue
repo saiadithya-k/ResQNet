@@ -2,15 +2,15 @@
   <div class="reconciliation-panel">
     <div class="panel-header">
       <div class="header-left">
-        <h4>⚖️ Resource Transfer Reconciliation & Audit</h4>
+        <h4>️ Resource Transfer Reconciliation & Audit</h4>
         <span class="sub-text">Expected vs Actual Inventory Verification & Discrepancy Settlement</span>
       </div>
       <div class="filter-controls">
         <select v-model="filterType" class="filter-select">
           <option value="">All Results</option>
-          <option value="MATCH">Exact Matches ✅</option>
-          <option value="SHORTAGE">Shortages ⚠️</option>
-          <option value="OVERAGE">Overages 📈</option>
+          <option value="MATCH">Exact Matches ✓</option>
+          <option value="SHORTAGE">Shortages ️</option>
+          <option value="OVERAGE">Overages </option>
         </select>
       </div>
     </div>
@@ -32,7 +32,7 @@
           <div class="rec-title">
             <span class="rec-resource">{{ rec.resource?.name || 'Emergency Resource' }}</span>
             <span class="rec-hospitals">
-              🏥 {{ rec.sourceHospital?.hospitalName || 'Source' }} ➔ 🏥 {{ rec.destinationHospital?.hospitalName || 'Destination' }}
+               {{ rec.sourceHospital?.hospitalName || 'Source' }} →  {{ rec.destinationHospital?.hospitalName || 'Destination' }}
             </span>
           </div>
           <span class="status-pill" :class="`pill-${rec.status.toLowerCase()}`">
@@ -61,7 +61,7 @@
         <!-- Resolution Information -->
         <div v-if="rec.status === 'RESOLVED'" class="resolution-box">
           <div class="resolution-badge">
-            <span>✅ Resolved by {{ rec.resolvedBy || 'Operations Admin' }}</span>
+            <span>✓ Resolved by {{ rec.resolvedBy || 'Operations Admin' }}</span>
           </div>
           <p v-if="rec.resolutionReason" class="resolution-reason">
             <strong>Reason:</strong> {{ rec.resolutionReason }}
@@ -71,7 +71,7 @@
         <!-- Resolve Button if Discrepancy Unresolved -->
         <div v-if="rec.status === 'DISCREPANCY'" class="action-footer">
           <button class="btn-resolve" @click="$emit('resolve-discrepancy', rec)">
-            ✍️ Resolve Discrepancy
+            ️ Resolve Discrepancy
           </button>
         </div>
       </div>

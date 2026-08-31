@@ -3,7 +3,7 @@
     <!-- Toggle Floating Button -->
     <button v-if="!isOpen" class="copilot-fab" @click="isOpen = true">
       <span class="ai-glow"></span>
-      <span class="icon">{{ isCitizen ? '🛡️' : '🤖' }}</span>
+      <span class="icon">{{ isCitizen ? '️' : '' }}</span>
       <span class="label">{{ isCitizen ? 'SAFETY ASSIST' : 'AI COPILOT' }}</span>
     </button>
 
@@ -21,33 +21,33 @@
       <div class="quick-prompts">
         <template v-if="isCitizen">
           <button class="prompt-chip" @click="sendQuery('What is the status of my emergency?')">
-            🚨 My Emergency?
+             My Emergency?
           </button>
           <button class="prompt-chip" @click="sendQuery('What public alerts are currently active?')">
-            📢 Public Alerts?
+             Public Alerts?
           </button>
           <button class="prompt-chip" @click="sendQuery('Where is the nearest evacuation shelter?')">
-            🏠 Nearest Shelter?
+             Nearest Shelter?
           </button>
           <button class="prompt-chip" @click="sendQuery('How do I perform CPR on an unconscious person?')">
             🩹 CPR Steps?
           </button>
           <button class="prompt-chip" @click="sendQuery('What are the official emergency helpline numbers?')">
-            📞 Helplines?
+             Helplines?
           </button>
         </template>
         <template v-else>
           <button class="prompt-chip font-mono" @click="sendQuery('Which critical incidents need immediate attention?')">
-            🚨 Immediate Attention?
+             Immediate Attention?
           </button>
           <button class="prompt-chip font-mono" @click="sendQuery('Which hospitals can accept critical patients with available ICU capacity?')">
-            🏥 ICU Capacity?
+             ICU Capacity?
           </button>
           <button class="prompt-chip font-mono" @click="sendQuery('Where are we short on ambulances?')">
-            🚑 Ambulance Shortage?
+             Ambulance Shortage?
           </button>
           <button class="prompt-chip font-mono" @click="sendQuery('Which shelters are nearing capacity?')">
-            🏠 Shelter Occupancy?
+             Shelter Occupancy?
           </button>
         </template>
       </div>
@@ -73,7 +73,7 @@
                   {{ action.label }}
                 </button>
                 <div v-else class="action-item">
-                  <span>⚡</span> {{ action }}
+                  <span></span> {{ action }}
                 </div>
               </template>
             </div>
@@ -82,13 +82,13 @@
           <!-- Error Retry Option -->
           <div v-if="msg.isError" class="error-retry-box">
             <button class="btn-retry-query font-mono" @click="retryQuery(msg.failedQuery)">
-              🔄 Retry Query
+               Retry Query
             </button>
           </div>
         </div>
 
         <div v-if="loading" class="chat-bubble assistant loading font-mono">
-          <span>⚡ Analyzing real-time operational grid telemetry...</span>
+          <span> Analyzing real-time operational grid telemetry...</span>
         </div>
       </div>
 
@@ -145,7 +145,7 @@ const messages = ref([
     actions: [
       {
         type: 'VIEW_INCIDENT',
-        label: '🚨 Inspect Priority Incident #1042',
+        label: ' Inspect Priority Incident #1042',
         payload: { id: 'INC-1042', latitude: 13.0827, longitude: 80.2707 }
       }
     ]
@@ -181,7 +181,7 @@ async function sendQuery(queryText) {
   } catch (err) {
     messages.value.push({
       role: 'assistant',
-      content: '⚠️ Failed to connect to AI Copilot backend engine. Please check network/service availability.',
+      content: '️ Failed to connect to AI Copilot backend engine. Please check network/service availability.',
       isError: true,
       failedQuery: queryText,
       actions: []
@@ -229,7 +229,7 @@ async function executeAction(action) {
     }
 
     notificationStore.addNotification({
-      title: `🎯 Map Focused on #${targetId || 'INC-1042'}`,
+      title: ` Map Focused on #${targetId || 'INC-1042'}`,
       message: `${targetInc?.title || 'Incident'} centered on tactical GIS map`,
       type: 'INFO'
     });
@@ -269,14 +269,14 @@ async function executeAction(action) {
     }
 
     notificationStore.addNotification({
-      title: `⚡ Rapid Unit Dispatched to #${incId}`,
+      title: ` Rapid Unit Dispatched to #${incId}`,
       message: `Ambulance Unit Alpha-12 mobilized. ETA: 8 minutes. Priority: CRITICAL.`,
       type: 'SUCCESS'
     });
 
     messages.value.push({
       role: 'assistant',
-      content: `✅ **DISPATCH EXECUTED:** Ambulance Unit Alpha-12 (\`AMB-A12\`) has been dispatched to Incident **#${incId}**.\n\n• **Status:** \`EN_ROUTE\` (Priority: 96/100)\n• **ETA:** ~8 minutes\n• **Route:** Dynamic Emergency Bypass Corridor active.`
+      content: `✓ **DISPATCH EXECUTED:** Ambulance Unit Alpha-12 (\`AMB-A12\`) has been dispatched to Incident **#${incId}**.\n\n• **Status:** \`EN_ROUTE\` (Priority: 96/100)\n• **ETA:** ~8 minutes\n• **Route:** Dynamic Emergency Bypass Corridor active.`
     });
     scrollToBottom();
 
@@ -298,7 +298,7 @@ async function executeAction(action) {
     }
     hospitalStore.selectHospital(hosp);
     notificationStore.addNotification({
-      title: `🏥 Focused ${hosp.name}`,
+      title: ` Focused ${hosp.name}`,
       message: 'Hospital highlighted on Tactical Map',
       type: 'INFO'
     });
@@ -323,14 +323,14 @@ async function executeAction(action) {
     responderStore.selectResponder(resp);
 
     notificationStore.addNotification({
-      title: `🚑 Telemetry: ${resp.name} (${resp.badgeNumber})`,
+      title: ` Telemetry: ${resp.name} (${resp.badgeNumber})`,
       message: `Unit centered on tactical map. Status: ${resp.status}`,
       type: 'INFO'
     });
 
     messages.value.push({
       role: 'assistant',
-      content: `📍 **TELEMETRY ACCESSED:** ${resp.name} (\`${resp.badgeNumber}\`)\n\n• **Status:** \`${resp.status}\`\n• **Live GPS:** [${resp.latitude}, ${resp.longitude}]\n• **Equipment:** Advanced Life Support, Defibrillator (AED), Trauma Kit.`
+      content: ` **TELEMETRY ACCESSED:** ${resp.name} (\`${resp.badgeNumber}\`)\n\n• **Status:** \`${resp.status}\`\n• **Live GPS:** [${resp.latitude}, ${resp.longitude}]\n• **Equipment:** Advanced Life Support, Defibrillator (AED), Trauma Kit.`
     });
     scrollToBottom();
 

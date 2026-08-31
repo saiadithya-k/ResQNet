@@ -2,16 +2,16 @@
   <div class="transfer-panel">
     <div class="panel-header">
       <div class="header-left">
-        <h4>🚚 Active Resource & Logistical Transfers</h4>
+        <h4> Active Resource & Logistical Transfers</h4>
         <span class="sub-text">Live In-Transit Movement & Destination Receipts</span>
       </div>
       <div class="filter-controls">
         <select v-model="filterStatus" class="filter-select">
           <option value="">All Statuses</option>
           <option value="APPROVED">Approved (Ready)</option>
-          <option value="IN_TRANSIT">In Transit 🚚</option>
-          <option value="DELIVERED">Delivered 🏁</option>
-          <option value="RECEIVED">Received & Stocked ✅</option>
+          <option value="IN_TRANSIT">In Transit </option>
+          <option value="DELIVERED">Delivered </option>
+          <option value="RECEIVED">Received & Stocked ✓</option>
         </select>
       </div>
     </div>
@@ -44,7 +44,7 @@
             <span class="point-label">From:</span>
             <span class="point-name">{{ t.fromHospital?.hospitalName || t.fromDistrict || 'Source Hub' }}</span>
           </div>
-          <div class="route-arrow">➔</div>
+          <div class="route-arrow">→</div>
           <div class="route-point">
             <span class="point-label">To:</span>
             <span class="point-name">{{ t.toHospital?.hospitalName || t.toDistrict || 'Destination Hub' }}</span>
@@ -82,7 +82,7 @@
             class="btn-action btn-dispatch"
             @click="$emit('start-transfer', t.id)"
           >
-            🚚 Dispatch Into Transit
+             Dispatch Into Transit
           </button>
 
           <!-- Deliver by Courier / Source -->
@@ -91,7 +91,7 @@
             class="btn-action btn-deliver"
             @click="$emit('deliver-transfer', t.id)"
           >
-            🏁 Mark Delivered
+             Mark Delivered
           </button>
 
           <!-- Receive & Stock by Destination -->
@@ -100,7 +100,7 @@
             class="btn-action btn-receive"
             @click="$emit('receive-transfer', t.id)"
           >
-            📦 Confirm Receipt & Stock Inventory
+             Confirm Receipt & Stock Inventory
           </button>
         </div>
       </div>

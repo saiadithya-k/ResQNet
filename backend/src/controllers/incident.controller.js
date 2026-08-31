@@ -23,10 +23,25 @@ exports.getIncidentById = (req, res) => {
 };
 
 exports.createIncident = (req, res) => {
-  const { title, description, incidentType, latitude, longitude, victimCount, language, mediaUrl } = req.body;
+  const { title, description, incidentType, latitude, longitude, locationSource, district, address, location, victimCount, language, mediaUrl } = req.body;
+
+  // Strict coordinate validation
+  const parsedLat = parseFloat(latitude);
+  const parsedLon = parseFloat(longitude);
+
+  if (isNaN(parsedLat) || parsedLat < -90 || parsedLat > 90 || isNaN(parsedLon) || parsedLon < -180 || parsedLon > 180) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid incident coordinates. Latitude must be between -90 and 90, and longitude between -180 and 180.'
+    });
+  }
 
   // AI enrichment
   const aiEnrichment = aiService.extractEmergency(description || title, language || 'en');
+
+  const resolvedAddress = address || location || `GPS (${parsedLat.toFixed(5)}, ${parsedLon.toFixed(5)})`;
+  const resolvedDistrict = district || 'Central Zone';
+  const resolvedSource = locationSource || 'SEARCH';
 
   const newIncident = {
     id: `INC-${1045 + mockState.incidents.length}`,
@@ -36,10 +51,12 @@ exports.createIncident = (req, res) => {
     status: 'REPORTED',
     severity: aiEnrichment.severity,
     priorityScore: aiEnrichment.priorityScore,
-    latitude: latitude || 13.0827,
-    longitude: longitude || 80.2707,
-    district: req.body.district || 'Central Zone',
-    address: req.body.address || 'Reported GPS Location',
+    latitude: parsedLat,
+    longitude: parsedLon,
+    address: resolvedAddress,
+    location: resolvedAddress,
+    district: resolvedDistrict,
+    locationSource: resolvedSource,
     victimCount: victimCount || aiEnrichment.victimCount,
     hasInjuries: aiEnrichment.hasInjuries,
     hasTrapped: aiEnrichment.hasTrapped,
@@ -53,7 +70,7 @@ exports.createIncident = (req, res) => {
     evidenceFiles: [],
     createdAt: new Date().toISOString(),
     timeline: [
-      { time: new Date().toLocaleTimeString().slice(0, 5), title: 'Reported', description: 'Submitted by citizen' },
+      { time: new Date().toLocaleTimeString().slice(0, 5), title: 'Reported', description: `Submitted via ${resolvedSource} at ${resolvedAddress}` },
       { time: new Date().toLocaleTimeString().slice(0, 5), title: 'AI Enriched', description: `Priority Score computed: ${aiEnrichment.priorityScore}` }
     ]
   };

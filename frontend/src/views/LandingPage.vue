@@ -21,27 +21,28 @@
         <!-- Main Call-To-Action Gateways -->
         <div class="hero-cta-group">
           <router-link to="/login/citizen" class="cta-btn cta-citizen">
-            <span class="cta-icon">🚨</span>
             <div class="cta-text">
               <span class="cta-title">Get Emergency Help</span>
-              <span class="cta-sub">Citizen Portal & Voice SOS</span>
+              <span class="cta-sub">Citizen Portal &amp; Voice SOS</span>
             </div>
-            <span class="cta-arrow">➔</span>
+            <span class="cta-arrow">&#8594;</span>
           </router-link>
 
           <router-link to="/login/operations" class="cta-btn cta-ops">
-            <span class="cta-icon">🛡️</span>
             <div class="cta-text">
-              <span class="cta-title">Operations & Command</span>
+              <span class="cta-title">Operations &amp; Command</span>
               <span class="cta-sub">Dispatch, EMTs, Hospital Mesh</span>
             </div>
-            <span class="cta-arrow">➔</span>
+            <span class="cta-arrow">&#8594;</span>
           </router-link>
-        </div>
 
-        <div class="quick-login-link">
-          <span>Already know your role?</span>
-          <router-link to="/login" class="text-link">Open Central Gateway</router-link>
+          <router-link to="/workflow" class="cta-btn cta-workflow">
+            <div class="cta-text">
+              <span class="cta-title">⚡ Interactive Workflow</span>
+              <span class="cta-sub">Public Architecture &amp; System Mesh (No Login)</span>
+            </div>
+            <span class="cta-arrow">&#8594;</span>
+          </router-link>
         </div>
       </div>
     </section>
@@ -90,36 +91,32 @@
 
       <div class="pipeline-grid">
         <div class="pipeline-card">
-          <div class="step-number">01</div>
-          <div class="card-icon">🎙️</div>
+          <div class="card-icon-text">VOICE</div>
           <h3>Report Emergency</h3>
           <p>Citizens trigger SOS via voice, multilingual text, or location check-in. GPS coordinates and media are captured instantly.</p>
         </div>
 
-        <div class="pipeline-arrow">➔</div>
+        <div class="pipeline-arrow">→</div>
 
         <div class="pipeline-card">
-          <div class="step-number">02</div>
-          <div class="card-icon">🧠</div>
+          <div class="card-icon-text">AI</div>
           <h3>AI-Assisted Triage</h3>
           <p>Multilingual NLP extracts casualty counts, trapped victim states, and hazard flags, calculating dynamic priority scores (0–100).</p>
         </div>
 
-        <div class="pipeline-arrow">➔</div>
+        <div class="pipeline-arrow">→</div>
 
         <div class="pipeline-card">
-          <div class="step-number">03</div>
-          <div class="card-icon">⚡</div>
+          <div class="card-icon-text">MATCH</div>
           <h3>Intelligent Matching</h3>
           <p>6-factor algorithmic scoring evaluates responder skills, equipment, distance, ETA, fatigue, and active workload.</p>
         </div>
 
-        <div class="pipeline-arrow">➔</div>
+        <div class="pipeline-arrow">→</div>
 
         <div class="pipeline-card">
-          <div class="step-number">04</div>
-          <div class="card-icon">🏥</div>
-          <h3>Rescue & Hospital Care</h3>
+          <div class="card-icon-text">RESCUE</div>
+          <h3>Rescue &amp; Hospital Care</h3>
           <p>Live GIS tracking navigates units to the scene while hospital beds, ICU units, and trauma suites are reserved ahead of arrival.</p>
         </div>
       </div>
@@ -135,37 +132,37 @@
 
       <div class="features-grid">
         <div class="feature-card">
-          <div class="feature-icon">🤖</div>
+          <div class="feature-icon-text">AI</div>
           <h3>Multilingual AI Copilot</h3>
           <p>Real-time emergency transcription and entity extraction supporting English, Tamil, Hindi, and Telugu with zero latency.</p>
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon">🗺️</div>
+          <div class="feature-icon-text">GIS</div>
           <h3>Tactical GIS Command Center</h3>
           <p>Interactive MapLibre & OpenFreeMap Tactical GIS map with simulated GPS interpolation, hazard zone polygons, route vectors, and heatmaps.</p>
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon">🚑</div>
+          <div class="feature-icon-text">EMT</div>
           <h3>Concurrency-Locked Dispatch</h3>
           <p>ACID-compliant PostgreSQL transaction locks protect field units against concurrent double-dispatch races.</p>
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon">🏥</div>
+          <div class="feature-icon-text">ICU</div>
           <h3>Regional Hospital Mesh</h3>
           <p>Live ICU, bed, ventilator, and operating room capacity balancing with automated inter-hospital transfer routing.</p>
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon">🤝</div>
+          <div class="feature-icon-text">CPR</div>
           <h3>Community First Responders</h3>
           <p>500-meter proximity matching for CPR/AED and First-Aid certified citizen volunteers during critical window moments.</p>
         </div>
 
         <div class="feature-card">
-          <div class="feature-icon">🔐</div>
+          <div class="feature-icon-text">SHA</div>
           <h3>SHA-256 Audit Vault</h3>
           <p>Cryptographically hashed, tamper-evident audit logs and chain-of-custody verification for all incident events.</p>
         </div>
@@ -180,8 +177,8 @@
         <h3>Facing an Emergency?</h3>
         <p>Report structural collapses, fires, medical crises, or floods. Track rescue units in real time and notify family safety circles.</p>
         <router-link to="/login/citizen" class="action-btn btn-citizen">
-          🚨 Open Citizen Emergency Portal
-        </router-link>
+          Open Citizen Emergency Portal
+          </router-link>
       </div>
 
       <!-- Operations Box -->
@@ -190,8 +187,8 @@
         <h3>Emergency Operations Personnel</h3>
         <p>Tactical Command, 911/112 Dispatchers, Paramedics, Fire Chiefs, Community Responders, and Hospital Staff.</p>
         <router-link to="/login/operations" class="action-btn btn-ops">
-          🛡️ Access Command Portal
-        </router-link>
+          Access Command Portal
+          </router-link>
       </div>
     </section>
 
@@ -200,7 +197,7 @@
       <div class="footer-top">
         <div class="footer-brand">
           <div class="footer-logo">
-            <span class="logo-emoji">🚨</span>
+            <span class="logo-emoji"></span>
             <h2>ResQ<span>Net</span></h2>
           </div>
           <p>AI Emergency Intelligence & Public Safety Mesh Platform.</p>
@@ -224,7 +221,7 @@
 
       <div class="footer-bottom">
         <p>&copy; 2026 ResQNet Emergency Response Network. All rights reserved.</p>
-        <span class="security-tag">🟢 SYSTEM HEALTHY — VERIFIED PRODUCTION BUILD</span>
+        <span class="security-tag">SYSTEM HEALTHY — VERIFIED PRODUCTION BUILD</span>
       </div>
     </footer>
   </div>
@@ -323,10 +320,10 @@
 
 .hero-cta-group {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.25rem;
   width: 100%;
-  max-width: 680px;
+  max-width: 960px;
   margin-top: 1rem;
 }
 
@@ -363,6 +360,18 @@
   border-color: #3b82f6;
   transform: translateY(-3px);
   box-shadow: 0 12px 30px -5px rgba(59, 130, 246, 0.35);
+}
+
+.cta-workflow {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(14, 116, 144, 0.25));
+  border: 1px solid rgba(6, 182, 212, 0.5);
+}
+
+.cta-workflow:hover {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(14, 116, 144, 0.45));
+  border-color: #06b6d4;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px -5px rgba(6, 182, 212, 0.35);
 }
 
 .cta-icon {
@@ -824,5 +833,20 @@
   .split-cta-section {
     grid-template-columns: 1fr;
   }
+}
+
+/* Icon text replacements for emojis */
+.card-icon-text, .feature-icon-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  display: inline-block;
+  margin-bottom: 0.5rem;
 }
 </style>

@@ -4,7 +4,7 @@
     <div class="header-card tactical-card">
       <div class="header-left">
         <router-link to="/citizen" class="back-link">← Back to Portal</router-link>
-        <h2>👤 CITIZEN PROFILE & EMERGENCY DIRECTORY</h2>
+        <h2> CITIZEN PROFILE & EMERGENCY DIRECTORY</h2>
         <p>Personal crisis identifiers, emergency triage medical data, and trusted contacts directory.</p>
       </div>
 
@@ -15,7 +15,7 @@
           class="btn btn-primary btn-sm"
           @click="startEditing"
         >
-          ✏️ Edit Profile
+          ️ Edit Profile
         </button>
         <div v-else class="edit-btn-group">
           <button
@@ -25,7 +25,7 @@
             :disabled="saving"
           >
             <span v-if="saving" class="spinner-sm"></span>
-            <span>{{ saving ? 'Saving...' : '💾 Save Profile' }}</span>
+            <span>{{ saving ? 'Saving...' : ' Save Profile' }}</span>
           </button>
           <button
             type="button"
@@ -41,7 +41,7 @@
 
     <!-- Success Feedback Alert -->
     <div v-if="successMessage" class="tactical-card success-banner">
-      <span>✅ {{ successMessage }}</span>
+      <span>✓ {{ successMessage }}</span>
       <button class="btn btn-xs btn-ghost" @click="successMessage = ''">Dismiss</button>
     </div>
 
@@ -442,10 +442,10 @@ async function markAllRead() {
 }
 
 function getNotificationIcon(cat) {
-  if (cat === 'RESPONDER') return '🚑';
-  if (cat === 'FAMILY_SAFETY') return '👨‍👩‍👧';
-  if (cat === 'PUBLIC_ALERT') return '📢';
-  return '🚨';
+  if (cat === 'RESPONDER') return '';
+  if (cat === 'FAMILY_SAFETY') return '‍‍';
+  if (cat === 'PUBLIC_ALERT') return '';
+  return '';
 }
 
 onMounted(() => {
@@ -458,8 +458,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  max-width: 1040px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .header-card {
@@ -476,6 +475,10 @@ onMounted(() => {
   font-weight: 600;
   display: inline-block;
   margin-bottom: 0.25rem;
+
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
 }
 
 .back-link:hover {

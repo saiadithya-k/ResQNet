@@ -4,93 +4,101 @@
     <div ref="mapContainer" class="map-view"></div>
 
     <!-- Floating Map Control Toolbar -->
-    <div class="map-controls-panel">
+    <div :class="['map-controls-panel', { 'panel-minimized': panelMinimized }]">
       <div class="control-header">
         <div class="header-left">
           <span class="pulse-icon"></span>
-          <span>TACTICAL GIS LAYERS</span>
+          <span v-if="!panelMinimized">TACTICAL GIS LAYERS</span>
         </div>
-        <div class="theme-switcher font-mono">
-          <button
-            type="button"
-            :class="['theme-pill', { active: currentTheme === 'light' }]"
-            @click="switchTheme('light')"
-            title="White / Positron Theme"
-          >
-            ☀️ White
-          </button>
-          <button
-            type="button"
-            :class="['theme-pill', { active: currentTheme === 'dark' }]"
-            @click="switchTheme('dark')"
-            title="Dark Tactical Theme"
-          >
-            🌙 Dark
-          </button>
-        </div>
-      </div>
-      <div class="layer-toggles">
-        <label class="toggle-item">
-          <input type="checkbox" v-model="layers.incidents" @change="updateLayersVisibility" />
-          <span class="icon">🔴</span> Incidents ({{ incidentStore.incidents.length }})
-        </label>
-        <label class="toggle-item">
-          <input type="checkbox" v-model="layers.responders" @change="updateLayersVisibility" />
-          <span class="icon">🚑</span> Units ({{ responderStore.responders.length }})
-        </label>
-        <label class="toggle-item">
-          <input type="checkbox" v-model="layers.hospitals" @change="updateLayersVisibility" />
-          <span class="icon">🏥</span> Hospitals ({{ hospitalStore.hospitals.length }})
-        </label>
-        <label class="toggle-item">
-          <input type="checkbox" v-model="layers.shelters" @change="updateLayersVisibility" />
-          <span class="icon">🏠</span> Shelters ({{ disasterStore.shelters.length }})
-        </label>
-        <label class="toggle-item">
-          <input type="checkbox" v-model="layers.zones" @change="updateLayersVisibility" />
-          <span class="icon">⚠️</span> Disaster Zones
-        </label>
-        <label class="toggle-item">
-          <input type="checkbox" v-model="layers.roadblocks" @change="updateLayersVisibility" />
-          <span class="icon">🚧</span> Roadblocks
-        </label>
-        <label class="toggle-item">
-          <input type="checkbox" v-model="layers.routes" @change="updateLayersVisibility" />
-          <span class="icon">⚡</span> Route Optimization
-        </label>
-        <label class="toggle-item">
-          <input type="checkbox" v-model="layers.heatmap" @change="updateLayersVisibility" />
-          <span class="icon">🔥</span> Incident Heatmap
-        </label>
-      </div>
-
-      <!-- Comparative Route Mode Selector Strip -->
-      <div v-if="layers.routes" class="route-selector-box">
-        <div class="route-sel-hdr font-mono">ROUTE COMPARISON:</div>
-        <div class="route-btn-group">
-          <button
-            :class="['route-toggle-btn', { active: activeRouteType === 'EMERGENCY' }]"
-            @click="setRouteType('EMERGENCY')"
-          >
-            ⚡ Emergency Corridor ({{ routeMetrics.emergencyEta }}m)
-          </button>
-          <button
-            :class="['route-toggle-btn', 'btn-std', { active: activeRouteType === 'STANDARD' }]"
-            @click="setRouteType('STANDARD')"
-          >
-            🚧 Standard Route ({{ routeMetrics.standardEta }}m)
+        <div class="header-right">
+          <div v-if="!panelMinimized" class="theme-switcher font-mono">
+            <button
+              type="button"
+              :class="['theme-pill', { active: currentTheme === 'light' }]"
+              @click="switchTheme('light')"
+              title="White Theme"
+            >
+              White
+            </button>
+            <button
+              type="button"
+              :class="['theme-pill', { active: currentTheme === 'dark' }]"
+              @click="switchTheme('dark')"
+              title="Dark Tactical Theme"
+            >
+              Dark
+            </button>
+          </div>
+          <button class="panel-minimize-btn" @click="panelMinimized = !panelMinimized" :title="panelMinimized ? 'Expand layers panel' : 'Minimize layers panel'">
+            {{ panelMinimized ? '▶' : '◀' }}
           </button>
         </div>
       </div>
 
-      <!-- Active Focus Card -->
-      <div v-if="incidentStore.selectedIncident" class="active-focus-card">
-        <div class="focus-hdr font-mono">🎯 MAP FOCUS: #{{ incidentStore.selectedIncident.id }}</div>
-        <span class="focus-title">{{ incidentStore.selectedIncident.title }}</span>
-        <button class="btn-refocus font-mono" @click="focusSelectedIncident">
-          Refocus Map
-        </button>
-      </div>
+      <template v-if="!panelMinimized">
+        <div class="layer-toggles">
+          <label class="toggle-item">
+            <input type="checkbox" v-model="layers.incidents" @change="updateLayersVisibility" />
+            <span class="layer-dot dot-red"></span> Incidents ({{ incidentStore.incidents.length }})
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" v-model="layers.responders" @change="updateLayersVisibility" />
+            <span class="layer-dot dot-cyan"></span> Units ({{ responderStore.responders.length }})
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" v-model="layers.hospitals" @change="updateLayersVisibility" />
+            <span class="layer-dot dot-emerald"></span> Hospitals ({{ hospitalStore.hospitals.length }})
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" v-model="layers.shelters" @change="updateLayersVisibility" />
+            <span class="layer-dot dot-amber"></span> Shelters ({{ disasterStore.shelters.length }})
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" v-model="layers.zones" @change="updateLayersVisibility" />
+            <span class="layer-dot dot-orange"></span> Disaster Zones
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" v-model="layers.roadblocks" @change="updateLayersVisibility" />
+            <span class="layer-dot dot-purple"></span> Roadblocks
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" v-model="layers.routes" @change="updateLayersVisibility" />
+            <span class="layer-dot dot-cyan"></span> Route Optimization
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" v-model="layers.heatmap" @change="updateLayersVisibility" />
+            <span class="layer-dot dot-red"></span> Incident Heatmap
+          </label>
+        </div>
+
+        <!-- Comparative Route Mode Selector Strip -->
+        <div v-if="layers.routes" class="route-selector-box">
+          <div class="route-sel-hdr font-mono">ROUTE COMPARISON:</div>
+          <div class="route-btn-group">
+            <button
+              :class="['route-toggle-btn', { active: activeRouteType === 'EMERGENCY' }]"
+              @click="setRouteType('EMERGENCY')"
+            >
+              Emergency Corridor ({{ routeMetrics.emergencyEta }}m)
+            </button>
+            <button
+              :class="['route-toggle-btn', 'btn-std', { active: activeRouteType === 'STANDARD' }]"
+              @click="setRouteType('STANDARD')"
+            >
+              Standard Route ({{ routeMetrics.standardEta }}m)
+            </button>
+          </div>
+        </div>
+
+        <!-- Active Focus Card -->
+        <div v-if="incidentStore.selectedIncident" class="active-focus-card">
+          <div class="focus-hdr font-mono">MAP FOCUS: #{{ incidentStore.selectedIncident.id }}</div>
+          <span class="focus-title">{{ incidentStore.selectedIncident.title }}</span>
+          <button class="btn-refocus font-mono" @click="focusSelectedIncident">
+            Refocus Map
+          </button>
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -112,7 +120,9 @@ const hospitalStore = useHospitalStore();
 const disasterStore = useDisasterStore();
 
 const mapContainer = ref(null);
+const panelMinimized = ref(false);
 let map = null;
+
 
 // Marker tracking maps for dynamic updates
 const incidentMarkers = new Map();
@@ -382,7 +392,7 @@ function setupSourcesAndLayers() {
             <div class="popup-tag tag-warn">STANDARD ROUTE (${routeMetrics.value.standardEta} MIN)</div>
             <h4>Congested Traffic Path</h4>
             <p>Distance: ${routeMetrics.value.standardDist} km</p>
-            <p class="text-red">⚠️ Passes through active roadblock</p>
+            <p class="text-red">️ Passes through active roadblock</p>
           </div>
         `)
         .addTo(map);
@@ -520,7 +530,10 @@ function renderIncidents() {
           <h4>${inc.title}</h4>
           <p><strong>Type:</strong> ${inc.incidentType} | <strong>Victims:</strong> ${inc.victimCount}</p>
           <p><strong>Status:</strong> ${inc.status}</p>
-          <p class="popup-addr">📍 ${inc.address || inc.district}</p>
+          <p class="popup-addr">📍 ${inc.address || inc.location || inc.district}</p>
+          <p class="popup-coords font-mono text-cyan" style="font-size:0.68rem; margin: 4px 0;">
+            [${Number(inc.latitude).toFixed(6)}, ${Number(inc.longitude).toFixed(6)}] · ${inc.locationSource || 'VERIFIED'}
+          </p>
           <div class="popup-action font-mono">✓ SYNCHRONIZED TO COMMAND CONSOLE</div>
         </div>
       `);
@@ -531,21 +544,21 @@ function renderIncidents() {
       });
 
       const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
-        .setLngLat([inc.longitude, inc.latitude])
+        .setLngLat([parseFloat(inc.longitude), parseFloat(inc.latitude)])
         .setPopup(popup)
         .addTo(map);
 
       incidentMarkers.set(inc.id, marker);
       markerObj = marker;
     } else {
-      markerObj.setLngLat([inc.longitude, inc.latitude]);
+      markerObj.setLngLat([parseFloat(inc.longitude), parseFloat(inc.latitude)]);
     }
 
     // Update inner HTML of element
     const el = markerObj.getElement();
     el.innerHTML = `
       <div class="custom-map-icon ${isCritical ? 'pulse-critical' : 'pulse-high'} ${isSelected ? 'marker-selected-halo' : ''}">
-        <span>${inc.incidentType === 'FIRE' ? '🔥' : inc.incidentType === 'HAZMAT' ? '☣️' : '🚨'}</span>
+        <span>${inc.incidentType === 'FIRE' ? '🔥' : inc.incidentType === 'HAZMAT' ? '☣️' : inc.incidentType === 'FLOOD' ? '🌊' : inc.incidentType === 'COLLAPSE' ? '🏚️' : '🚨'}</span>
         ${isSelected ? '<span class="selected-pin-badge">TARGET</span>' : ''}
       </div>
     `;
@@ -603,7 +616,7 @@ function renderResponders() {
     const el = markerObj.getElement();
     el.innerHTML = `
       <div class="custom-map-icon icon-unit ${resp.isCommunity ? 'icon-comm' : ''} ${resp.status === 'EN_ROUTE' ? 'pulse-enroute' : ''}">
-        <span>${resp.isCommunity ? '🧑‍⚕️' : isAmb ? '🚑' : '🚒'}</span>
+        <span>${resp.isCommunity ? '🧑‍🚒' : isAmb ? '🚑' : '🚒'}</span>
       </div>
     `;
     el.style.display = layers.value.responders ? 'block' : 'none';
@@ -1326,4 +1339,61 @@ watch(
 .text-emerald { color: #34d399; }
 .text-cyan { color: #22d3ee; }
 .text-red { color: #f87171; }
+
+/* ─── Panel Minimize ─────────────────────────────── */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.panel-minimize-btn {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: #94a3b8;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.65rem;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.panel-minimize-btn:hover {
+  background: rgba(56, 189, 248, 0.18);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.5);
+}
+
+.panel-minimized {
+  width: auto !important;
+  min-width: 0 !important;
+  padding: 0.4rem 0.5rem !important;
+}
+
+.panel-minimized .control-header {
+  gap: 0 !important;
+}
+
+/* ─── Layer Dot Indicators ───────────────────────── */
+.layer-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: 2px;
+  vertical-align: middle;
+}
+
+.layer-dot.dot-red     { background: #f43f5e; box-shadow: 0 0 4px rgba(244,63,94,0.6); }
+.layer-dot.dot-cyan    { background: #38bdf8; box-shadow: 0 0 4px rgba(56,189,248,0.6); }
+.layer-dot.dot-emerald { background: #10b981; box-shadow: 0 0 4px rgba(16,185,129,0.6); }
+.layer-dot.dot-amber   { background: #f59e0b; box-shadow: 0 0 4px rgba(245,158,11,0.6); }
+.layer-dot.dot-orange  { background: #fb923c; box-shadow: 0 0 4px rgba(251,146,60,0.6); }
+.layer-dot.dot-purple  { background: #818cf8; box-shadow: 0 0 4px rgba(129,140,248,0.6); }
 </style>

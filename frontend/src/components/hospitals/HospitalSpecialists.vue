@@ -2,7 +2,7 @@
   <div class="specialists-panel">
     <div class="panel-header">
       <div class="header-left">
-        <h4>👨‍⚕️ Medical Specialists & On-Call Roster</h4>
+        <h4>‍️ Medical Specialists & On-Call Roster</h4>
         <span class="sub-text">Hospital Specialist Personnel</span>
       </div>
       <div class="specialty-filter">
@@ -41,8 +41,8 @@
           <small v-if="spec.subSpecialty" class="sub-specialty">({{ spec.subSpecialty }})</small>
         </div>
         <div v-if="spec.phone || spec.email" class="spec-contact">
-          <span v-if="spec.phone">📞 {{ spec.phone }}</span>
-          <span v-if="spec.email">✉️ {{ spec.email }}</span>
+          <span v-if="spec.phone"> {{ spec.phone }}</span>
+          <span v-if="spec.email">️ {{ spec.email }}</span>
         </div>
       </div>
     </div>

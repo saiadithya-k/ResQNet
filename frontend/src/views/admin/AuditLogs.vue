@@ -2,7 +2,7 @@
   <div class="audit-view">
     <div class="header-card tactical-card">
       <div class="hdr-text">
-        <h2>🧾 IMMUTABLE SYSTEM AUDIT TRAIL & OPERATIONAL LOGS</h2>
+        <h2> IMMUTABLE SYSTEM AUDIT TRAIL & OPERATIONAL LOGS</h2>
         <p>Real-time forensic audit logging of all command decisions, status transitions, responder dispatches, and SHA-256 integrity verifications.</p>
       </div>
       <div class="audit-stats-strip font-mono" v-if="logs.length">

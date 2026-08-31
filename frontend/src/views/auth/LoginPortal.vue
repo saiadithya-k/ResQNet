@@ -17,22 +17,32 @@
       <div class="gateway-options">
         <!-- Citizen Gateway -->
         <router-link to="/login/citizen" class="gateway-card citizen-gateway">
-          <div class="gateway-icon">👤</div>
+          <div class="gateway-icon">📱</div>
           <div class="gateway-info">
             <h3>Citizen Portal</h3>
             <p>Report emergencies, SOS voice broadcast, family check-in & shelter locator</p>
           </div>
-          <div class="gateway-arrow">➔</div>
+          <div class="gateway-arrow">→</div>
         </router-link>
 
         <!-- Operations Gateway -->
         <router-link to="/login/operations" class="gateway-card operations-gateway">
-          <div class="gateway-icon">🚨</div>
+          <div class="gateway-icon">🛡️</div>
           <div class="gateway-info">
             <h3>Operations & Command</h3>
             <p>Tactical Command, Dispatchers, EMTs, Fire & Hospital Mesh</p>
           </div>
-          <div class="gateway-arrow">➔</div>
+          <div class="gateway-arrow">→</div>
+        </router-link>
+
+        <!-- Public Tactical Architecture Workflow (Zero login required) -->
+        <router-link to="/workflow" class="gateway-card workflow-gateway">
+          <div class="gateway-icon">⚡</div>
+          <div class="gateway-info">
+            <h3>System Workflow Architecture</h3>
+            <p>Interactive End-to-End Emergency Intelligence Mesh (No Login Required)</p>
+          </div>
+          <div class="gateway-arrow">→</div>
         </router-link>
       </div>
 
@@ -162,6 +172,13 @@
   border-color: rgba(59, 130, 246, 0.5);
   transform: translateY(-2px);
   box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.2);
+}
+
+.workflow-gateway:hover {
+  background: rgba(0, 242, 254, 0.1);
+  border-color: rgba(0, 242, 254, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 242, 254, 0.25);
 }
 
 .gateway-icon {

@@ -2,7 +2,7 @@
   <div class="hospital-matching-panel">
     <div class="matching-header">
       <div class="header-left">
-        <h4>🎯 Deterministic Hospital Match Console</h4>
+        <h4> Deterministic Hospital Match Console</h4>
         <span class="sub-text">Intelligent Emergency Destination Optimization</span>
       </div>
       <div v-if="matchData" class="incident-badge">

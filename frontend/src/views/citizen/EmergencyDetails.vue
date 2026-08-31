@@ -8,7 +8,7 @@
 
     <!-- Not Found / Unauthorized State -->
     <div v-else-if="fetchError || !incident" class="tactical-card state-panel error">
-      <span class="state-icon">🔒</span>
+      <span class="state-icon"></span>
       <h3>EMERGENCY NOT ACCESSIBLE</h3>
       <p>{{ fetchError || "You're not authorized to view this emergency or it does not exist." }}</p>
       <router-link to="/citizen/emergencies" class="btn btn-primary btn-sm mt-3">
@@ -26,7 +26,7 @@
             <h2>{{ getCategoryIcon(incident.incidentType) }} {{ incident.title }}</h2>
             <span class="inc-id-badge font-mono">{{ incident.id }}</span>
           </div>
-          <p class="inc-location-sub">📍 {{ incident.address }} ({{ incident.latitude?.toFixed(4) }}, {{ incident.longitude?.toFixed(4) }})</p>
+          <p class="inc-location-sub"> {{ incident.address }} ({{ incident.latitude?.toFixed(4) }}, {{ incident.longitude?.toFixed(4) }})</p>
         </div>
 
         <div class="header-right">
@@ -89,11 +89,11 @@
               </div>
               <div class="hazard-flags-list">
                 <span v-if="incident.hasInjuries" class="h-flag red">🩸 Severe Injuries</span>
-                <span v-if="incident.hasTrapped" class="h-flag red">⛓️ People Trapped</span>
-                <span v-if="incident.hasFire" class="h-flag amber">🔥 Active Fire / Smoke</span>
-                <span v-if="incident.hasHazmat" class="h-flag amber">☣️ Chemical / Toxic Vapor</span>
+                <span v-if="incident.hasTrapped" class="h-flag red">️ People Trapped</span>
+                <span v-if="incident.hasFire" class="h-flag amber"> Active Fire / Smoke</span>
+                <span v-if="incident.hasHazmat" class="h-flag amber">️ Chemical / Toxic Vapor</span>
                 <span v-if="incident.vulnerableGroups?.length" class="h-flag blue">
-                  👶 Vulnerable: {{ incident.vulnerableGroups.join(', ') }}
+                   Vulnerable: {{ incident.vulnerableGroups.join(', ') }}
                 </span>
               </div>
             </div>
@@ -137,7 +137,7 @@
 
                 <!-- Audio Preview -->
                 <div v-else-if="ev.fileType === 'audio'" class="ev-audio-box">
-                  <span class="audio-ico">🎙️</span>
+                  <span class="audio-ico">️</span>
                   <audio :src="ev.url" controls class="ev-audio-player"></audio>
                 </div>
 
@@ -255,8 +255,8 @@
             </div>
 
             <ul class="safety-steps">
-              <li>📍 <strong>Stay in Place:</strong> Keep your mobile phone accessible for responder call signs.</li>
-              <li>🚫 <strong>Clear Access:</strong> Keep surrounding driveways and gate pathways clear for emergency vehicles.</li>
+              <li> <strong>Stay in Place:</strong> Keep your mobile phone accessible for responder call signs.</li>
+              <li> <strong>Clear Access:</strong> Keep surrounding driveways and gate pathways clear for emergency vehicles.</li>
               <li>🩹 <strong>First Aid:</strong> If someone is severely bleeding, apply firm, clean pressure. Do not move suspected spinal injuries.</li>
             </ul>
           </div>
@@ -382,7 +382,7 @@ function initMap() {
       respEl.style.alignItems = 'center';
       respEl.style.justifyContent = 'center';
       respEl.style.fontSize = '11px';
-      respEl.innerHTML = '🚑';
+      respEl.innerHTML = '';
 
       const respPopup = new maplibregl.Popup({ offset: [0, -10] }).setHTML(
         '<strong>Assigned First Responder Unit</strong>'
@@ -464,21 +464,21 @@ function getSeverityClass(sev) {
 }
 
 function getCategoryIcon(type) {
-  if (type === 'COLLAPSE') return '🏚️';
-  if (type === 'FIRE') return '🔥';
-  if (type === 'HAZMAT') return '☣️';
-  if (type === 'FLOOD') return '🌊';
-  if (type === 'MEDICAL') return '🚑';
-  if (type === 'EXPLOSION') return '💥';
-  if (type === 'ELECTRICAL') return '⚡';
-  return '🚨';
+  if (type === 'COLLAPSE') return '️';
+  if (type === 'FIRE') return '';
+  if (type === 'HAZMAT') return '️';
+  if (type === 'FLOOD') return '';
+  if (type === 'MEDICAL') return '';
+  if (type === 'EXPLOSION') return '';
+  if (type === 'ELECTRICAL') return '';
+  return '';
 }
 
 function getVehicleIcon(type) {
-  if (type === 'FIRE' || type === 'EXPLOSION') return '🚒';
-  if (type === 'FLOOD') return '🚤';
-  if (type === 'MEDICAL') return '🚑';
-  return '🚑';
+  if (type === 'FIRE' || type === 'EXPLOSION') return '';
+  if (type === 'FLOOD') return '';
+  if (type === 'MEDICAL') return '';
+  return '';
 }
 
 function getResponderName(inc) {
@@ -526,8 +526,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  max-width: 1040px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .header-card {
@@ -544,6 +543,10 @@ onBeforeUnmount(() => {
   font-weight: 600;
   display: inline-block;
   margin-bottom: 0.25rem;
+
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
 }
 
 .back-link:hover {

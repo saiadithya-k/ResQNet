@@ -9,7 +9,7 @@
         @click="uiStore.toggleSidebar"
         :title="uiStore.sidebarOpen ? 'Slide Close Sidebar' : 'Slide Open Sidebar'"
       >
-        <span class="toggle-icon">{{ uiStore.sidebarOpen ? '◀' : '☰' }}</span>
+        <span class="toggle-icon">{{ uiStore.sidebarOpen ? '◀' : '' }}</span>
       </button>
 
       <router-link to="/" class="brand-link">
@@ -27,7 +27,7 @@
     <!-- Center Live System Status / Disaster Mode Banner -->
     <div class="center-banner">
       <div v-if="disasterStore.isDisasterMode" class="disaster-active-badge">
-        <span class="siren-icon">🚨</span>
+        <span class="siren-icon"></span>
         <span class="text">DISASTER MODE ACTIVE: {{ disasterStore.activeDisaster?.type || 'MAJOR EMERGENCY' }}</span>
       </div>
       <div v-else class="system-status-badge">
@@ -47,10 +47,16 @@
         <span class="val text-red">{{ incidentStore.criticalIncidents.length }}</span>
       </div>
 
+      <!-- Tactical Workflow Button (Public Architecture Webpage) -->
+      <router-link to="/workflow" class="nav-workflow-btn" title="Open Tactical Emergency Workflow Canvas">
+        <span class="wf-btn-icon">⚡</span>
+        <span class="wf-btn-label">WORKFLOW</span>
+      </router-link>
+
       <!-- Interactive User Account Menu (When Authenticated) -->
       <div v-if="authStore.isAuthenticated && authStore.user" class="user-menu-wrapper">
         <div class="user-pill" @click="toggleUserMenu" title="Account Menu">
-          <div class="avatar">{{ authStore.user?.name?.charAt(0) || authStore.user?.role?.charAt(0) || '👤' }}</div>
+          <div class="avatar">{{ authStore.user?.name?.charAt(0) || authStore.user?.role?.charAt(0) || '' }}</div>
           <div class="user-meta">
             <span class="user-name">{{ authStore.user?.name || authStore.user?.mobileNumber || 'User' }}</span>
             <span class="user-role badge-role">{{ authStore.user?.role || 'CITIZEN' }}</span>
@@ -62,7 +68,7 @@
         <div v-if="userMenuOpen" class="user-dropdown-menu">
           <div class="dropdown-header">
             <div class="dh-name">{{ authStore.user?.name || 'Verified User' }}</div>
-            <div class="dh-mobile" v-if="authStore.user?.mobileNumber">📱 {{ authStore.user.mobileNumber }}</div>
+            <div class="dh-mobile" v-if="authStore.user?.mobileNumber"> {{ authStore.user.mobileNumber }}</div>
             <span class="dh-badge">{{ authStore.user?.role || 'CITIZEN' }}</span>
           </div>
 
@@ -73,7 +79,7 @@
               class="dropdown-item"
               @click="userMenuOpen = false"
             >
-              <span class="di-icon">👤</span> My Citizen Profile
+              <span class="di-icon"></span> My Citizen Profile
             </router-link>
             <router-link
               v-if="authStore.user?.role === 'CITIZEN'"
@@ -81,7 +87,7 @@
               class="dropdown-item"
               @click="userMenuOpen = false"
             >
-              <span class="di-icon">📋</span> My Emergencies
+              <span class="di-icon"></span> My Emergencies
             </router-link>
             <router-link
               v-if="['ADMIN', 'DISPATCHER'].includes(authStore.user?.role)"
@@ -89,11 +95,11 @@
               class="dropdown-item"
               @click="userMenuOpen = false"
             >
-              <span class="di-icon">🚨</span> Tactical Command
+              <span class="di-icon"></span> Tactical Command
             </router-link>
 
             <button class="dropdown-item logout-item" @click="handleLogout">
-              <span class="di-icon">🚪</span> Logout
+              <span class="di-icon"></span> Logout
             </button>
           </div>
         </div>
@@ -102,7 +108,7 @@
       <!-- Sign In Button (When Unauthenticated) -->
       <div v-else class="auth-actions">
         <router-link to="/login" class="nav-signin-btn">
-          <span class="di-icon">🔐</span>
+          <span class="di-icon"></span>
           <span>Sign In</span>
         </router-link>
       </div>
@@ -126,7 +132,7 @@ const disasterStore = useDisasterStore();
 const uiStore = useUiStore();
 
 const isPublicRoute = computed(() => {
-  return route.path === '/' || route.path.startsWith('/login');
+  return route.path === '/' || route.path.startsWith('/login') || route.path === '/workflow' || route.path === '/admin/workflow';
 });
 
 const userMenuOpen = ref(false);
@@ -482,5 +488,49 @@ onUnmounted(() => {
   color: #ffffff;
   transform: translateY(-1px);
   box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+}
+
+/* ─── Tactical Workflow Nav Button ───────────────── */
+.nav-workflow-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(129, 140, 248, 0.2));
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  color: #38bdf8;
+  padding: 0.35rem 0.8rem;
+  border-radius: 8px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-workflow-btn:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.3), rgba(129, 140, 248, 0.35));
+  border-color: #38bdf8;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+}
+
+.nav-workflow-btn:active {
+  transform: translateY(0);
+}
+
+.wf-btn-icon {
+  font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  .wf-btn-label {
+    display: none;
+  }
+  .nav-workflow-btn {
+    padding: 0.35rem 0.5rem;
+  }
 }
 </style>

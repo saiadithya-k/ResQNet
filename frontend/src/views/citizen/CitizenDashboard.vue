@@ -16,7 +16,7 @@
       <!-- Primary Emergency Trigger Actions -->
       <div class="hero-actions">
         <router-link to="/citizen/report" class="btn btn-emergency-primary" id="btn-report-emergency">
-          <span class="btn-icon">🚨</span>
+          <span class="btn-icon"></span>
           <div class="btn-text">
             <span class="btn-main">REPORT EMERGENCY</span>
             <span class="btn-sub">Text & GPS Incident Filing</span>
@@ -24,7 +24,7 @@
         </router-link>
 
         <router-link to="/citizen/voice" class="btn btn-emergency-secondary" id="btn-voice-emergency">
-          <span class="btn-icon">🎙️</span>
+          <span class="btn-icon">️</span>
           <div class="btn-text">
             <span class="btn-main">SPEAK EMERGENCY (SOS)</span>
             <span class="btn-sub">Tamil · English · Hindi · Telugu</span>
@@ -36,22 +36,22 @@
     <!-- Quick Navigation Bar for Citizen Destinations -->
     <div class="quick-nav-bar tactical-card">
       <router-link to="/citizen" class="nav-pill active">
-        <span>📋</span> Dashboard
+        <span></span> Dashboard
       </router-link>
       <router-link to="/citizen/emergencies" class="nav-pill">
-        <span>🚨</span> My Emergencies ({{ myIncidents.length }})
+        <span></span> My Emergencies ({{ myIncidents.length }})
       </router-link>
       <router-link to="/citizen/family" class="nav-pill">
-        <span>👨‍👩‍👧</span> Family Safety
+        <span>‍‍</span> Family Safety
       </router-link>
       <router-link to="/citizen/alerts" class="nav-pill">
-        <span>📢</span> Public Alerts
+        <span></span> Public Alerts
       </router-link>
       <router-link to="/citizen/risk" class="nav-pill">
-        <span>🔮</span> Risk Forecast
+        <span></span> Risk Forecast
       </router-link>
       <router-link to="/citizen/profile" class="nav-pill">
-        <span>👤</span> Citizen Profile
+        <span></span> Citizen Profile
       </router-link>
     </div>
 
@@ -65,7 +65,7 @@
             <h3>MY RECENT EMERGENCY REPORTS</h3>
           </div>
           <button class="btn btn-ghost btn-xs" @click="refreshIncidents" :disabled="loadingIncidents">
-            {{ loadingIncidents ? 'Refreshing...' : '🔄 Refresh' }}
+            {{ loadingIncidents ? 'Refreshing...' : ' Refresh' }}
           </button>
         </div>
 
@@ -77,7 +77,7 @@
 
         <!-- Empty State -->
         <div v-else-if="myIncidents.length === 0" class="empty-state">
-          <div class="empty-icon">🛡️</div>
+          <div class="empty-icon">️</div>
           <div class="empty-title">No Active Emergencies Reported</div>
           <p class="empty-text">If you or someone nearby is in danger, use the buttons above to transmit an emergency report.</p>
           <router-link to="/citizen/report" class="btn btn-primary btn-sm mt-2">
@@ -99,9 +99,9 @@
                 <strong class="report-title">{{ inc.title }}</strong>
               </div>
               <div class="report-meta">
-                <span>📍 {{ inc.address || 'GPS Coordinates Locked' }}</span>
+                <span> {{ inc.address || 'GPS Coordinates Locked' }}</span>
                 <span>⏱️ {{ inc.createdAt ? new Date(inc.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent' }}</span>
-                <span>👥 {{ inc.victimCount || 1 }} Victim(s)</span>
+                <span> {{ inc.victimCount || 1 }} Victim(s)</span>
               </div>
             </div>
             <div class="report-badges">

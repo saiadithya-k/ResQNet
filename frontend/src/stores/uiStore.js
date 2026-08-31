@@ -3,6 +3,7 @@ import { defineStore } from 'pinia';
 export const useUiStore = defineStore('ui', {
   state: () => ({
     sidebarOpen: true,
+    workflowOpen: false,
     isMobile: typeof window !== 'undefined' ? window.innerWidth < 768 : false
   }),
   actions: {
@@ -16,6 +17,16 @@ export const useUiStore = defineStore('ui', {
       if (typeof window !== 'undefined' && window.innerWidth < 768) {
         this.sidebarOpen = false;
       }
+    },
+    openWorkflow() {
+      this.workflowOpen = true;
+    },
+    closeWorkflow() {
+      this.workflowOpen = false;
+    },
+    toggleWorkflow() {
+      this.workflowOpen = !this.workflowOpen;
     }
   }
 });
+
