@@ -3,8 +3,8 @@
     <!-- Toggle Floating Button -->
     <button v-if="!isOpen" class="copilot-fab" @click="isOpen = true">
       <span class="ai-glow"></span>
-      <span class="icon">🤖</span>
-      <span class="label">AI COPILOT</span>
+      <span class="icon">{{ isCitizen ? '🛡️' : '🤖' }}</span>
+      <span class="label">{{ isCitizen ? 'SAFETY ASSIST' : 'AI COPILOT' }}</span>
     </button>
 
     <!-- Expanded Copilot Tactical Console -->
@@ -12,33 +12,48 @@
       <div class="copilot-header">
         <div class="title-area">
           <span class="status-indicator"></span>
-          <h3>AI Tactical Emergency Copilot</h3>
+          <h3>{{ isCitizen ? 'ResQ Citizen Safety Assistant' : 'AI Tactical Emergency Copilot' }}</h3>
         </div>
         <button class="close-btn" @click="isOpen = false">✕</button>
       </div>
 
-      <!-- Quick Operational Prompt Suggestions -->
+      <!-- Quick Operational Prompt Suggestions (Role-Adaptive) -->
       <div class="quick-prompts">
-        <button class="prompt-chip" @click="sendQuery('Which critical incidents need immediate attention?')">
-          🚨 Critical Incidents?
-        </button>
-        <button class="prompt-chip" @click="sendQuery('Check ICU and Trauma hospital capacity')">
-          🏥 Hospital Beds?
-        </button>
-        <button class="prompt-chip" @click="sendQuery('Detect ambulance shortages in District A')">
-          📦 Resource Shortage?
-        </button>
+        <template v-if="isCitizen">
+          <button class="prompt-chip" @click="sendQuery('What is the status of my emergency?')">
+            🚨 My Emergency?
+          </button>
+          <button class="prompt-chip" @click="sendQuery('What public alerts are currently active?')">
+            📢 Public Alerts?
+          </button>
+          <button class="prompt-chip" @click="sendQuery('What is the AI risk forecast in my area?')">
+            🔮 Risk Forecast?
+          </button>
+        </template>
+        <template v-else>
+          <button class="prompt-chip" @click="sendQuery('Which critical incidents need immediate attention?')">
+            🚨 Critical Incidents?
+          </button>
+          <button class="prompt-chip" @click="sendQuery('Check ICU and Trauma hospital capacity')">
+            🏥 Hospital Beds?
+          </button>
+          <button class="prompt-chip" @click="sendQuery('Detect ambulance shortages in District A')">
+            📦 Resource Shortage?
+          </button>
+        </template>
       </div>
 
       <!-- Chat Stream -->
       <div class="chat-stream" ref="chatStreamRef">
         <div v-for="(msg, idx) in messages" :key="idx" :class="['chat-bubble', msg.role]">
-          <div class="sender-tag">{{ msg.role === 'user' ? 'COMMANDER' : 'AI COPILOT' }}</div>
+          <div class="sender-tag">
+            {{ msg.role === 'user' ? (isCitizen ? 'CITIZEN' : 'COMMANDER') : (isCitizen ? 'RESQ ASSISTANT' : 'AI COPILOT') }}
+          </div>
           <div class="bubble-content">{{ msg.content }}</div>
 
           <!-- Suggested Actionable Buttons -->
           <div v-if="msg.actions && msg.actions.length > 0" class="actions-container">
-            <div class="actions-title">TACTICAL RECOMMENDATIONS:</div>
+            <div class="actions-title">RECOMMENDED ACTIONS:</div>
             <div v-for="(action, aIdx) in msg.actions" :key="aIdx" class="action-item">
               <span>⚡</span> {{ action }}
             </div>
@@ -55,7 +70,7 @@
         <input
           type="text"
           v-model="inputQuery"
-          placeholder="Ask Copilot about incidents, resources, routes..."
+          :placeholder="isCitizen ? 'Ask about your emergency status, alerts, risk...' : 'Ask Copilot about incidents, resources, routes...'"
           class="copilot-input"
         />
         <button type="submit" class="btn btn-primary btn-sm" :disabled="!inputQuery.trim() || loading">
@@ -67,18 +82,26 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue';
+import { ref, computed, nextTick } from 'vue';
+import { useAuthStore } from '../../stores/authStore';
 import api from '../../services/api';
 
+const authStore = useAuthStore();
 const isOpen = ref(false);
 const inputQuery = ref('');
 const loading = ref(false);
 const chatStreamRef = ref(null);
 
+const isCitizen = computed(() => {
+  return !authStore.user?.role || authStore.user?.role === 'CITIZEN';
+});
+
 const messages = ref([
   {
     role: 'assistant',
-    content: 'Emergency Command Copilot ready. I have real-time access to all active incidents, responder GPS locations, and hospital trauma beds.',
+    content: isCitizen.value
+      ? 'ResQ Citizen Assistant ready. Ask about your reported emergencies, active public alerts, or crisis safety check-ins.'
+      : 'Emergency Command Copilot ready. Real-time access to operational incident telemetry and resource coordination.',
     actions: []
   }
 ]);
@@ -91,7 +114,10 @@ async function sendQuery(queryText) {
   scrollToBottom();
 
   try {
-    const res = await api.post('/ai/copilot', { query: queryText });
+    const res = await api.post('/ai/copilot', {
+      query: queryText,
+      role: authStore.user?.role || 'CITIZEN'
+    });
     messages.value.push({
       role: 'assistant',
       content: res.data.data.answer,

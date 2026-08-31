@@ -7,17 +7,22 @@
         <p>AI Emergency Intelligence & Coordination Platform</p>
       </div>
 
+      <div v-if="errorMsg" class="login-err-banner">
+        <span>⚠️ {{ errorMsg }}</span>
+      </div>
+
       <form @submit.prevent="handleLogin" class="login-form">
         <div>
-          <label>Email Address / Call Sign:</label>
-          <input type="email" v-model="email" class="form-input" required />
+          <label for="loginEmail">Email Address / Call Sign:</label>
+          <input id="loginEmail" type="email" v-model="email" class="form-input" required />
         </div>
         <div>
-          <label>Authentication Key / Password:</label>
-          <input type="password" v-model="password" class="form-input" required />
+          <label for="loginPassword">Authentication Key / Password:</label>
+          <input id="loginPassword" type="password" v-model="password" class="form-input" required />
         </div>
-        <button type="submit" class="btn btn-primary btn-block">
-          🔐 Authenticate & Enter Command
+        <button type="submit" class="btn btn-primary btn-block" :disabled="loading">
+          <span v-if="loading">Verifying credentials...</span>
+          <span v-else>🔐 Authenticate & Enter Portal</span>
         </button>
       </form>
 
@@ -44,21 +49,40 @@ import api from '../../services/api';
 const router = useRouter();
 const authStore = useAuthStore();
 
-const email = ref('admin@resqnet.org');
+const email = ref('citizen@resqnet.org');
 const password = ref('password123');
+const loading = ref(false);
+const errorMsg = ref('');
 
 function fillLogin(em) {
   email.value = em;
   password.value = 'password123';
+  errorMsg.value = '';
 }
 
 async function handleLogin() {
+  loading.value = true;
+  errorMsg.value = '';
   try {
     const res = await api.post('/auth/login', { email: email.value, password: password.value });
-    authStore.setUser(res.data.data.user, res.data.data.token);
-    router.push('/admin/command');
+    const user = res.data.data.user;
+    const token = res.data.data.token;
+    authStore.setUser(user, token);
+
+    // Dynamic routing by role
+    if (user.role === 'CITIZEN') {
+      router.push('/citizen');
+    } else if (user.role === 'RESPONDER') {
+      router.push('/responder');
+    } else if (user.role === 'HOSPITAL') {
+      router.push('/hospital');
+    } else {
+      router.push('/admin/command');
+    }
   } catch (err) {
-    alert('Invalid credentials');
+    errorMsg.value = err.response?.data?.message || 'Invalid credentials. Please verify email and password.';
+  } finally {
+    loading.value = false;
   }
 }
 </script>
@@ -96,6 +120,15 @@ async function handleLogin() {
 .login-header p {
   font-size: 0.75rem;
   color: #94a3b8;
+}
+
+.login-err-banner {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
 }
 
 .login-form {
