@@ -159,9 +159,9 @@ onUnmounted(() => {
 <style scoped>
 .tactical-navbar {
   height: 64px;
-  background: rgba(6, 9, 19, 0.85);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(56, 189, 248, 0.18);
+  background: rgba(10, 15, 30, 0.95);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(51, 65, 85, 0.7);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -185,8 +185,8 @@ onUnmounted(() => {
 }
 
 .sidebar-slide-toggle {
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(59, 130, 246, 0.3);
   color: #94a3b8;
   width: 36px;
   height: 36px;
@@ -200,24 +200,23 @@ onUnmounted(() => {
 }
 
 .sidebar-slide-toggle:hover {
-  background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
-  border-color: #38bdf8;
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border-color: #3b82f6;
   transform: scale(1.05);
 }
 
 .logo-icon {
   position: relative;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
-  background: linear-gradient(135deg, #1e293b, #0f172a);
-  border: 1px solid rgba(56, 189, 248, 0.4);
+  width: 40px;
+  height: 40px;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.4);
   border-radius: 10px;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
 }
 
 .pulse-radar {
@@ -225,13 +224,13 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   border-radius: 10px;
-  border: 2px solid #38bdf8;
-  animation: radar-pulse 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+  border: 2px solid #ef4444;
+  animation: radar-pulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
 @keyframes radar-pulse {
   0% { transform: scale(0.95); opacity: 1; }
-  100% { transform: scale(1.35); opacity: 0; }
+  100% { transform: scale(1.4); opacity: 0; }
 }
 
 .logo-text {
@@ -239,15 +238,14 @@ onUnmounted(() => {
   font-weight: 800;
   color: #f8fafc;
   line-height: 1.1;
-  font-family: var(--font-display);
 }
 
 .logo-text span {
-  color: #38bdf8;
+  color: #3b82f6;
 }
 
 .logo-subtext {
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   color: #94a3b8;
   font-family: var(--font-mono);
   letter-spacing: 0.05em;
