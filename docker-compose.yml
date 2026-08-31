@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -21,8 +19,9 @@ services:
     container_name: resqnet-backend
     restart: always
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 5000
+      CLIENT_URL: http://localhost:5173
       DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/resqnet?schema=public"
       JWT_SECRET: super_secret_jwt_key_resqnet_2026_emergency
     ports:
