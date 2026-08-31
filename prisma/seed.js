@@ -1,8 +1,8 @@
 /**
  * Seed file for ResQNet database initialization
  */
-const bcrypt = require('../backend/node_modules/bcryptjs');
-const { PrismaClient } = require('../backend/node_modules/@prisma/client');
+const bcrypt = require('bcryptjs');
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 

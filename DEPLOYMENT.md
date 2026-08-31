@@ -27,8 +27,8 @@ This guide walks you through deploying **ResQNet** with:
                            │ (Prisma ORM)
                            ▼
 ┌────────────────────────────────────────────────────────┐
-│              Render PostgreSQL Database                │
-│   - Managed Cloud Database                             │
+│              Neon PostgreSQL Database                  │
+│   - Serverless Cloud Database                          │
 │   - Seeded with Role Accounts & Operational Records    │
 └────────────────────────────────────────────────────────┘
 ```
@@ -37,17 +37,14 @@ This guide walks you through deploying **ResQNet** with:
 
 ## PART 1: Deploy Backend & Database on Render
 
-### Step 1: Create a PostgreSQL Database on Render
-1. Log in to your [Render Dashboard](https://dashboard.render.com/).
-2. Click **New +** → **PostgreSQL**.
-3. Configure the database:
-   - **Name**: `resqnet-db`
-   - **Database**: `resqnet`
-   - **User**: `postgres`
-   - **Region**: Choose the region closest to you (e.g., Singapore, Frankfurt, Oregon).
-   - **Plan**: Free (or Starter).
-4. Click **Create Database**.
-5. Once created, copy the **Internal Database URL** (if deploying backend on Render) or **External Database URL**.
+### Step 1: Database Setup (Neon PostgreSQL)
+Your database is configured with **Neon PostgreSQL**. You do not need to create a new database on Render unless you prefer to.
+
+- **Neon Connection String**:
+  ```env
+  DATABASE_URL="postgresql://neondb_owner:npg_8xqNvz5senaL@ep-fragrant-art-aebth51o-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+  ```
+- The schema has already been synchronized and seeded with default operational accounts.
 
 ---
 
