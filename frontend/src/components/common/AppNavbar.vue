@@ -50,21 +50,31 @@
           <span class="user-name">{{ authStore.user?.name || 'Chief Miller' }}</span>
           <span class="user-role badge-role">{{ authStore.user?.role || 'ADMIN' }}</span>
         </div>
+        <button class="logout-btn" @click="handleLogout" title="Switch Account / Sign In">
+          🚪
+        </button>
       </div>
     </div>
   </header>
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../stores/authStore';
 import { useIncidentStore } from '../../stores/incidentStore';
 import { useDisasterStore } from '../../stores/disasterStore';
 import { useUiStore } from '../../stores/uiStore';
 
+const router = useRouter();
 const authStore = useAuthStore();
 const incidentStore = useIncidentStore();
 const disasterStore = useDisasterStore();
 const uiStore = useUiStore();
+
+function handleLogout() {
+  authStore.logout();
+  router.push('/login');
+}
 </script>
 
 <style scoped>
@@ -269,5 +279,25 @@ const uiStore = useUiStore();
   font-size: 0.6rem;
   font-family: var(--font-mono);
   color: #60a5fa;
+}
+
+.logout-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  opacity: 0.75;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logout-btn:hover {
+  opacity: 1;
+  background: rgba(239, 68, 68, 0.25);
+  transform: scale(1.1);
 }
 </style>

@@ -64,14 +64,11 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  if (to.path === '/login') {
+    // Allow viewing the login page directly
+    next();
+  } else if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login');
-  } else if (to.path === '/login' && authStore.isAuthenticated) {
-    if (authStore.user?.role === 'CITIZEN') {
-      next('/citizen');
-    } else {
-      next('/admin/command');
-    }
   } else if (authStore.isAuthenticated && authStore.user?.role === 'CITIZEN') {
     // Role Boundary Hardening: Prevent citizen from accessing admin, responder, or hospital internal screens
     if (to.path.startsWith('/admin') || to.path.startsWith('/responder') || to.path.startsWith('/hospital')) {

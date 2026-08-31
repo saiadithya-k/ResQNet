@@ -2,28 +2,34 @@ import { defineStore } from 'pinia';
 import api from '../services/api';
 
 export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    user: {
-      id: 'usr-admin-1',
-      name: 'Command Chief Sarah Miller',
-      email: 'admin@resqnet.org',
-      role: 'ADMIN'
-    },
-    token: localStorage.getItem('token') || 'demo-token',
-    isAuthenticated: true
-  }),
+  state: () => {
+    let savedUser = null;
+    try {
+      savedUser = JSON.parse(localStorage.getItem('resqnet_user'));
+    } catch (e) {}
+
+    const savedToken = localStorage.getItem('token');
+
+    return {
+      user: savedUser,
+      token: savedToken,
+      isAuthenticated: !!savedToken && !!savedUser
+    };
+  },
   actions: {
     setUser(user, token) {
       this.user = user;
       this.token = token;
       this.isAuthenticated = true;
       localStorage.setItem('token', token);
+      localStorage.setItem('resqnet_user', JSON.stringify(user));
     },
     logout() {
       this.user = null;
       this.token = null;
       this.isAuthenticated = false;
       localStorage.removeItem('token');
+      localStorage.removeItem('resqnet_user');
     }
   }
 });
