@@ -155,6 +155,12 @@ function handleDocumentClick(e) {
 
 onMounted(() => {
   document.addEventListener('click', handleDocumentClick);
+  if (incidentStore.incidents.length === 0) {
+    incidentStore.fetchIncidents();
+  }
+  if (!disasterStore.shelters || disasterStore.shelters.length === 0) {
+    disasterStore.fetchStatus();
+  }
 });
 
 onUnmounted(() => {

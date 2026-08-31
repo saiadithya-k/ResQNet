@@ -10,8 +10,8 @@ export const useIncidentStore = defineStore('incidents', {
     filterSeverity: ''
   }),
   getters: {
-    criticalIncidents: (state) => state.incidents.filter(i => i.severity === 'CRITICAL'),
-    activeIncidentsCount: (state) => state.incidents.filter(i => i.status !== 'RESOLVED').length
+    criticalIncidents: (state) => state.incidents.filter(i => i.severity === 'CRITICAL' && i.status !== 'RESOLVED' && i.status !== 'DUPLICATE'),
+    activeIncidentsCount: (state) => state.incidents.filter(i => i.status !== 'RESOLVED' && i.status !== 'DUPLICATE').length
   },
   actions: {
     async fetchIncidents() {

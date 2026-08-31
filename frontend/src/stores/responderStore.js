@@ -36,7 +36,19 @@ export const useResponderStore = defineStore('responders', {
     updateResponderLocation(responder) {
       const idx = this.responders.findIndex(r => r.id === responder.id);
       if (idx !== -1) {
-        this.responders[idx] = responder;
+        this.responders[idx] = { ...this.responders[idx], ...responder };
+      }
+    },
+    updateResponder(responder) {
+      if (!responder || !responder.id) return;
+      const idx = this.responders.findIndex(r => r.id === responder.id);
+      if (idx !== -1) {
+        this.responders[idx] = { ...this.responders[idx], ...responder };
+      } else {
+        this.responders.push(responder);
+      }
+      if (this.selectedResponder?.id === responder.id) {
+        this.selectedResponder = { ...this.selectedResponder, ...responder };
       }
     }
   }

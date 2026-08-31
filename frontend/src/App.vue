@@ -28,9 +28,17 @@ import AppNavbar from './components/common/AppNavbar.vue';
 import AppSidebar from './components/common/AppSidebar.vue';
 import CopilotChat from './components/ai/CopilotChat.vue';
 import { useSocketService } from './services/socketService';
+import { useIncidentStore } from './stores/incidentStore';
+import { useDisasterStore } from './stores/disasterStore';
+import { useHospitalStore } from './stores/hospitalStore';
+import { useResponderStore } from './stores/responderStore';
 
 const route = useRoute();
 const socket = useSocketService();
+const incidentStore = useIncidentStore();
+const disasterStore = useDisasterStore();
+const hospitalStore = useHospitalStore();
+const responderStore = useResponderStore();
 const viewportRef = ref(null);
 
 const isWorkflowRoute = computed(() => {
@@ -60,8 +68,18 @@ watch(() => route.path, () => {
   setTimeout(scrollToTop, 500);
 });
 
-onMounted(() => {
+onMounted(async () => {
   socket.connect();
+  try {
+    await Promise.allSettled([
+      incidentStore.fetchIncidents(),
+      disasterStore.fetchStatus(),
+      hospitalStore.fetchHospitals(),
+      responderStore.fetchResponders()
+    ]);
+  } catch (err) {
+    console.warn('Initial data synchronization warning:', err);
+  }
 });
 </script>
 

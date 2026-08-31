@@ -51,31 +51,32 @@
     <section class="status-strip">
       <div class="status-grid">
         <div class="status-item">
-          <span class="status-indicator online"></span>
+          <span :class="['status-indicator', disasterStore.isDisasterMode ? 'critical' : 'online']"></span>
           <div class="status-info">
-            <strong>Response Network</strong>
-            <span>Operational & Online</span>
+            <strong>Response Grid</strong>
+            <span v-if="disasterStore.isDisasterMode" class="text-danger">Disaster Mode Active</span>
+            <span v-else>Operational &amp; Online</span>
           </div>
         </div>
         <div class="status-item">
           <span class="status-indicator online"></span>
           <div class="status-info">
             <strong>Emergency Dispatch</strong>
-            <span>Active & Standby</span>
+            <span>{{ incidentStore.activeIncidentsCount }} Active &bull; {{ incidentStore.criticalIncidents.length }} Critical</span>
+          </div>
+        </div>
+        <div class="status-item">
+          <span class="status-indicator online"></span>
+          <div class="status-info">
+            <strong>Tactical Fleet</strong>
+            <span>{{ responderStore.responders.length }} Field Units Ready</span>
           </div>
         </div>
         <div class="status-item">
           <span class="status-indicator online"></span>
           <div class="status-info">
             <strong>Hospital Mesh</strong>
-            <span>Telemetry Connected</span>
-          </div>
-        </div>
-        <div class="status-item">
-          <span class="status-indicator online"></span>
-          <div class="status-info">
-            <strong>AI NLP Triage</strong>
-            <span>Multilingual Active</span>
+            <span>{{ hospitalStore.hospitals.length }} Centers Linked</span>
           </div>
         </div>
       </div>
@@ -228,6 +229,23 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue';
+import { useIncidentStore } from '../stores/incidentStore';
+import { useResponderStore } from '../stores/responderStore';
+import { useHospitalStore } from '../stores/hospitalStore';
+import { useDisasterStore } from '../stores/disasterStore';
+
+const incidentStore = useIncidentStore();
+const responderStore = useResponderStore();
+const hospitalStore = useHospitalStore();
+const disasterStore = useDisasterStore();
+
+onMounted(async () => {
+  if (incidentStore.incidents.length === 0) incidentStore.fetchIncidents();
+  if (responderStore.responders.length === 0) responderStore.fetchResponders();
+  if (hospitalStore.hospitals.length === 0) hospitalStore.fetchHospitals();
+  if (!disasterStore.shelters || disasterStore.shelters.length === 0) disasterStore.fetchStatus();
+});
 </script>
 
 <style scoped>
@@ -449,6 +467,19 @@
   background: #10b981;
   border-radius: 50%;
   box-shadow: 0 0 10px #10b981;
+}
+
+.status-indicator.critical {
+  width: 10px;
+  height: 10px;
+  background: #ef4444;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ef4444;
+  animation: pulse-danger 1.5s infinite;
+}
+
+.text-danger {
+  color: #f87171 !important;
 }
 
 .status-info {

@@ -1,10 +1,16 @@
 <template>
   <div class="copilot-container">
-    <!-- Toggle Floating Button -->
-    <button v-if="!isOpen" class="copilot-fab" @click="isOpen = true">
-      <span class="ai-glow"></span>
-      <span class="icon">{{ isCitizen ? '️' : '' }}</span>
+    <!-- Toggle Floating Edge Pill (Slides in from right edge on cursor hover, slides back when cursor leaves) -->
+    <button
+      v-if="!isOpen"
+      class="copilot-fab"
+      @click="isOpen = true"
+      :title="isCitizen ? '🤖 Open AI Safety Assistant (Click to open)' : '🤖 Open Tactical Copilot (Click to open)'"
+      aria-label="Open AI Assistant"
+    >
+      <span class="bot-avatar-badge">🤖</span>
       <span class="label">{{ isCitizen ? 'SAFETY ASSIST' : 'AI COPILOT' }}</span>
+      <span class="slide-indicator-arrow">◀</span>
     </button>
 
     <!-- Expanded Copilot Tactical Console -->
@@ -357,40 +363,113 @@ function scrollToBottom() {
 <style scoped>
 .copilot-container {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: 24px;
+  right: 0;
   z-index: 2000;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
 }
 
 .copilot-fab {
+  pointer-events: auto;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: linear-gradient(135deg, #1e293b, #0f172a);
-  border: 1px solid #3b82f6;
+  gap: 0.65rem;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.96));
+  border: 1.5px solid rgba(59, 130, 246, 0.6);
+  border-right: none;
   color: #60a5fa;
-  padding: 0.65rem 1.1rem;
-  border-radius: 9999px;
+  padding: 0.55rem 1.1rem 0.55rem 0.75rem;
+  border-top-left-radius: 9999px;
+  border-bottom-left-radius: 9999px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
   cursor: pointer;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7), 0 0 15px rgba(59, 130, 246, 0.4);
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 0.8rem;
-  transition: transform 0.2s ease;
+  box-shadow: -6px 10px 25px rgba(0, 0, 0, 0.75), 0 0 15px rgba(59, 130, 246, 0.35);
+  font-family: var(--font-mono, monospace);
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  backdrop-filter: blur(16px);
+  user-select: none;
+  /* Slid to right edge by default, revealing the glowing AI chatbot badge */
+  transform: translateX(calc(100% - 50px));
+  transition: transform 0.35s cubic-bezier(0.34, 1.3, 0.64, 1), box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
 }
 
-.copilot-fab:hover {
-  transform: translateY(-2px);
-  border-color: #60a5fa;
+.copilot-fab:hover,
+.copilot-fab:focus-visible {
+  transform: translateX(-16px);
+  border-color: #38bdf8;
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.95), rgba(15, 23, 42, 0.98));
+  box-shadow: -8px 12px 30px rgba(0, 0, 0, 0.85), 0 0 25px rgba(56, 189, 248, 0.6);
+  border-top-right-radius: 9999px;
+  border-bottom-right-radius: 9999px;
+  border-right: 1.5px solid #38bdf8;
+}
+
+.bot-avatar-badge {
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(59, 130, 246, 0.2);
+  border-radius: 50%;
+  border: 1px solid rgba(96, 165, 250, 0.5);
+  animation: bot-beacon-pulse 2.2s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+@keyframes bot-beacon-pulse {
+  0%, 100% {
+    box-shadow: 0 0 6px rgba(59, 130, 246, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.9);
+    transform: scale(1.08);
+  }
+}
+
+.slide-indicator-arrow {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  transition: transform 0.3s ease, color 0.3s ease;
+  margin-left: -0.15rem;
+}
+
+.copilot-fab:hover .slide-indicator-arrow {
+  transform: translateX(-2px);
+  color: #38bdf8;
 }
 
 .copilot-window {
+  pointer-events: auto;
+  margin-right: 20px;
+  margin-bottom: 0;
   width: 380px;
   height: 520px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 25px rgba(59, 130, 246, 0.25);
   border: 1px solid rgba(59, 130, 246, 0.5);
+  border-radius: 16px;
+  overflow: hidden;
+  animation: copilot-pop 0.25s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+@keyframes copilot-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .copilot-header {
