@@ -15,7 +15,7 @@
   <strong>Transforming citizen distress signals into prioritized, intelligently dispatched, life-saving responses in sub-second time.</strong>
 </p>
 
-[⚡ Explore Interactive Workflow (Public)](http://localhost:5173/workflow) • [🚀 Quick Start](#-quick-start) • [🔑 Demo Accounts](#-demo-accounts) • [📖 Deployment Guide](DEPLOYMENT.md)
+[⚡ Explore Interactive Workflow (Public)](http://localhost:5173/workflow) • [🚀 Quick Start](#-quick-start) • [🔑 Demo Accounts](#-demo-accounts) • [🌐 Portals](#-platform-portals)
 
 </div>
 
@@ -128,12 +128,6 @@ ResQNet/
 │   │   └── stores/          # Pinia reactive stores (Incidents, Disasters, Responders, UI)
 └── prisma/                   # PostgreSQL schema models & demo seeds
 ```
-
----
-
-## 🚢 Production Deployment
-
-For step-by-step production hosting on **Render** (Backend API + Database) and **Vercel** (Frontend SPA), refer to the comprehensive [**DEPLOYMENT.md**](DEPLOYMENT.md) guide.
 
 ---
 
